@@ -1,0 +1,157 @@
+<!-- miniprogram/pages/dishes/index.wxml -->
+<view class="app-container dishes-container">
+
+  <!-- 顶部标题与操作栏 -->
+  <view class="action-header">
+    <view class="title-section">家庭收藏菜品</view>
+    <view class="header-buttons" wx:if="{{ memberRole !== 'read' }}">
+      <button 
+        class="btn-secondary mini-btn" 
+        style="background: var(--green-light); color: var(--green-color); border-color: rgba(155, 184, 167, 0.2);"
+        bindtap="onOpenAiImport"
+      >
+        ✨ AI 导入
+      </button>
+      <button 
+        class="btn-primary mini-btn" 
+        bindtap="onOpenAddModal"
+      >
+        + 新增
+      </button>
+    </view>
+  </view>
+
+  <!-- 搜索栏 -->
+  <view class="search-wrapper">
+    <input 
+      class="custom-input" 
+      placeholder="🔍 搜索库中菜品..." 
+      value="{{ searchQuery }}"
+      bindinput="onSearchInput"
+    />
+  </view>
+
+  <!-- 选项卡筛选 -->
+  <scroll-view class="tab-scroll" scroll-x="true">
+    <view 
+      class="tab-pill {{ activeTab === item ? 'active' : '' }}" 
+      wx:for="{{ tabs }}" 
+      wx:key="index"
+      bindtap="onTabChange"
+      data-tab="{{ item }}"
+    >
+      {{ item }}
+    </view>
+  </scroll-view>
+
+  <!-- 菜品库展示 -->
+  <view class="dishes-list-wrapper" wx:if="{{ filteredDishes.length > 0 }}">
+    <view class="dish-repo-card" wx:for="{{ filteredDishes }}" wx:key="_id">
+      <view class="dish-repo-info">
+        <view class="dish-repo-title-row">
+          <text class="badge badge-primary">{{ item.category }}</text>
+          <text class="dish-repo-name">{{ item.name }}</text>
+        </view>
+        <text class="dish-repo-remark" wx:if="{{ item.remark }}">“{{ item.remark }}”</text>
+      </view>
+      <view 
+        class="btn-delete-trash" 
+        bindtap="onDeleteDish" 
+        data-id="{{ item._id }}" 
+        data-name="{{ item.name }}"
+        wx:if="{{ memberRole !== 'read' }}"
+      >
+        🗑️
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="glass-card empty-placeholder animate-fade-in" wx:else>
+    <view class="empty-icon">🥗</view>
+    <text class="empty-text">菜品库空空如也，快点击右上角新增或导入吧</text>
+  </view>
+
+
+  <!-- 新增菜品 Modal -->
+  <view class="modal-overlay" wx:if="{{ showAddModal }}" bindtap="onCloseAddModal">
+    <view class="modal-content animate-fade-in" catchtap="true">
+      <view class="modal-header">
+        <text class="modal-title">新增菜品</text>
+        <view class="modal-close" bindtap="onCloseAddModal">×</view>
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">菜品名称</text>
+        <input 
+          class="custom-input" 
+          placeholder="请输入菜品名称，如“辣椒炒肉”" 
+          value="{{ newDishName }}"
+          bindinput="setData"
+          model:value="{{ newDishName }}"
+        />
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">菜品类别</text>
+        <picker bindchange="onCategoryChange" value="{{ 0 }}" range="{{ categories }}">
+          <view class="form-picker">
+            {{ newDishCategory }} ▾
+          </view>
+        </picker>
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">备注 / 描述 (可选)</text>
+        <input 
+          class="custom-input" 
+          placeholder="如“不放辣/宝贝爱吃”" 
+          value="{{ newDishRemark }}"
+          bindinput="setData"
+          model:value="{{ newDishRemark }}"
+        />
+      </view>
+
+      <button 
+        class="btn-primary" 
+        style="width: 100%; margin-top: 40rpx;" 
+        bindtap="onAddDish"
+      >
+        确认保存
+      </button>
+    </view>
+  </view>
+
+
+  <!-- AI 批量分析导入 Modal -->
+  <view class="modal-overlay" wx:if="{{ showAiImportModal }}" bindtap="onCloseAiImport">
+    <view class="modal-content animate-fade-in" catchtap="true">
+      <view class="modal-header">
+        <text class="modal-title">✨ AI 批量解析导入</text>
+        <view class="modal-close" bindtap="onCloseAiImport">×</view>
+      </view>
+
+      <textarea 
+        class="ai-textarea" 
+        placeholder="在这里输入或粘贴您想要导入的菜品文本。&#10;例如：“帮我加一下红烧排骨、清蒸鲈鱼，还有一道紫菜蛋汤，阿姨还会做番茄炒蛋和香菇青菜。”" 
+        value="{{ bulkImportText }}"
+        bindinput="setData"
+        model:value="{{ bulkImportText }}"
+      />
+
+      <view class="ai-tips">
+        💡 AI 会自动提取菜名并按类别（热菜/汤品/凉菜）分类，去重后存入菜品库。
+      </view>
+
+      <button 
+        class="btn-primary" 
+        style="width: 100%; background: linear-gradient(135deg, #9BB8A7 0%, #87A995 100%); box-shadow: 0 8rpx 24rpx rgba(155, 184, 167, 0.3);"
+        bindtap="onCommitAiImport"
+        disabled="{{ importLoading }}"
+      >
+        {{ importLoading ? 'AI 正在分析并导入...' : '开始 AI 解析并导入' }}
+      </button>
+    </view>
+  </view>
+
+</view>

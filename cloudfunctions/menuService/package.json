@@ -1,0 +1,9 @@
+{
+  "name": "menuService",
+  "version": "1.0.0",
+  "description": "菜单与菜品库读写管理服务 (带安全权限校验)",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

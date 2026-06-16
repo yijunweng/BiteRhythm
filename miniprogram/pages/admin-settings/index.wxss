@@ -1,0 +1,106 @@
+/* miniprogram/pages/admin-settings/index.wxss */
+
+.settings-container {
+  padding: 30rpx;
+  min-height: 100vh;
+}
+
+/* 微信OpenID专属模块 */
+.openid-card {
+  background: rgba(226, 155, 155, 0.06);
+  border: 1rpx dashed var(--accent-color);
+  margin-bottom: 30rpx;
+}
+
+.openid-title {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: var(--accent-color);
+  margin-bottom: 12rpx;
+}
+
+.openid-value-box {
+  background: rgba(255, 255, 255, 0.6);
+  padding: 16rpx 24rpx;
+  border-radius: 16rpx;
+  font-family: monospace;
+  font-size: 24rpx;
+  color: var(--text-main);
+  word-break: break-all;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.btn-copy {
+  font-size: 22rpx;
+  background: var(--accent-light);
+  color: var(--accent-color);
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  white-space: nowrap;
+}
+
+.openid-tips {
+  font-size: 22rpx;
+  color: var(--text-sub);
+}
+
+/* 拦截无权限界面 */
+.unauthorized-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 80rpx 40rpx;
+  margin-top: 100rpx;
+  border-color: rgba(226, 155, 155, 0.4);
+}
+
+.lock-icon {
+  font-size: 110rpx;
+  margin-bottom: 30rpx;
+}
+
+.lock-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.lock-desc {
+  font-size: 26rpx;
+  color: var(--text-sub);
+  margin-top: 12rpx;
+  margin-bottom: 40rpx;
+}
+
+/* 表单卡片 */
+.form-card {
+  margin-bottom: 30rpx;
+}
+
+.form-group {
+  margin-bottom: 30rpx;
+}
+
+.form-label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.form-picker {
+  background: rgba(255, 255, 255, 0.6);
+  border: 2rpx solid rgba(108, 142, 191, 0.15);
+  border-radius: 20rpx;
+  height: 90rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 30rpx;
+  font-size: 28rpx;
+}

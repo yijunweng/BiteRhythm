@@ -1,0 +1,12 @@
+# WeChat DevTools local configurations
+project.private.config.json
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Dependencies and build outputs
+node_modules/
+miniprogram_npm/
+dist/
+unpackage/

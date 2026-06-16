@@ -1,0 +1,10 @@
+{
+  "name": "llmService",
+  "version": "1.0.0",
+  "description": "对接大模型的云端智能引擎，提供食谱推荐与文本解析",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "axios": "^1.6.0"
+  }
+}

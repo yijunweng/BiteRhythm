@@ -1,0 +1,9 @@
+{
+  "name": "adminService",
+  "version": "1.0.0",
+  "description": "超级管理员管理服务",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

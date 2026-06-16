@@ -1,0 +1,2140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>胃口周刊 - 交互式 UI 原型初稿</title>
+    <style>
+        /* 全局样式与极简乳白/香槟金配色 */
+        :root {
+            --primary-color: #2A2A2A;     /* 曜石墨黑 (主对比色) */
+            --primary-hover: #151515;
+            --secondary-color: #D4B28C;   /* 柔和暖金/香槟金 (高亮与AI标识) */
+            --bg-color: #FDFDFB;          /* 极轻柔乳白 (页面底色，更白更干净) */
+            --card-bg: #FFFFFF;           /* 纯白卡片 */
+            --text-main: #222222;         /* 炭黑 (主要文字) */
+            --text-muted: #9E9E9E;        /* 柔灰 (辅助文字) */
+            --border-color: #F3EFE9;      /* 超淡奶油灰边框 */
+            --alert-bg: #FDFDFB;          /* 极淡乳金警示背景 */
+            --alert-text: #C49B6E;        /* 暖金警示文本 */
+            --shadow: 0 8px 30px rgba(188, 179, 166, 0.06); /* 更柔和淡雅的阴影 */
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 1) 0%, rgba(250, 248, 243, 0.4) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-main);
+            padding: 40px 20px;
+        }
+
+        /* 原型展示大布局 */
+        .workspace {
+            display: flex;
+            gap: 40px;
+            max-width: 1000px;
+            width: 100%;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        /* 侧边说明与角色控制面板 */
+        .control-panel {
+            flex: 1;
+            min-width: 320px;
+            max-width: 450px;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .control-panel h1 {
+            font-size: 22px;
+            margin-bottom: 12px;
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .control-panel p.desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .role-switch-box {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+
+        .role-switch-box h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .role-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .role-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: #FAF8F5;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+
+        .role-btn:hover {
+            background: #F4EFE6;
+        }
+
+        .role-btn.active {
+            background: #F7F3EA;
+            border-color: var(--secondary-color);
+            color: var(--primary-color);
+        }
+
+        .role-badge {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: normal;
+        }
+
+        .role-badge.admin { background: #F7F3EA; color: var(--secondary-color); }
+        .role-badge.write { background: #E3F2FD; color: #1E88E5; }
+        .role-badge.read { background: #FFEBEE; color: #E53935; }
+
+        .feature-tips {
+            margin-top: 20px;
+        }
+
+        .feature-tips h3 {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .feature-tips ul {
+            list-style: none;
+            font-size: 13px;
+            color: var(--text-main);
+            line-height: 1.7;
+        }
+
+        .feature-tips li {
+            position: relative;
+            padding-left: 16px;
+            margin-bottom: 6px;
+        }
+
+        .feature-tips li::before {
+            content: "•";
+            color: var(--secondary-color);
+            position: absolute;
+            left: 4px;
+            font-weight: bold;
+        }
+
+        /* 手机框架 (iPhone Mockup) */
+        .phone-container {
+            position: relative;
+            width: 375px;
+            height: 812px;
+            background: #E8E2DA; /* 暖白陶瓷质感边框 */
+            border-radius: 40px;
+            padding: 12px;
+            box-shadow: 0 25px 60px rgba(165, 153, 137, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        /* 顶部听筒/相机刘海 */
+        .phone-notch {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 24px;
+            background: #E8E2DA;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+            z-index: 999;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 状态栏 */
+        .status-bar {
+            height: 38px;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 12px;
+            font-weight: 600;
+            color: #000;
+            background: var(--bg-color);
+            z-index: 99;
+        }
+
+        .status-bar .right-icons {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        /* 小程序导航栏 (Top Navbar) */
+        .mini-nav-bar {
+            height: 44px;
+            padding: 0 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-color);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+            z-index: 99;
+        }
+
+        .nav-back {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .nav-back svg {
+            margin-right: 4px;
+        }
+
+        .nav-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .mini-menu-capsule {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0,0,0,0.1);
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+
+        .mini-menu-capsule span {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #000;
+            display: inline-block;
+        }
+
+        .mini-menu-capsule .circle {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #000;
+            border-radius: 50%;
+        }
+
+        /* 页面主要内容区 */
+        .screen-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            padding-bottom: 90px; /* 留出底部导航空间 */
+            position: relative;
+        }
+
+        .screen-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* 隐藏的页面模板 */
+        .app-page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .app-page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 卡片基础样式 */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(122, 132, 97, 0.05);
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* 权限条 (只读模式提示) */
+        .read-only-banner {
+            display: none;
+            background: var(--alert-bg);
+            color: var(--alert-text);
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-bottom: 12px;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        .read-only-banner svg {
+            flex-shrink: 0;
+        }
+
+        /* 底部导航栏 TabBar */
+        .tab-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: 10px;
+            z-index: 100;
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 20%;
+        }
+
+        .tab-item svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            transition: var(--transition);
+        }
+
+        .tab-item.active {
+            color: var(--primary-color);
+        }
+
+        .tab-item.active svg {
+            stroke: var(--primary-color);
+            transform: scale(1.08);
+        }
+
+        /* 底部 Home Indicator */
+        .home-indicator {
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 5px;
+            border-radius: 10px;
+            background: #2D3142;
+            z-index: 101;
+            pointer-events: none;
+        }
+
+        /* 具体页面元素 - 首页 (日历页) */
+        .family-selector {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+
+        /* 日历组件 */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .calendar-month {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .week-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+
+        .cal-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 2px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            background: #FAF8F5;
+            position: relative;
+        }
+
+        .cal-day:hover {
+            background: #F0EDE4;
+        }
+
+        .cal-day.other-month {
+            opacity: 0.3;
+        }
+
+        .cal-day.active {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .cal-day.has-menu::after {
+            content: "";
+            width: 4px;
+            height: 4px;
+            background: var(--secondary-color);
+            border-radius: 50%;
+            position: absolute;
+            bottom: 4px;
+        }
+
+        .cal-day.active.has-menu::after {
+            background: #fff;
+        }
+
+        /* 今日菜单卡片 */
+        .today-menu-card {
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        .dish-tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .dish-pill {
+            background: #FCFAF2;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .empty-menu-text {
+            color: var(--text-muted);
+            font-size: 13px;
+            text-align: center;
+            padding: 16px 0;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            width: 100%;
+            background: #FFFFFF;
+            color: var(--text-main);
+            border: 1.5px solid var(--secondary-color); /* 香槟柔金边框 */
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 3px 10px rgba(212, 178, 140, 0.05);
+        }
+
+        .btn:hover {
+            background: #FAF7F2;
+            box-shadow: 0 5px 15px rgba(212, 178, 140, 0.1);
+        }
+
+        .btn.btn-secondary {
+            background: #FFFFFF;
+            color: var(--text-main);
+            border: 1.5px solid var(--border-color);
+            box-shadow: none;
+        }
+
+        .btn.btn-secondary:hover {
+            background: #FDFDFB;
+            border-color: var(--secondary-color);
+        }
+
+        .btn.btn-tertiary {
+            background: #FDFDFB;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+
+        .btn.btn-tertiary:hover {
+            background: #FAF7F2;
+        }
+
+        .btn:disabled {
+            background: #FDFDFB;
+            color: var(--text-muted);
+            cursor: not-allowed;
+            border-color: var(--border-color);
+            box-shadow: none;
+        }
+
+        /* 具体页面 - 编辑页面 */
+        .edit-dish-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .edit-dish-item:last-child {
+            border-bottom: none;
+        }
+
+        .delete-btn {
+            cursor: pointer;
+            color: #E53935;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .delete-btn:hover {
+            background: rgba(229, 57, 53, 0.08);
+        }
+
+        .ai-tip-card {
+            background: linear-gradient(135deg, #FDFCF9 0%, #FAF6EE 100%);
+            border-left: 4px solid var(--secondary-color);
+            font-size: 12px;
+            line-height: 1.6;
+            color: #6C584C;
+        }
+
+        .ai-tip-header {
+            font-weight: 700;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--secondary-color);
+        }
+
+        .edit-actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .add-input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .input-text {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border-color);
+            font-size: 13px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .input-text:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* 具体页面 - 菜品库 */
+        .search-bar-container {
+            margin-bottom: 16px;
+        }
+
+        .category-tab-container {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+            padding-bottom: 4px;
+        }
+
+        .category-tab-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .category-tab {
+            padding: 6px 14px;
+            border-radius: 16px;
+            background: #FFFFFF;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .category-tab.active {
+            background: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+        }
+
+        .dish-repo-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .repo-dish-card {
+            background: #fff;
+            padding: 12px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            border: 1px solid rgba(0, 0, 0, 0.02);
+        }
+
+        .repo-dish-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .repo-dish-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .repo-dish-tag {
+            font-size: 11px;
+            background: #FCFAF2;
+            color: var(--text-muted);
+            padding: 2px 6px;
+            border-radius: 4px;
+            align-self: flex-start;
+        }
+
+        .repo-add-icon {
+            color: var(--primary-color);
+            cursor: pointer;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .repo-add-icon:hover {
+            background: rgba(212, 178, 140, 0.08);
+        }
+
+        /* 批量导入界面 */
+        .batch-import-area {
+            width: 100%;
+            height: 80px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border-color);
+            padding: 8px;
+            font-size: 12px;
+            resize: none;
+            outline: none;
+            transition: var(--transition);
+            margin-bottom: 10px;
+        }
+
+        .batch-import-area:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* 具体页面 - 成员管理 */
+        .member-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .member-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .member-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .member-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #EFECE6;
+            object-fit: cover;
+        }
+
+        .member-name-role {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .member-nickname {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .member-role-text {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .approval-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-approve-read {
+            background: #F7F3EA;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-approve-write {
+            background: #E3F2FD;
+            color: #1E88E5;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* 具体页面 - 系统设置 */
+        .settings-lock-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .settings-lock-screen.active {
+            display: flex;
+        }
+
+        .settings-lock-screen svg {
+            margin-bottom: 16px;
+            color: var(--secondary-color);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border-color);
+            font-size: 13px;
+            outline: none;
+            background-color: #fff;
+        }
+
+        /* 加载动画 (Shimmer效果) */
+        .shimmer-loader {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            padding: 16px 0;
+        }
+
+        .shimmer-line {
+            height: 16px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading-shimmer 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes loading-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* 模态框提示 */
+        .toast-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(47, 62, 70, 0.95);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 20px;
+            font-size: 13px;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: var(--transition);
+            text-align: center;
+            min-width: 180px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .toast-popup.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* 模态弹窗样式 */
+        .modal-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(47, 62, 70, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: 0 15px 35px rgba(165, 153, 137, 0.25);
+            border: 1px solid var(--border-color);
+            animation: modalScaleUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes modalScaleUp {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* 设置子页面与菜单样式 */
+        .settings-menu-item {
+            background: #FFFFFF;
+            padding: 16px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(188, 179, 166, 0.04);
+            border: 1px solid var(--border-color);
+            font-size: 14px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .settings-menu-item:hover {
+            background: #FAF7F2;
+            border-color: var(--secondary-color);
+        }
+
+        .subpage-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--secondary-color);
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .subpage-header:hover {
+            color: var(--primary-color);
+        }
+
+        .subpage-header svg {
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.5;
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="workspace">
+
+    <!-- 侧边说明与配置面板 -->
+    <div class="control-panel">
+        <h1>胃口周刊原型设计</h1>
+        <p class="desc">这是基于《胃口周刊 PRD》设计的低保真交互原型初稿。您可以通过右侧的模拟手机进行交互，也可以使用下方的<b>角色身份切换面板</b>，测试不同的权限在界面中的实际呈现效果方式。</p>
+
+        <!-- 身份切换控制 -->
+        <div class="role-switch-box">
+            <h3>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                切换模拟角色身份
+            </h3>
+            <div class="role-buttons">
+                <button class="role-btn active" onclick="switchRole('admin')">
+                    <span>超级管理员 (您本人)</span>
+                    <span class="role-badge admin">全部权限</span>
+                </button>
+                <button class="role-btn" onclick="switchRole('family')">
+                    <span>家庭成员 (家人)</span>
+                    <span class="role-badge write">读写菜单</span>
+                </button>
+                <button class="role-btn" onclick="switchRole('maid')">
+                    <span>做饭阿姨 (阿姨)</span>
+                    <span class="role-badge read">共享视图</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="feature-tips">
+            <h3>💡 交互亮点提示：</h3>
+            <ul>
+                <li><b>家庭资料管理</b>：在日历页面左上角可点击切换不同的家庭组合，每次进入会默认展示您最后一次选中的家庭。</li>
+                <li><b>日历视图状态</b>：日历格子中，有排餐计划的日期下方会自动显示指示红点，直观且节约空间。</li>
+                <li><b>大模型一键排餐</b>：在日历下方的“今日菜谱”卡片，点击“一键智能排餐”可体验智能一键生成本周的排餐（伴有AI高光加载动画）。</li>
+                <li><b>单日编辑与推荐</b>：点击任意一个日历格子，系统将加载当天的详情。点击“编辑今日菜谱”可进入编辑单日页面，拥有读写权限的人可点击“AI一键推荐”获取今日配菜方案。</li>
+                <li><b>共享视图模式限制</b>：切换成“做饭阿姨”，进入页面将仅可浏览菜单，相关AI及编辑保存操作不可见，并展示温馨的浏览提示。</li>
+                <li><b>系统设置锁定保护</b>：切换为“家庭成员”或“做饭阿姨”，系统设置Tab会被锁定保护，仅创建者可见，确保 API Key 等系统数据安全。</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 手机外框 Mockup -->
+    <div class="phone-container">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+            
+            <!-- 手机系统状态栏 -->
+            <div class="status-bar">
+                <span>12:00</span>
+                <div class="right-icons">
+                    <!-- 信号图标 -->
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2z"/></svg>
+                    <!-- Wifi图标 -->
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+                    <!-- 电池图标 -->
+                    <svg width="16" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2" ry="2"/><line x1="22" y1="11" x2="22" y2="13"/></svg>
+                </div>
+            </div>
+
+            <!-- 小程序头部胶囊栏 -->
+            <div class="mini-nav-bar">
+                <div id="nav-back-container" class="nav-back" style="visibility: hidden;" onclick="goBackToCalendar()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    返回
+                </div>
+                <div class="nav-title" id="nav-page-title">胃口周刊</div>
+                <div class="mini-menu-capsule">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <div style="width: 1px; height: 12px; background: #e0e0e0; margin: 0 4px;"></div>
+                    <div class="circle"></div>
+                </div>
+            </div>
+
+            <!-- 手机内页滑动区域 -->
+            <div class="screen-content" id="screen-content">
+
+                <!-- 1. 首页 (日历与每日菜单) -->
+                <div id="page-calendar" class="app-page active">
+                    
+                    <!-- 家庭切换器 -->
+                    <div class="family-selector" onclick="showToast('已切换至: 我的小家 (就餐人数: 3人)')">
+                        <span id="current-family-name">我的小家</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+
+                    <!-- 日历卡片 -->
+                    <div class="card">
+                        <div class="calendar-header">
+                            <span class="calendar-month">2026年 6月</span>
+                            <div class="calendar-nav">
+                                <span onclick="showToast('已切换至上个月')">◀</span>
+                                <span onclick="showToast('已切换至下个月')">▶</span>
+                            </div>
+                        </div>
+                        <div class="week-days">
+                            <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+                        </div>
+                        <div class="calendar-grid" id="calendar-grid-container">
+                            <!-- JS 动态渲染日历 -->
+                        </div>
+                    </div>
+
+                    <!-- 今日菜单详情卡片 -->
+                    <div class="card today-menu-card">
+                        <div class="card-title">
+                            <span id="selected-date-title">今日菜谱 (6月16日)</span>
+                            <span id="edit-btn-header"></span>
+                        </div>
+                        
+                        <div id="today-dish-container">
+                            <!-- JS 动态渲染今日菜品 -->
+                        </div>
+
+                        <div style="margin-top: 16px;" id="ai-auto-plan-btn-container">
+                            <button class="btn" onclick="triggerWeekAIPlan()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                大模型智能排餐 (下周5天)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 编辑菜谱页面 (由日历详情点击进入) -->
+                <div id="page-edit-menu" class="app-page">
+                    <div class="card">
+                        <div class="card-title" id="edit-page-date-label">
+                            编辑 6月16日 菜谱
+                        </div>
+
+                        <!-- 菜品列表 -->
+                        <div id="edit-page-dishes-list" style="margin-bottom: 16px;">
+                            <!-- JS 动态渲染 -->
+                        </div>
+
+                        <!-- AI一键推荐与复制等快捷功能 -->
+                        <div class="edit-actions-grid" id="edit-actions-panel">
+                            <button class="btn btn-secondary btn-tertiary" onclick="triggerSingleAIDishRecommend()">
+                                🪄 AI一键推荐菜
+                            </button>
+                            <button class="btn btn-secondary btn-tertiary" onclick="copyYesterdayMenu()">
+                                📋 复制昨日菜单
+                            </button>
+                        </div>
+
+                        <!-- 手动添加 -->
+                        <div class="add-input-group" id="manual-add-panel">
+                            <input type="text" id="add-dish-input" class="input-text" placeholder="输入新菜名...">
+                            <button class="btn" style="width: auto; padding: 10px 16px;" onclick="addDishManual()">添加</button>
+                        </div>
+                        <div style="margin-top: 10px;" id="choose-repo-panel">
+                            <button class="btn btn-secondary" style="padding: 8px; font-size: 12px; border-radius: 8px;" onclick="switchTab('dishes')">从菜品库选择...</button>
+                        </div>
+                    </div>
+
+                    <!-- AI 建议卡片 -->
+                    <div class="card ai-tip-card">
+                        <div class="ai-tip-header">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            AI 智能营养搭配建议
+                        </div>
+                        <div id="ai-nutritional-tip">
+                            当前已有荤菜、素菜，营养搭配较为均衡。若有空闲，推荐配以“冬瓜干贝汤”增加鲜美度与水分补充。
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px;" id="save-menu-btn-container">
+                        <button class="btn" onclick="saveMenuAndBack()">确认并保存</button>
+                    </div>
+                </div>
+
+                <!-- 3. 我的收藏与菜品库 -->
+                <div id="page-dishes" class="app-page">
+                    <!-- 搜索栏 -->
+                    <div class="search-bar-container">
+                        <input type="text" class="input-text" style="width: 100%; border-radius: 12px;" placeholder="🔍 搜索收藏的菜品..." oninput="filterDishes(this.value)">
+                    </div>
+
+                    <!-- 分类Tab -->
+                    <div class="category-tab-container" id="dish-category-tabs">
+                        <span class="category-tab active" onclick="switchDishCategory('全部')">全部</span>
+                        <span class="category-tab" onclick="switchDishCategory('荤菜')">荤菜</span>
+                        <span class="category-tab" onclick="switchDishCategory('素菜')">素菜</span>
+                        <span class="category-tab" onclick="switchDishCategory('汤品')">汤品</span>
+                        <span class="category-tab" onclick="switchDishCategory('主食')">主食</span>
+                    </div>
+
+                    <!-- 菜品列表 -->
+                    <div class="dish-repo-list" id="dishes-repo-list-container">
+                        <!-- JS 动态渲染 -->
+                    </div>
+
+                    <!-- AI批量导入卡片 (仅限写权限) -->
+                    <div class="card" style="margin-top: 20px;" id="ai-batch-import-card">
+                        <div class="card-title">大模型文本智能导入</div>
+                        <textarea class="batch-import-area" id="batch-import-text" placeholder="例：星期一吃小炒肉和清炒芥兰。阿姨周二做红烧排骨、手撕包菜和冬瓜汤..."></textarea>
+                        <button class="btn btn-secondary" onclick="triggerAIBatchImport()">解析并批量添加菜品</button>
+                    </div>
+                </div>
+
+                <!-- 4. 系统设置 (独立页面，支持权限全包围锁定) -->
+                <div id="page-settings" class="app-page">
+                    
+                    <!-- 非管理员屏蔽视图 (全屏锁定) -->
+                    <div class="settings-lock-screen" id="settings-lock-panel">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <h3 style="font-size: 15px; margin-bottom: 8px; color: var(--text-main);">系统配置已锁定保护</h3>
+                        <p style="font-size: 12px; color: var(--text-muted);">为保障家庭数据隐私与大模型密钥安全，此设置页面仅超级管理员(雇主)可访问查看。</p>
+                    </div>
+
+                    <!-- 管理员专属容器 -->
+                    <div id="settings-admin-container" style="display: none;">
+                        
+                        <!-- 菜单列表主页 -->
+                        <div id="settings-home-menu">
+                            <div class="settings-menu-item" onclick="openSettingsSubpage('members')">
+                                <span>👥 成员与协作管理</span>
+                                <span style="color: var(--text-muted); font-size: 16px;">&rsaquo;</span>
+                            </div>
+                            <div class="settings-menu-item" onclick="openSettingsSubpage('llm')">
+                                <span>🤖 大模型参数配置</span>
+                                <span style="color: var(--text-muted); font-size: 16px;">&rsaquo;</span>
+                            </div>
+                        </div>
+
+                        <!-- 子菜单 1: 成员与协作管理 -->
+                        <div id="settings-subpage-members" style="display: none;">
+                            <div class="subpage-header" onclick="goBackToSettingsHome()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                返回设置菜单
+                            </div>
+
+                            <!-- 成员列表卡片 -->
+                            <div class="card">
+                                <div class="card-title">
+                                    <span>家庭成员 (我的小家)</span>
+                                    <span class="role-badge admin">就餐人数: 3人</span>
+                                </div>
+                                <div class="member-list" id="approved-members-list">
+                                    <!-- JS 动态渲染 -->
+                                </div>
+                            </div>
+
+                            <!-- 待审批列表卡片 -->
+                            <div class="card" id="pending-approval-card">
+                                <div class="card-title">
+                                    <span>待审批加入申请</span>
+                                    <span class="role-badge write" style="background:#FFF9C4; color:#F57F17" id="pending-count-badge">1个申请</span>
+                                </div>
+                                <div class="member-list" id="pending-members-list">
+                                    <!-- JS 动态渲染 -->
+                                </div>
+                            </div>
+
+                            <!-- 邀请与模拟接收面板 -->
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
+                                <div id="invite-member-btn-container">
+                                    <button class="btn" style="border-color: var(--secondary-color);" onclick="showToast('已复制微信邀请链接，可发送至新家庭成员。')">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                                        生成微信邀请链接
+                                    </button>
+                                </div>
+                                <button class="btn btn-secondary" style="border-style: dashed; padding: 10px;" onclick="openInviteModal()">
+                                    ✨ 模拟新成员微信接受邀请加入
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 子菜单 2: 大模型配置 -->
+                        <div id="settings-subpage-llm" style="display: none;">
+                            <div class="subpage-header" onclick="goBackToSettingsHome()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                返回设置菜单
+                            </div>
+
+                            <!-- 配置表单 -->
+                            <div class="card">
+                                <div class="card-title">大模型参数配置 (安全存储于云开发)</div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">API 提供商</label>
+                                    <select class="form-select" id="config-provider" onchange="onProviderChange(this.value)">
+                                        <option value="deepseek">DeepSeek (国内性价比推荐)</option>
+                                        <option value="openai">OpenAI (美国/标准接口)</option>
+                                        <option value="hunyuan">腾讯混元 (腾讯云原生生态)</option>
+                                        <option value="custom">Custom (自定义中转接口)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">API Base URL</label>
+                                    <input type="text" class="input-text" style="width:100%" id="config-base-url" value="https://api.deepseek.com/v1">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">API Key</label>
+                                    <input type="password" class="input-text" style="width:100%" id="config-api-key" placeholder="sk-••••••••••••••••••••">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">模型名称 (Model Name)</label>
+                                    <input type="text" class="input-text" style="width:100%" id="config-model-name" value="deepseek-chat">
+                                </div>
+
+                                <button class="btn" style="margin-top: 10px; border-color: var(--secondary-color);" onclick="showToast('大模型配置已安全保存至微信云数据库！')">保存配置</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 浮动骨架屏 (大模型生成菜谱时呈现) -->
+                <div class="shimmer-loader" id="ai-shimmer-loader">
+                    <div class="shimmer-line" style="width: 60%"></div>
+                    <div class="shimmer-line" style="width: 100%; height: 40px; border-radius: 12px;"></div>
+                    <div class="shimmer-line" style="width: 80%"></div>
+                    <div class="shimmer-line" style="width: 100%; height: 40px; border-radius: 12px;"></div>
+                </div>
+
+            </div>
+
+            <!-- Toast 弹窗提示 -->
+            <div id="toast-message" class="toast-popup">已保存</div>
+
+            <!-- 接受邀请弹窗 -->
+            <div class="modal-overlay" id="invite-modal">
+                <div class="modal-card">
+                    <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 12px; color: var(--text-main); text-align: center;">接受邀请加入家庭</h3>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;">名字在加入时要求填入，后续如需修改需联系超级管理员。</p>
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label class="form-label">您的名字/昵称</label>
+                        <input type="text" class="input-text" style="width: 100%;" id="invite-nickname-input" placeholder="例如：做饭阿姨-王大姐">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button class="btn btn-secondary" style="padding: 10px; font-size: 13px;" onclick="closeInviteModal()">取消</button>
+                        <button class="btn" style="padding: 10px; font-size: 13px; border-color: var(--secondary-color);" onclick="submitInviteNickname()">确认加入</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部导航栏 TabBar -->
+            <div class="tab-bar" id="app-tab-bar">
+                <div class="tab-item active" id="tab-calendar" onclick="switchTab('calendar')">
+                    <!-- 日历Icon -->
+                    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <span>日历</span>
+                </div>
+                <div class="tab-item" id="tab-dishes" onclick="switchTab('dishes')">
+                    <!-- 收藏菜品库Icon -->
+                    <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                    <span>菜品库</span>
+                </div>
+                <div class="tab-item" id="tab-settings" onclick="switchTab('settings')">
+                    <!-- 设置Icon -->
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <span>设置</span>
+                </div>
+            </div>
+
+            <!-- Home Indicator -->
+            <div class="home-indicator"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- 模拟原型控制脚本 -->
+<script>
+    // 1. 数据模型与状态
+    let state = {
+        currentRole: 'admin', // admin, family, maid
+        currentTab: 'calendar', // calendar, dishes, members, settings
+        settingsSubpage: 'home', // 设置子页面状态: home, members, llm
+        selectedDate: '2026-06-16', // 当前选择日期 (6月16日)
+        currentDishCategory: '全部',
+        searchQuery: '',
+        
+        // 初始菜单数据
+        menuData: {
+            '2026-06-15': ['红烧排骨', '手撕包菜', '西红柿鸡蛋汤'],
+            '2026-06-16': ['清蒸鲈鱼', '干煸豆角', '冬瓜排骨汤'],
+            '2026-06-17': ['小炒黄牛肉', '清炒时蔬'],
+            '2026-06-18': [],
+            '2026-06-19': []
+        },
+
+        // 收藏菜品库
+        dishesDb: [
+            { id: 1, name: '红烧排骨', category: '荤菜', tags: '经典酱香' },
+            { id: 2, name: '清蒸鲈鱼', category: '荤菜', tags: '清淡少油' },
+            { id: 3, name: '小炒黄牛肉', category: '荤菜', tags: '麻辣下饭' },
+            { id: 4, name: '黄焖鸡', category: '荤菜', tags: '香浓汤浓' },
+            { id: 5, name: '手撕包菜', category: '素菜', tags: '快手爆炒' },
+            { id: 6, name: '干煸豆角', category: '素菜', tags: '香辣微干' },
+            { id: 7, name: '清炒时蔬', category: '素菜', tags: '低脂清爽' },
+            { id: 8, name: '蒜蓉粉丝娃娃菜', category: '素菜', tags: '蒜香浓郁' },
+            { id: 9, name: '西红柿鸡蛋汤', category: '汤品', tags: '快手汤膳' },
+            { id: 10, name: '冬瓜排骨汤', category: '汤品', tags: '滋补清火' },
+            { id: 11, name: '紫菜蛋花汤', category: '汤品', tags: '极速出锅' },
+            { id: 12, name: '黄金扬州炒饭', category: '主食', tags: '家常风味' }
+        ],
+
+        // 成员数据
+        members: [
+            { openid: 'user1', nickname: '雇主（我本人）', role: 'admin', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80' },
+            { openid: 'user2', nickname: '先生', role: 'write', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80' }
+        ],
+
+        pendingMembers: [
+            { openid: 'user3', nickname: '阿姨 - 张大姐', role: 'pending', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80' }
+        ]
+    };
+
+    // 2. 界面初始化与主逻辑
+    document.addEventListener('DOMContentLoaded', () => {
+        renderCalendarGrid();
+        renderTodayMenu();
+        renderDishesRepo();
+        renderMembers();
+        updatePermissionView();
+    });
+
+    // 3. 页面/Tab切换
+    function switchTab(tabId) {
+        state.currentTab = tabId;
+        
+        // 隐藏“返回”按钮并恢复标题，除非在单日编辑页面
+        document.getElementById('nav-back-container').style.visibility = 'hidden';
+        document.getElementById('nav-back-container').onclick = goBackToCalendar;
+        
+        // 移除所有tab的active样式
+        document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+        // 隐藏所有应用页面
+        document.querySelectorAll('.app-page').forEach(el => el.classList.remove('active'));
+
+        // 更新激活的Tab
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+        
+        if (tabId === 'calendar') {
+            document.getElementById('nav-page-title').innerText = '胃口周刊';
+            document.getElementById('page-calendar').classList.add('active');
+            renderCalendarGrid();
+            renderTodayMenu();
+        } else if (tabId === 'dishes') {
+            document.getElementById('nav-page-title').innerText = '菜品库备忘录';
+            document.getElementById('page-dishes').classList.add('active');
+            renderDishesRepo();
+        } else if (tabId === 'settings') {
+            document.getElementById('nav-page-title').innerText = '设置与家庭管理';
+            document.getElementById('page-settings').classList.add('active');
+            goBackToSettingsHome();
+            renderMembers();
+        }
+
+        updatePermissionView();
+    }
+
+    // 4. 进入单日编辑页
+    function openEditMenu(dateStr) {
+        state.selectedDate = dateStr;
+        
+        // 隐藏所有主页，打开编辑页
+        document.querySelectorAll('.app-page').forEach(el => el.classList.remove('active'));
+        document.getElementById('page-edit-menu').classList.add('active');
+
+        // 设置导航标题
+        document.getElementById('nav-page-title').innerText = '编辑菜谱';
+        document.getElementById('nav-back-container').style.visibility = 'visible';
+
+        // 渲染编辑页面内容
+        renderEditPage();
+        updatePermissionView();
+    }
+
+    function goBackToCalendar() {
+        switchTab('calendar');
+    }
+
+    // 设置页面子菜单控制
+    function openSettingsSubpage(subpageId) {
+        state.settingsSubpage = subpageId;
+        
+        // 隐藏主菜单
+        document.getElementById('settings-home-menu').style.display = 'none';
+        
+        if (subpageId === 'members') {
+            document.getElementById('nav-page-title').innerText = '成员与协作管理';
+            document.getElementById('settings-subpage-members').style.display = 'block';
+            document.getElementById('settings-subpage-llm').style.display = 'none';
+            renderMembers();
+        } else if (subpageId === 'llm') {
+            document.getElementById('nav-page-title').innerText = '大模型参数配置';
+            document.getElementById('settings-subpage-members').style.display = 'none';
+            document.getElementById('settings-subpage-llm').style.display = 'block';
+        }
+        
+        // 呈现顶部全局返回按钮，并改变其点击指向
+        const backBtn = document.getElementById('nav-back-container');
+        backBtn.style.visibility = 'visible';
+        backBtn.onclick = goBackToSettingsHome;
+    }
+
+    function goBackToSettingsHome() {
+        state.settingsSubpage = 'home';
+        document.getElementById('nav-page-title').innerText = '设置与家庭管理';
+        
+        document.getElementById('settings-home-menu').style.display = 'block';
+        document.getElementById('settings-subpage-members').style.display = 'none';
+        document.getElementById('settings-subpage-llm').style.display = 'none';
+        
+        // 隐藏全局返回按钮，并还原点击事件为返回日历
+        const backBtn = document.getElementById('nav-back-container');
+        backBtn.style.visibility = 'hidden';
+        backBtn.onclick = goBackToCalendar;
+    }
+
+    // 5. 模拟角色身份切换
+    function switchRole(role) {
+        state.currentRole = role;
+        
+        // 更新侧边栏按钮样式
+        document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+
+        // 重新渲染相关页面与更新权限屏蔽
+        updatePermissionView();
+        
+        if (state.currentTab === 'calendar') {
+            renderTodayMenu();
+            renderCalendarGrid();
+        } else if (state.currentTab === 'dishes') {
+            renderDishesRepo();
+        } else if (state.currentTab === 'settings') {
+            renderMembers();
+            updatePermissionView();
+        }
+
+        showToast(`已切换身份：${role === 'admin' ? '超级管理员' : role === 'family' ? '家人(读写)' : '只读阿姨'}`);
+    }
+
+    // 6. 权限界面控制机制 (根据身份使部分按钮失效/显隐)
+    function updatePermissionView() {
+        const isMaid = state.currentRole === 'maid';
+        const isAdmin = state.currentRole === 'admin';
+
+        // --- 首页 (日历页) 权限管控 ---
+        const aiAutoPlanBtnContainer = document.getElementById('ai-auto-plan-btn-container');
+        
+        if (isMaid) {
+            aiAutoPlanBtnContainer.style.display = 'none';
+        } else {
+            aiAutoPlanBtnContainer.style.display = 'block';
+        }
+
+        // --- 单日编辑页 权限管控 ---
+        const editActionsPanel = document.getElementById('edit-actions-panel');
+        const manualAddPanel = document.getElementById('manual-add-panel');
+        const saveMenuBtnContainer = document.getElementById('save-menu-btn-container');
+        const chooseRepoPanel = document.getElementById('choose-repo-panel');
+
+        if (isMaid) {
+            editActionsPanel.style.display = 'none';
+            manualAddPanel.style.display = 'none';
+            chooseRepoPanel.style.display = 'none';
+            saveMenuBtnContainer.style.display = 'none';
+        } else {
+            editActionsPanel.style.display = 'grid';
+            manualAddPanel.style.display = 'flex';
+            chooseRepoPanel.style.display = 'block';
+            saveMenuBtnContainer.style.display = 'block';
+        }
+
+        // --- 菜品库 权限管控 ---
+        const aiBatchImportCard = document.getElementById('ai-batch-import-card');
+        if (isMaid) {
+            aiBatchImportCard.style.display = 'none';
+        } else {
+            aiBatchImportCard.style.display = 'block';
+        }
+
+        // --- 成员管理 权限管控 (仅超级管理员可审批) ---
+        const pendingApprovalCard = document.getElementById('pending-approval-card');
+        if (isAdmin) {
+            pendingApprovalCard.style.display = 'block';
+        } else {
+            pendingApprovalCard.style.display = 'none';
+        }
+
+        // --- 系统参数设置 权限管控 ---
+        const settingsLockPanel = document.getElementById('settings-lock-panel');
+        const settingsAdminContainer = document.getElementById('settings-admin-container');
+
+        if (isAdmin) {
+            settingsLockPanel.classList.remove('active');
+            settingsAdminContainer.style.display = 'block';
+        } else {
+            settingsLockPanel.classList.add('active');
+            settingsAdminContainer.style.display = 'none';
+        }
+    }
+
+    // 7. 渲染日历网格
+    function renderCalendarGrid() {
+        const container = document.getElementById('calendar-grid-container');
+        container.innerHTML = '';
+
+        // 模拟 2026年 6月的日历排布 (6月1日是周一，共30天)
+        // 上月补白 (5月31日是周日，需要补1天)
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'cal-day other-month';
+        emptyDay.innerText = '31';
+        container.appendChild(emptyDay);
+
+        // 渲染 30天
+        for (let d = 1; d <= 30; d++) {
+            const dateStr = `2026-06-${d < 10 ? '0' + d : d}`;
+            const dayEl = document.createElement('div');
+            dayEl.className = 'cal-day';
+            
+            // 是否有计划菜单
+            if (state.menuData[dateStr] && state.menuData[dateStr].length > 0) {
+                dayEl.classList.add('has-menu');
+            }
+
+            // 是否是选中日期
+            if (dateStr === state.selectedDate) {
+                dayEl.classList.add('active');
+            }
+
+            dayEl.innerHTML = `<span>${d}</span>`;
+            dayEl.onclick = () => {
+                // 更新选中并重新渲染
+                state.selectedDate = dateStr;
+                document.querySelectorAll('.cal-day').forEach(el => el.classList.remove('active'));
+                dayEl.classList.add('active');
+                
+                // 刷新今日菜单与编辑模块
+                renderTodayMenu();
+            };
+
+            container.appendChild(dayEl);
+        }
+
+        // 下月补白
+        for (let d = 1; d <= 4; d++) {
+            const nextDay = document.createElement('div');
+            nextDay.className = 'cal-day other-month';
+            nextDay.innerText = d;
+            container.appendChild(nextDay);
+        }
+    }
+
+    // 8. 渲染首页今日菜单详情卡片
+    function renderTodayMenu() {
+        const dateStr = state.selectedDate;
+        const dishes = state.menuData[dateStr] || [];
+        const container = document.getElementById('today-dish-container');
+        
+        // 格式化日期标题
+        const dayNum = parseInt(dateStr.split('-')[2]);
+        document.getElementById('selected-date-title').innerText = `已选菜谱 (6月${dayNum}日)`;
+
+        // 渲染操作按钮
+        const editBtnHeader = document.getElementById('edit-btn-header');
+        if (state.currentRole !== 'maid') {
+            editBtnHeader.innerHTML = `<button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px; border-radius: 8px;" onclick="openEditMenu('${dateStr}')">编辑菜谱</button>`;
+        } else {
+            editBtnHeader.innerHTML = `<button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px; border-radius: 8px;" onclick="openEditMenu('${dateStr}')">查看详情</button>`;
+        }
+
+        if (dishes.length === 0) {
+            container.innerHTML = `<p class="empty-menu-text">暂无已规划的菜品。${state.currentRole === 'maid' ? '请等待雇主排餐。' : '您可以点击上方编辑按钮或使用大模型智能一键排餐。'}</p>`;
+        } else {
+            let html = `<div class="dish-tag-list">`;
+            dishes.forEach(dish => {
+                html += `<span class="dish-pill">🥘 ${dish}</span>`;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+    }
+
+    // 9. 大模型一键智能周排餐 (模拟交互)
+    function triggerWeekAIPlan() {
+        const container = document.getElementById('today-dish-container');
+        const shimmer = document.getElementById('ai-shimmer-loader');
+        
+        // 隐藏卡片内容，展示Shimmer加载
+        container.style.display = 'none';
+        shimmer.style.display = 'flex';
+        
+        showToast('AI 正在调取收藏菜谱，搭配最佳营养中...');
+
+        setTimeout(() => {
+            // 批量生成 6月15 ~ 6月19日的工作日菜谱
+            state.menuData['2026-06-15'] = ['红烧排骨', '手撕包菜', '冬瓜排骨汤'];
+            state.menuData['2026-06-16'] = ['清蒸鲈鱼', '干煸豆角', '西红柿鸡蛋汤'];
+            state.menuData['2026-06-17'] = ['小炒黄牛肉', '清炒时蔬', '紫菜蛋花汤'];
+            state.menuData['2026-06-18'] = ['黄焖鸡', '蒜蓉粉丝娃娃菜'];
+            state.menuData['2026-06-19'] = ['经典扬州炒饭', '番茄蛋花汤'];
+
+            // 隐藏加载，呈现数据
+            shimmer.style.display = 'none';
+            container.style.display = 'block';
+
+            renderCalendarGrid();
+            renderTodayMenu();
+            showToast('🤖 AI 已成功帮您自动安排下周一至周五的周菜谱！');
+        }, 1500);
+    }
+
+    // 10. 渲染单日编辑页面
+    let editPageDishes = [];
+    function renderEditPage() {
+        const dateStr = state.selectedDate;
+        const dayNum = parseInt(dateStr.split('-')[2]);
+        document.getElementById('edit-page-date-label').innerText = `编辑 6月${dayNum}日 今日菜单`;
+
+        editPageDishes = [...(state.menuData[dateStr] || [])];
+        renderEditPageDishesList();
+        updateAIDishSuggestion();
+    }
+
+    function renderEditPageDishesList() {
+        const container = document.getElementById('edit-page-dishes-list');
+        container.innerHTML = '';
+
+        if (editPageDishes.length === 0) {
+            container.innerHTML = `<p class="empty-menu-text">当前菜单为空，请添加。</p>`;
+            return;
+        }
+
+        editPageDishes.forEach((dish, idx) => {
+            const div = document.createElement('div');
+            div.className = 'edit-dish-item';
+            div.innerHTML = `
+                <span style="font-size: 14px; font-weight: 500;">🥗 ${dish}</span>
+                ${state.currentRole !== 'maid' ? `<span class="delete-btn" onclick="removeDishFromEdit(${idx})">✕</span>` : ''}
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function removeDishFromEdit(index) {
+        editPageDishes.splice(index, 1);
+        renderEditPageDishesList();
+        updateAIDishSuggestion();
+    }
+
+    // 手动添加菜品
+    function addDishManual() {
+        const input = document.getElementById('add-dish-input');
+        const name = input.value.trim();
+        if (!name) return;
+
+        editPageDishes.push(name);
+        input.value = '';
+        renderEditPageDishesList();
+        updateAIDishSuggestion();
+        showToast(`已添加：${name}`);
+    }
+
+    // 从菜品库选中导入
+    function importFromRepo(name) {
+        if (state.currentRole === 'maid') return;
+        editPageDishes.push(name);
+        showToast(`已从菜谱库导入：${name}`);
+        // 自动切回日历以查看编辑，或者提示用户已加入
+    }
+
+    // 复制昨日菜单
+    function copyYesterdayMenu() {
+        // 获取昨天的日期
+        const d = new Date(state.selectedDate);
+        d.setDate(d.getDate() - 1);
+        const yestStr = `2026-06-${d.getDate() < 10 ? '0' + d.getDate() : d.getDate()}`;
+        const yestMenu = state.menuData[yestStr] || [];
+        
+        if (yestMenu.length === 0) {
+            showToast('昨日暂无规划菜单，无法复制');
+            return;
+        }
+
+        editPageDishes = [...yestMenu];
+        renderEditPageDishesList();
+        updateAIDishSuggestion();
+        showToast('已复制昨日菜单');
+    }
+
+    // 大模型单日智能搭配建议
+    function triggerSingleAIDishRecommend() {
+        showToast('AI 正在评估当前搭配营养...');
+        setTimeout(() => {
+            if (editPageDishes.length === 0) {
+                editPageDishes = ['黄焖鸡', '清炒时蔬', '冬瓜排骨汤'];
+                showToast('🤖 AI 为您推荐了一荤一素一汤的搭配！');
+            } else {
+                // 根据已选推荐
+                editPageDishes.push('紫菜蛋花汤');
+                showToast('🤖 已为您推荐搭配：“紫菜蛋花汤”！');
+            }
+            renderEditPageDishesList();
+            updateAIDishSuggestion();
+        }, 800);
+    }
+
+    // 更新AI智能健康小贴士内容
+    function updateAIDishSuggestion() {
+        const tipEl = document.getElementById('ai-nutritional-tip');
+        if (editPageDishes.length === 0) {
+            tipEl.innerText = '当前尚未添加任何菜品，大模型助手建议搭配：“一荤（如红烧排骨）+ 一素（如清炒时蔬）+ 一汤”，高蛋白高纤维，更符合健康饮食标准。';
+        } else if (editPageDishes.length >= 3) {
+            tipEl.innerText = '当前已有主副菜搭配，营养膳食纤维及矿物质搭配合理，建议今日控油，以清蒸/水煮/白灼等烹饪方式为主。';
+        } else {
+            tipEl.innerText = '目前菜品偏向单一。大模型发现缺乏绿叶菜的摄入，建议在菜品库中选择“蒜蓉娃娃菜”或“清炒时蔬”进行均衡搭配。';
+        }
+    }
+
+    // 确认并保存单日编辑
+    function saveMenuAndBack() {
+        state.menuData[state.selectedDate] = [...editPageDishes];
+        showToast('已保存今日菜单修改');
+        goBackToCalendar();
+    }
+
+    // 11. 渲染我的收藏与菜品库
+    function renderDishesRepo() {
+        const container = document.getElementById('dishes-repo-list-container');
+        container.innerHTML = '';
+
+        const filterVal = state.searchQuery.toLowerCase();
+        const category = state.currentDishCategory;
+
+        let filtered = state.dishesDb.filter(dish => {
+            const matchesSearch = dish.name.toLowerCase().includes(filterVal);
+            const matchesCategory = (category === '全部' || dish.category === category);
+            return matchesSearch && matchesCategory;
+        });
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<p class="empty-menu-text">无匹配的菜品。</p>`;
+            return;
+        }
+
+        filtered.forEach(dish => {
+            const card = document.createElement('div');
+            card.className = 'repo-dish-card';
+            card.innerHTML = `
+                <div class="repo-dish-info">
+                    <span class="repo-dish-name">${dish.name}</span>
+                    <span class="repo-dish-tag">${dish.category} · ${dish.tags}</span>
+                </div>
+                ${state.currentRole !== 'maid' ? `
+                    <div class="repo-add-icon" onclick="importFromRepo('${dish.name}')" title="加入今日菜单">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </div>
+                ` : ''}
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function switchDishCategory(category) {
+        state.currentDishCategory = category;
+        document.querySelectorAll('#dish-category-tabs .category-tab').forEach(el => {
+            el.classList.remove('active');
+            if (el.innerText === category) el.classList.add('active');
+        });
+        renderDishesRepo();
+    }
+
+    function filterDishes(val) {
+        state.searchQuery = val;
+        renderDishesRepo();
+    }
+
+    // AI批量解析导入
+    function triggerAIBatchImport() {
+        const txt = document.getElementById('batch-import-text').value.trim();
+        if (!txt) {
+            showToast('请输入一些提及菜品的文本内容');
+            return;
+        }
+
+        showToast('AI 正在为您提取菜品...');
+        setTimeout(() => {
+            // 模拟解析出新菜品
+            const newDishes = [
+                { id: Date.now() + 1, name: '红烧肉', category: '荤菜', tags: '浓油赤酱' },
+                { id: Date.now() + 2, name: '清炒芥兰', category: '素菜', tags: '爽脆清淡' }
+            ];
+            
+            state.dishesDb.push(...newDishes);
+            document.getElementById('batch-import-text').value = '';
+            renderDishesRepo();
+            showToast('🤖 AI 解析成功！已自动往菜谱库追加“红烧肉”、“清炒芥兰”。');
+        }, 1200);
+    }
+
+    // 12. 渲染成员管理与设置内部的协作面板
+    state.editingMemberOpenId = null; // 记录正在编辑的成员 OpenID
+
+    function renderMembers() {
+        const approvedContainer = document.getElementById('approved-members-list');
+        const pendingContainer = document.getElementById('pending-members-list');
+        
+        approvedContainer.innerHTML = '';
+        pendingContainer.innerHTML = '';
+
+        const isAdmin = state.currentRole === 'admin';
+
+        // 已审核成员
+        state.members.forEach(m => {
+            const div = document.createElement('div');
+            div.className = 'member-item';
+            
+            // 角色文本与徽章分类
+            let roleLabelText = '只读模式 (阿姨)';
+            let badgeClass = 'read';
+            let badgeText = '仅浏览';
+            if (m.role === 'admin') {
+                roleLabelText = '超级管理员 (雇主)';
+                badgeClass = 'admin';
+                badgeText = '所有权限';
+            } else if (m.role === 'write') {
+                roleLabelText = '家庭成员 (家人)';
+                badgeClass = 'write';
+                badgeText = '读写菜单';
+            }
+
+            // 判断该成员是否处于“行内编辑模式”
+            if (state.editingMemberOpenId === m.openid) {
+                div.innerHTML = `
+                    <div style="display:flex; flex-direction:column; gap:6px; width:100%;">
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <input type="text" class="input-text" id="edit-name-${m.openid}" value="${m.nickname}" style="padding: 6px; font-size: 13px; flex: 1;">
+                            ${m.openid !== 'user1' ? `
+                            <select class="form-select" id="edit-role-${m.openid}" style="width: auto; padding: 6px; font-size: 13px; height: 36px;">
+                                <option value="admin" ${m.role === 'admin' ? 'selected' : ''}>管理员</option>
+                                <option value="write" ${m.role === 'write' ? 'selected' : ''}>读写家人</option>
+                                <option value="read" ${m.role === 'read' ? 'selected' : ''}>只读阿姨</option>
+                            </select>
+                            ` : ''}
+                        </div>
+                        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top: 4px;">
+                            <button class="btn btn-secondary" style="width:auto; padding:4px 12px; font-size:11px; border-radius:6px;" onclick="cancelMemberEdit()">取消</button>
+                            <button class="btn" style="width:auto; padding:4px 12px; font-size:11px; border-radius:6px; border-color: var(--secondary-color);" onclick="saveMemberEdit('${m.openid}')">保存</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // 静态卡片显示
+                div.innerHTML = `
+                    <div class="member-user-info">
+                        <img class="member-avatar" src="${m.avatar}">
+                        <div class="member-name-role">
+                            <span class="member-nickname">${m.nickname}</span>
+                            <span class="member-role-text">${roleLabelText}</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="role-badge ${badgeClass}">${badgeText}</span>
+                        ${isAdmin ? `
+                            <span class="repo-add-icon" style="width:24px; height:24px; color: var(--secondary-color);" onclick="startMemberEdit('${m.openid}')" title="修改名字与权限">✏️</span>
+                        ` : ''}
+                    </div>
+                `;
+            }
+            approvedContainer.appendChild(div);
+        });
+
+        // 待审批成员 (仅在管理员态下做动作)
+        const hasPending = state.pendingMembers.length > 0;
+        const pendingCountBadge = document.getElementById('pending-count-badge');
+        
+        if (hasPending) {
+            pendingCountBadge.innerText = `${state.pendingMembers.length}个申请`;
+            pendingCountBadge.style.display = 'inline-block';
+            
+            state.pendingMembers.forEach((m, idx) => {
+                const div = document.createElement('div');
+                div.className = 'member-item';
+                div.innerHTML = `
+                    <div class="member-user-info">
+                        <img class="member-avatar" src="${m.avatar}">
+                        <div class="member-name-role">
+                            <span class="member-nickname">${m.nickname}</span>
+                            <span class="member-role-text">接受邀请待加入</span>
+                        </div>
+                    </div>
+                    ${isAdmin ? `
+                    <div class="approval-actions">
+                        <button class="btn-approve-read" onclick="approveMember(${idx}, 'read')">同意(只读阿姨)</button>
+                        <button class="btn-approve-write" onclick="approveMember(${idx}, 'write')">同意(读写家人)</button>
+                    </div>
+                    ` : '<span class="role-badge read" style="background:#FAF8F5; color:#8E9AAF">等待雇主审批</span>'}
+                `;
+                pendingContainer.appendChild(div);
+            });
+        } else {
+            pendingCountBadge.style.display = 'none';
+            pendingContainer.innerHTML = `<p class="empty-menu-text" style="padding: 10px 0;">暂无新的加入申请</p>`;
+        }
+    }
+
+    // 管理员修改姓名和权限函数
+    function startMemberEdit(openid) {
+        state.editingMemberOpenId = openid;
+        renderMembers();
+    }
+
+    function cancelMemberEdit() {
+        state.editingMemberOpenId = null;
+        renderMembers();
+    }
+
+    function saveMemberEdit(openid) {
+        const nameInput = document.getElementById(`edit-name-${openid}`);
+        const roleSelect = document.getElementById(`edit-role-${openid}`);
+        
+        const member = state.members.find(m => m.openid === openid);
+        if (member) {
+            const oldName = member.nickname;
+            member.nickname = nameInput.value.trim() || member.nickname;
+            if (roleSelect) {
+                member.role = roleSelect.value;
+            }
+            showToast(`已将『${oldName}』修改为『${member.nickname}』，并更新了权限。`);
+        }
+        
+        state.editingMemberOpenId = null;
+        renderMembers();
+    }
+
+    // 审批通过动作
+    function approveMember(index, roleType) {
+        const approvedUser = state.pendingMembers.splice(index, 1)[0];
+        
+        // 赋予新角色
+        approvedUser.role = roleType;
+        
+        // 推入正式名单
+        state.members.push(approvedUser);
+
+        renderMembers();
+        showToast(`审批成功！已加入『${approvedUser.nickname}』`);
+    }
+
+    // 微信邀请模拟弹窗逻辑
+    function openInviteModal() {
+        document.getElementById('invite-nickname-input').value = '';
+        document.getElementById('invite-modal').style.display = 'flex';
+    }
+
+    function closeInviteModal() {
+        document.getElementById('invite-modal').style.display = 'none';
+    }
+
+    function submitInviteNickname() {
+        const input = document.getElementById('invite-nickname-input');
+        const nickname = input.value.trim();
+        if (!nickname) {
+            showToast('请先填写您的名字以接受邀请');
+            return;
+        }
+
+        // 新用户初次接受邀请时提供名字
+        const newUser = {
+            openid: 'user_' + Date.now(),
+            nickname: nickname,
+            role: 'pending',
+            avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80'
+        };
+
+        state.pendingMembers.push(newUser);
+        closeInviteModal();
+        renderMembers();
+        
+        if (state.currentRole === 'admin') {
+            showToast(`新成员『${nickname}』已申请加入！您可在待审批列表中审核。`);
+        } else {
+            showToast(`申请提交成功！名字已锁定为『${nickname}』，请等待雇主审批。`);
+        }
+    }
+
+    // 13. 系统参数设置联动
+    function onProviderChange(provider) {
+        const baseUrlInput = document.getElementById('config-base-url');
+        const modelInput = document.getElementById('config-model-name');
+        
+        if (provider === 'deepseek') {
+            baseUrlInput.value = 'https://api.deepseek.com/v1';
+            modelInput.value = 'deepseek-chat';
+        } else if (provider === 'openai') {
+            baseUrlInput.value = 'https://api.openai.com/v1';
+            modelInput.value = 'gpt-4o-mini';
+        } else if (provider === 'hunyuan') {
+            baseUrlInput.value = 'https://api.hunyuan.tencentyun.com/v1';
+            modelInput.value = 'hunyuan-lite';
+        } else {
+            baseUrlInput.value = '';
+            modelInput.value = '';
+        }
+    }
+
+    // 14. 弹窗消息
+    let toastTimeout;
+    function showToast(msg) {
+        const toast = document.getElementById('toast-message');
+        toast.innerText = msg;
+        toast.classList.add('show');
+        
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2500);
+    }
+</script>
+</body>
+</html>

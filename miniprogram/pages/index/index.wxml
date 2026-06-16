@@ -1,0 +1,135 @@
+<!-- miniprogram/pages/index/index.wxml -->
+<view class="app-container index-container">
+  
+  <!-- 顶部状态栏与家庭选择 -->
+  <view class="header-bar">
+    <view class="family-selector-wrapper">
+      <view class="family-selector-btn" bindtap="toggleFamilySelector">
+        <text>{{ activeFamily ? activeFamily.name : '选择家庭' }}</text>
+        <view class="arrow-icon {{ showFamilySelector ? 'open' : '' }}">▼</view>
+      </view>
+      
+      <!-- 家庭下拉选择器 -->
+      <view class="family-dropdown" wx:if="{{ showFamilySelector }}">
+        <view 
+          class="family-item {{ activeFamily._id === item._id ? 'active' : '' }}" 
+          wx:for="{{ families }}" 
+          wx:key="_id" 
+          bindtap="selectFamily" 
+          data-family="{{ item }}"
+        >
+          {{ item.name }}
+        </view>
+        <view class="family-item btn-add-family" bindtap="onCreateFamily">
+          + 新增家庭
+        </view>
+      </view>
+    </view>
+    
+    <!-- 快捷角色状态 -->
+    <view class="role-badge" wx:if="{{ activeFamily }}">
+      角色: {{ memberRole === 'admin' ? '管理员' : (memberRole === 'write' ? '家人' : '只读阿姨') }}
+    </view>
+  </view>
+
+  <!-- 日历卡片 -->
+  <view class="glass-card calendar-card animate-fade-in" wx:if="{{ activeFamily }}">
+    <view class="calendar-header">
+      <view class="month-title">{{ currentYear }} 年 {{ currentMonth }} 月</view>
+      <view class="month-btn-group">
+        <view class="month-nav-btn" bindtap="onChangeMonth" data-direction="prev">◀</view>
+        <view class="month-nav-btn" bindtap="onChangeMonth" data-direction="next">▶</view>
+      </view>
+    </view>
+
+    <!-- 星期表头 -->
+    <view class="weeks-row">
+      <view class="week-cell">日</view>
+      <view class="week-cell">一</view>
+      <view class="week-cell">二</view>
+      <view class="week-cell">三</view>
+      <view class="week-cell">四</view>
+      <view class="week-cell">五</view>
+      <view class="week-cell">六</view>
+    </view>
+
+    <!-- 日历日期网格 -->
+    <view class="days-grid">
+      <view 
+        class="day-cell {{ item.isCurrentMonth ? '' : 'other-month' }} {{ item.isToday ? 'is-today' : '' }} {{ item.isSelected ? 'is-selected' : '' }}" 
+        wx:for="{{ days }}" 
+        wx:key="index"
+        bindtap="onSelectDate"
+        data-datestr="{{ item.dateStr }}"
+      >
+        <view class="day-num-box">
+          <text>{{ item.day }}</text>
+        </view>
+        <view class="menu-dot" wx:if="{{ item.hasMenu }}"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 家庭为空时的提示 -->
+  <view class="glass-card empty-placeholder animate-fade-in" wx:if="{{ !activeFamily && !loading }}">
+    <view class="empty-icon">🍳</view>
+    <view class="empty-text">您还没有加入任何家庭菜单群组</view>
+    <button class="btn-primary" style="margin-top: 30rpx;" bindtap="onCreateFamily">创建我的家庭</button>
+  </view>
+
+  <!-- 今日菜单详情卡片 -->
+  <view class="glass-card menu-details-card animate-fade-in" wx:if="{{ activeFamily }}">
+    <view class="date-title-bar">
+      <view class="date-text">{{ selectedDateStr }} 菜单</view>
+    </view>
+
+    <!-- 菜单已规划 -->
+    <view class="dishes-list" wx:if="{{ selectedDateMenu && selectedDateMenu.dishes.length > 0 }}">
+      <view class="dish-item" wx:for="{{ selectedDateMenu.dishes }}" wx:key="index">
+        <text class="dish-num">0{{ index + 1 }}</text>
+        <text class="dish-name">{{ item.name }}</text>
+        <text class="dish-tag" wx:if="{{ item.category }}">{{ item.category }}</text>
+      </view>
+    </view>
+
+    <!-- 菜单未规划 -->
+    <view class="empty-placeholder" wx:else>
+      <view class="empty-icon">🍽️</view>
+      <view class="empty-text">今日暂未规划菜单</view>
+    </view>
+
+    <!-- 操作按钮 (阿姨 role = 'read' 时隐藏或置灰) -->
+    <button 
+      class="btn-primary" 
+      hover-class="btn-primary-hover"
+      bindtap="onGoToEditMenu" 
+      wx:if="{{ memberRole !== 'read' }}"
+      style="margin-top: 30rpx; width: 100%;"
+    >
+      {{ (selectedDateMenu && selectedDateMenu.dishes.length > 0) ? '修改今日菜单' : '规划今日菜单' }}
+    </button>
+    <view 
+      style="text-align: center; font-size: 24rpx; color: var(--text-light); padding-top: 20rpx;" 
+      wx:else
+    >
+      💡 只读成员无法修改菜单
+    </view>
+  </view>
+
+  <!-- 底部快捷导航 -->
+  <view class="quick-nav" wx:if="{{ activeFamily }}">
+    <view class="nav-card" hover-class="glass-card-hover" bindtap="onNavigate" data-page="dishes">
+      <view class="nav-icon">📖</view>
+      <text class="nav-label">菜品库</text>
+    </view>
+    <view class="nav-card" hover-class="glass-card-hover" bindtap="onNavigate" data-page="members">
+      <view class="nav-icon">👥</view>
+      <text class="nav-label">家庭成员</text>
+    </view>
+    <view class="nav-card" hover-class="glass-card-hover" bindtap="onNavigate" data-page="admin-settings" wx:if="{{ isSystemAdmin }}">
+      <view class="nav-icon">⚙️</view>
+      <text class="nav-label">系统设置</text>
+    </view>
+  </view>
+
+</view>

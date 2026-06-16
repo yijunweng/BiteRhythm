@@ -1,0 +1,94 @@
+<!-- miniprogram/pages/admin-settings/index.wxml -->
+<view class="app-container settings-container">
+
+  <!-- ================= 非超级管理员锁定界面 ================= -->
+  <block wx:if="{{ !isSystemAdmin }}">
+    <view class="glass-card unauthorized-card animate-fade-in">
+      <view class="lock-icon">🔒</view>
+      <text class="lock-title">配置已锁定</text>
+      <text class="lock-desc">您当前不是系统的超级管理员，无权配置大模型 API 凭证。</text>
+      
+      <!-- 展示当前用户的 OpenID 便于其配置 -->
+      <view class="glass-card openid-card" style="width: 100%; text-align: left; box-shadow: none;">
+        <view class="openid-title">您的微信 OpenID</view>
+        <view class="openid-value-box">
+          <text>{{ myOpenid || '获取中...' }}</text>
+          <view class="btn-copy" bindtap="onCopyOpenid" wx:if="{{ myOpenid }}">复制</view>
+        </view>
+        <view class="openid-tips">
+          💡 如果您是超级管理员（雇主/主开发者），请复制此 OpenID 并将其配置到项目文件 <text style="font-family: monospace;">miniprogram/config.js</text> 中的 <text style="font-family: monospace;">superAdminOpenId</text>，重新编译即可。
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- ================= 超级管理员配置界面 ================= -->
+  <block wx:else>
+    <!-- 顶层重要警示 -->
+    <view class="glass-card openid-card animate-fade-in">
+      <view class="openid-title">👑 超级管理员权限锁定已启用</view>
+      <view class="openid-value-box">
+        <text style="font-size: 22rpx;">{{ myOpenid }}</text>
+      </view>
+      <view class="openid-tips">您的 OpenID 已成功匹配超管凭证。以下配置保存在微信云端数据库，前端逻辑调用云函数时在底层安全加载，不对任何家庭成员及做饭阿姨公开。</view>
+    </view>
+
+    <!-- 配置表单卡片 -->
+    <view class="glass-card form-card animate-fade-in">
+      <view class="section-title">LLM 大模型配置</view>
+
+      <view class="form-group">
+        <text class="form-label">API 提供商</text>
+        <picker bindchange="onProviderChange" value="{{ selectedProviderIndex }}" range="{{ providers }}">
+          <view class="form-picker">
+            {{ providers[selectedProviderIndex] }} ▾
+          </view>
+        </picker>
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">API Key</text>
+        <input 
+          class="custom-input" 
+          placeholder="请输入 API 密钥 (API Key)..." 
+          password="true" 
+          value="{{ apiKey }}"
+          bindinput="setData"
+          model:value="{{ apiKey }}"
+        />
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">API Base URL (端点)</text>
+        <input 
+          class="custom-input" 
+          placeholder="例如: https://api.deepseek.com/v1" 
+          value="{{ baseUrl }}"
+          bindinput="setData"
+          model:value="{{ baseUrl }}"
+        />
+      </view>
+
+      <view class="form-group">
+        <text class="form-label">模型名称 (Model Name)</text>
+        <input 
+          class="custom-input" 
+          placeholder="例如: deepseek-chat / gpt-4o-mini" 
+          value="{{ modelName }}"
+          bindinput="setData"
+          model:value="{{ modelName }}"
+        />
+      </view>
+
+      <button 
+        class="btn-primary" 
+        style="width: 100%; margin-top: 40rpx;" 
+        bindtap="onSaveConfig"
+        disabled="{{ saving }}"
+      >
+        {{ saving ? '正在保存...' : '保存配置' }}
+      </button>
+    </view>
+  </block>
+
+</view>

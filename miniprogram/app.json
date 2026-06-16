@@ -1,0 +1,18 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/edit-menu/index",
+    "pages/dishes/index",
+    "pages/members/index",
+    "pages/admin-settings/index"
+  ],
+  "window": {
+    "backgroundColor": "#F7F8FC",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "navigationBarTitleText": "胃口周刊",
+    "navigationBarTextStyle": "black"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}
