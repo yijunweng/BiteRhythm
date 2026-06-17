@@ -89,3 +89,69 @@
   line-height: 1.7;
   display: block;
 }
+
+/* 骨架屏组件样式 */
+.skeleton-brand-header {
+  pointer-events: none;
+}
+
+.skeleton-logo {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50% !important;
+  margin-bottom: 24rpx !important;
+}
+
+.skeleton-brand-name {
+  width: 320rpx;
+  height: 52rpx;
+  border-radius: 8rpx !important;
+  margin-bottom: 16rpx !important;
+}
+
+.skeleton-brand-sub {
+  width: 240rpx;
+  height: 32rpx;
+  border-radius: 8rpx !important;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-invite-card {
+  pointer-events: none;
+}
+
+.skeleton-invite-title {
+  width: 200rpx;
+  height: 40rpx;
+  border-radius: 8rpx !important;
+  margin-bottom: 24rpx !important;
+}
+
+.skeleton-invite-desc1 {
+  width: 100%;
+  height: 32rpx;
+  border-radius: 8rpx !important;
+  margin-bottom: 12rpx !important;
+}
+
+.skeleton-invite-desc2 {
+  width: 80%;
+  height: 32rpx;
+  border-radius: 8rpx !important;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-input-field {
+  width: 100%;
+  height: 88rpx;
+  border-radius: var(--radius-sm) !important;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-submit-btn {
+  width: 100%;
+  height: 88rpx;
+  border-radius: var(--radius-sm) !important;
+  margin-bottom: 0 !important;
+}
+

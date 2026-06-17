@@ -190,3 +190,78 @@
   border-radius: var(--radius-sm);
   line-height: 1.6;
 }
+
+/* 骨架屏组件样式 */
+.skeleton-dishes-header {
+  pointer-events: none;
+}
+
+.skeleton-title-placeholder {
+  width: 180rpx;
+  height: 48rpx;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-header-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+.skeleton-icon-btn {
+  width: 120rpx;
+  height: 52rpx;
+  border-radius: 12rpx !important;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-search-bar {
+  pointer-events: none;
+}
+
+.skeleton-search-input {
+  width: 100%;
+  height: 88rpx;
+  border-radius: var(--radius-sm) !important;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-tab-scroll {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 32rpx;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.skeleton-tab-pill {
+  width: 100rpx;
+  height: 56rpx;
+  border-radius: 40rpx !important;
+  flex-shrink: 0;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-dish-card {
+  pointer-events: none;
+}
+
+.skeleton-dish-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.skeleton-dish-cat {
+  width: 80rpx;
+  height: 32rpx;
+  border-radius: 8rpx !important;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-dish-name {
+  width: 220rpx;
+  height: 36rpx;
+  border-radius: 8rpx !important;
+  margin-bottom: 0 !important;
+}
+

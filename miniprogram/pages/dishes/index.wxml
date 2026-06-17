@@ -1,154 +1,190 @@
 <!-- miniprogram/pages/dishes/index.wxml -->
 <view class="page-container dishes-page">
 
-  <!-- 顶部操作栏 -->
-  <view class="dishes-header">
-    <text class="dishes-title">菜品库</text>
-    <view class="header-actions" wx:if="{{ memberRole !== 'read' }}">
-      <view class="icon-btn ai-btn" bindtap="onOpenAiImport">✦ AI导入</view>
-      <view class="icon-btn add-btn" bindtap="onOpenAddModal">＋ 新增</view>
+  <!-- 骨架屏加载状态 -->
+  <block wx:if="{{ loading }}">
+    <!-- 顶部栏骨架 -->
+    <view class="dishes-header skeleton-dishes-header">
+      <view class="shimmer-line skeleton-title-placeholder"></view>
+      <view class="skeleton-header-actions" wx:if="{{ memberRole !== 'read' }}">
+        <view class="shimmer-line skeleton-icon-btn"></view>
+        <view class="shimmer-line skeleton-icon-btn"></view>
+      </view>
     </view>
-  </view>
 
-  <!-- 只读提示 -->
-  <view class="read-only-banner" wx:if="{{ memberRole === 'read' }}">
-    🔒 只读模式：您可浏览菜品库，无法添加或删除
-  </view>
-
-  <!-- 搜索栏 -->
-  <view class="search-bar">
-    <input
-      class="input-field search-input"
-      placeholder="🔍 搜索菜品..."
-      value="{{ searchQuery }}"
-      bindinput="onSearchInput"
-    />
-  </view>
-
-  <!-- 分类 Tab -->
-  <scroll-view class="tab-scroll" scroll-x="true">
-    <view
-      class="tab-pill {{ activeTab === item ? 'active' : '' }}"
-      wx:for="{{ tabs }}"
-      wx:key="index"
-      bindtap="onTabChange"
-      data-tab="{{ item }}"
-    >
-      {{ item }}
+    <!-- 搜索栏骨架 -->
+    <view class="search-bar skeleton-search-bar">
+      <view class="shimmer-line skeleton-search-input"></view>
     </view>
-  </scroll-view>
 
-  <!-- 菜品列表 -->
-  <scroll-view class="dish-list-scroll animate-in" scroll-y="true" wx:if="{{ filteredDishes.length > 0 }}">
-    <view class="dish-list">
-      <view class="dish-card {{ item.remark === 'AI导入' ? 'is-ai-imported' : '' }}" wx:for="{{ filteredDishes }}" wx:key="_id">
-        <text class="ai-star-badge" wx:if="{{ item.remark === 'AI导入' }}">✦</text>
-        <view class="dish-info">
-          <view class="dish-name-row">
-            <text class="dish-card-cat">{{ item.category }}</text>
-            <text class="dish-card-name">{{ item.name }}</text>
+    <!-- 分类 Tab 骨架 -->
+    <view class="tab-scroll skeleton-tab-scroll">
+      <view class="shimmer-line skeleton-tab-pill" wx:for="{{ 5 }}" wx:key="index"></view>
+    </view>
+
+    <!-- 菜品列表骨架 -->
+    <view class="dish-list-scroll">
+      <view class="dish-list">
+        <view class="card dish-card skeleton-dish-card" wx:for="{{ 6 }}" wx:key="index">
+          <view class="dish-info skeleton-dish-info">
+            <view class="shimmer-line skeleton-dish-cat"></view>
+            <view class="shimmer-line skeleton-dish-name"></view>
           </view>
-          <text class="dish-card-remark" wx:if="{{ item.remark && item.remark !== 'AI导入' }}">{{ item.remark }}</text>
-        </view>
-        <view
-          class="trash-btn"
-          bindtap="onDeleteDish"
-          data-id="{{ item._id }}"
-          data-name="{{ item.name }}"
-          wx:if="{{ memberRole !== 'read' }}"
-        >
-          🗑
         </view>
       </view>
     </view>
-  </scroll-view>
+  </block>
 
-  <!-- 空状态 -->
-  <view class="card empty-state animate-in" wx:if="{{ filteredDishes.length === 0 && !loading }}">
-    <view class="empty-icon">🥗</view>
-    <view class="empty-text">菜品库空空如也
-点击右上角新增或 AI 导入吧</view>
-  </view>
-
-  <!-- 新增菜品 Modal -->
-  <view class="modal-mask" wx:if="{{ showAddModal }}" bindtap="onCloseAddModal">
-    <view class="modal-sheet" catchtap="noop">
-      <view class="modal-header">
-        <text class="modal-title">新增菜品</text>
-        <view class="modal-close" bindtap="onCloseAddModal">×</view>
+  <block wx:else>
+    <!-- 顶部操作栏 -->
+    <view class="dishes-header">
+      <text class="dishes-title">菜品库</text>
+      <view class="header-actions" wx:if="{{ memberRole !== 'read' }}">
+        <view class="icon-btn ai-btn" bindtap="onOpenAiImport">✦ AI导入</view>
+        <view class="icon-btn add-btn" bindtap="onOpenAddModal">＋ 新增</view>
       </view>
-
-      <view class="form-group">
-        <text class="form-label">菜品名称</text>
-        <input
-          class="input-field"
-          placeholder="请输入菜品名称，如「辣椒炒肉」"
-          value="{{ newDishName }}"
-          bindinput="onNewDishNameInput"
-        />
-      </view>
-
-      <view class="form-group">
-        <text class="form-label">菜品类别</text>
-        <picker bindchange="onCategoryChange" value="{{ categoryIndex }}" range="{{ categories }}">
-          <view class="form-picker">
-            <text>{{ newDishCategory }}</text>
-            <text style="color: var(--text-muted);">▾</text>
-          </view>
-        </picker>
-      </view>
-
-      <view class="form-group">
-        <text class="form-label">备注 / 描述（可选）</text>
-        <input
-          class="input-field"
-          placeholder="如「不放辣/宝贝爱吃」"
-          value="{{ newDishRemark }}"
-          bindinput="onNewDishRemarkInput"
-        />
-      </view>
-
-      <button
-        class="btn-primary"
-        hover-class="btn-primary-hover"
-        bindtap="onAddDish"
-        style="margin-top: 16rpx;"
-      >
-        确认保存
-      </button>
     </view>
-  </view>
 
-  <!-- AI 批量导入 Modal -->
-  <view class="modal-mask" wx:if="{{ showAiImportModal }}" bindtap="onCloseAiImport">
-    <view class="modal-sheet" catchtap="noop">
-      <view class="modal-header">
-        <text class="modal-title">✦ AI 批量解析导入</text>
-        <view class="modal-close" bindtap="onCloseAiImport">×</view>
-      </view>
+    <!-- 只读提示 -->
+    <view class="read-only-banner" wx:if="{{ memberRole === 'read' }}">
+      🔒 只读模式：您可浏览菜品库，无法添加或删除
+    </view>
 
-      <textarea
-        class="ai-textarea"
-        placeholder="输入或粘贴想要导入的菜品文本。例如：「帮我加一下红烧排骨、清茑鲈鱼，还有一道紫菜蛋汤」"
-        value="{{ bulkImportText }}"
-        bindinput="onBulkImportInput"
-        style="margin-bottom: 24rpx;"
+    <!-- 搜索栏 -->
+    <view class="search-bar">
+      <input
+        class="input-field search-input"
+        placeholder="🔍 搜索菜品..."
+        value="{{ searchQuery }}"
+        bindinput="onSearchInput"
       />
-
-      <view class="ai-tip">
-        💡 AI 会自动提取菜名并按类别（热菜/汤品/凉菜）分类，去重后存入菜品库。
-      </view>
-
-      <button
-        class="btn-primary"
-        hover-class="btn-primary-hover"
-        bindtap="onCommitAiImport"
-        disabled="{{ importLoading }}"
-        style="margin-top: 24rpx;"
-      >
-        {{ importLoading ? 'AI 分析导入中...' : '开始 AI 解析并导入' }}
-      </button>
     </view>
-  </view>
+
+    <!-- 分类 Tab -->
+    <scroll-view class="tab-scroll" scroll-x="true">
+      <view
+        class="tab-pill {{ activeTab === item ? 'active' : '' }}"
+        wx:for="{{ tabs }}"
+        wx:key="index"
+        bindtap="onTabChange"
+        data-tab="{{ item }}"
+      >
+        {{ item }}
+      </view>
+    </scroll-view>
+
+    <!-- 菜品列表 -->
+    <scroll-view class="dish-list-scroll animate-in" scroll-y="true" wx:if="{{ filteredDishes.length > 0 }}">
+      <view class="dish-list">
+        <view class="dish-card {{ item.remark === 'AI导入' ? 'is-ai-imported' : '' }}" wx:for="{{ filteredDishes }}" wx:key="_id">
+          <text class="ai-star-badge" wx:if="{{ item.remark === 'AI导入' }}">✦</text>
+          <view class="dish-info">
+            <view class="dish-name-row">
+              <text class="dish-card-cat">{{ item.category }}</text>
+              <text class="dish-card-name">{{ item.name }}</text>
+            </view>
+            <text class="dish-card-remark" wx:if="{{ item.remark && item.remark !== 'AI导入' }}">{{ item.remark }}</text>
+          </view>
+          <view
+            class="trash-btn"
+            bindtap="onDeleteDish"
+            data-id="{{ item._id }}"
+            data-name="{{ item.name }}"
+            wx:if="{{ memberRole !== 'read' }}"
+          >
+            🗑
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 空状态 -->
+    <view class="card empty-state animate-in" wx:if="{{ filteredDishes.length === 0 && !loading }}">
+      <view class="empty-icon">🥗</view>
+      <view class="empty-text">菜品库空空如也
+  点击右上角新增或 AI 导入吧</view>
+    </view>
+
+    <!-- 新增菜品 Modal -->
+    <view class="modal-mask" wx:if="{{ showAddModal }}" bindtap="onCloseAddModal">
+      <view class="modal-sheet" catchtap="noop">
+        <view class="modal-header">
+          <text class="modal-title">新增菜品</text>
+          <view class="modal-close" bindtap="onCloseAddModal">×</view>
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">菜品名称</text>
+          <input
+            class="input-field"
+            placeholder="请输入菜品名称，如「辣椒炒肉」"
+            value="{{ newDishName }}"
+            bindinput="onNewDishNameInput"
+          />
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">菜品类别</text>
+          <picker bindchange="onCategoryChange" value="{{ categoryIndex }}" range="{{ categories }}">
+            <view class="form-picker">
+              <text>{{ newDishCategory }}</text>
+              <text style="color: var(--text-muted);">▾</text>
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">备注 / 描述（可选）</text>
+          <input
+            class="input-field"
+            placeholder="如「不放辣/宝贝爱吃」"
+            value="{{ newDishRemark }}"
+            bindinput="onNewDishRemarkInput"
+          />
+        </view>
+
+        <button
+          class="btn-primary"
+          hover-class="btn-primary-hover"
+          bindtap="onAddDish"
+          style="margin-top: 16rpx;"
+        >
+          确认保存
+        </button>
+      </view>
+    </view>
+
+    <!-- AI 批量导入 Modal -->
+    <view class="modal-mask" wx:if="{{ showAiImportModal }}" bindtap="onCloseAiImport">
+      <view class="modal-sheet" catchtap="noop">
+        <view class="modal-header">
+          <text class="modal-title">✦ AI 批量解析导入</text>
+          <view class="modal-close" bindtap="onCloseAiImport">×</view>
+        </view>
+
+        <textarea
+          class="ai-textarea"
+          placeholder="输入或粘贴想要导入的菜品文本。例如：「帮我加一下红烧排骨、清茑鲈鱼，还有一道紫菜蛋汤」"
+          value="{{ bulkImportText }}"
+          bindinput="onBulkImportInput"
+          style="margin-bottom: 24rpx;"
+        />
+
+        <view class="ai-tip">
+          💡 AI 会自动提取菜名并按类别（热菜/汤品/凉菜）分类，去重后存入菜品库。
+        </view>
+
+        <button
+          class="btn-primary"
+          hover-class="btn-primary-hover"
+          bindtap="onCommitAiImport"
+          disabled="{{ importLoading }}"
+          style="margin-top: 24rpx;"
+        >
+          {{ importLoading ? 'AI 分析导入中...' : '开始 AI 解析并导入' }}
+        </button>
+      </view>
+    </view>
+  </block>
 
 </view>

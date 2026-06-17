@@ -3,6 +3,7 @@ const app = getApp();
 
 Page({
   data: {
+    loading: true,
     dateStr: '',
     familyId: '',
     isReadOnly: false,
@@ -26,7 +27,7 @@ Page({
     saving: false
   },
 
-  onLoad: function (options) {
+  onLoad: async function (options) {
     const { date, familyId } = options;
     if (!date || !familyId) {
       wx.showToast({ title: '参数错误', icon: 'none' });
@@ -37,14 +38,22 @@ Page({
     this.setData({
       dateStr: date,
       familyId,
-      isReadOnly: memberRole === 'read'
+      isReadOnly: memberRole === 'read',
+      loading: true
     });
-    this.fetchCurrentMenu();
-    this.fetchRepositoryDishes();
+    try {
+      await Promise.all([
+        this.fetchCurrentMenu(),
+        this.fetchRepositoryDishes()
+      ]);
+    } catch (err) {
+      console.error('加载菜单页数据失败', err);
+    } finally {
+      this.setData({ loading: false });
+    }
   },
 
   fetchCurrentMenu: async function () {
-    wx.showLoading({ title: '加载中...' });
     try {
       const db = wx.cloud.database();
       const res = await db.collection('menus').where({
@@ -56,8 +65,6 @@ Page({
       }
     } catch (err) {
       console.error('获取菜谱失败', err);
-    } finally {
-      wx.hideLoading();
     }
   },
 

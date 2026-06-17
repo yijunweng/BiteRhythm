@@ -1,66 +1,84 @@
 <!-- miniprogram/pages/members/index.wxml -->
 <view class="page-container members-page">
 
-  <!-- 项目 Logo / 品牌头 -->
-  <view class="brand-header animate-in">
-    <view class="brand-logo">🍳</view>
-    <text class="brand-name">BiteRhythm (食之律动)</text>
-    <text class="brand-sub">家庭小厨晚安排助手</text>
-  </view>
+  <!-- 骨架屏加载状态 -->
+  <block wx:if="{{ loading }}">
+    <view class="skeleton-members-page">
+      <!-- 顶部 Logo 骨架 -->
+      <view class="brand-header skeleton-brand-header">
+        <view class="shimmer-line skeleton-logo"></view>
+        <view class="shimmer-line skeleton-brand-name"></view>
+        <view class="shimmer-line skeleton-brand-sub"></view>
+      </view>
 
-  <!-- 已完成加入界面 -->
-  <view class="card animate-in" wx:if="{{ joined }}">
-    <view class="success-state">
-      <view class="success-icon">✔️</view>
-      <text class="success-title">加入成功！</text>
-      <text class="success-desc">您已成功申请加入「{{ familyName }}」，请等待管理员审批后即可查看菜单。</text>
-      <button class="btn-primary" hover-class="btn-primary-hover" bindtap="onGoHome" style="margin-top: 40rpx;">前往首页</button>
+      <!-- 加入家庭表单骨架 -->
+      <view class="card skeleton-invite-card">
+        <view class="shimmer-line skeleton-invite-title"></view>
+        <view class="shimmer-line skeleton-invite-desc1"></view>
+        <view class="shimmer-line skeleton-invite-desc2"></view>
+        
+        <view class="shimmer-line skeleton-input-field" style="margin-top: 32rpx;"></view>
+        <view class="shimmer-line skeleton-submit-btn" style="margin-top: 40rpx;"></view>
+      </view>
     </view>
-  </view>
+  </block>
 
-  <!-- 加入家庭表单 -->
-  <view wx:elif="{{ !joined && familyName }}" class="animate-in">
-    <view class="invite-banner">
-      <text class="invite-title">您收到了邀请！</text>
-      <text class="invite-desc">雇主邀请您加入家庭「{{ familyName }}」的咒房日历，一起规划家人每周的呀食。</text>
+  <block wx:else>
+    <!-- 项目 Logo / 品牌头 -->
+    <view class="brand-header animate-in">
+      <view class="brand-logo">🍳</view>
+      <text class="brand-name">BiteRhythm (食之律动)</text>
+      <text class="brand-sub">家庭小厨晚安排助手</text>
     </view>
 
-    <view class="card">
-      <text class="section-title">填写您的属名</text>
-      <text class="nickname-tip">属名将被家庭成员看到，请输入您希望使用的名字或称呼。</text>
-      <input
-        class="input-field"
-        placeholder="例如：温馨小家阿姨、二宝妈妈"
-        value="{{ nickname }}"
-        bindinput="onNicknameInput"
-        style="margin-top: 16rpx;"
-        maxlength="20"
-      />
-
-      <button
-        class="btn-primary"
-        hover-class="btn-primary-hover"
-        bindtap="onSubmitJoin"
-        disabled="{{ submitting }}"
-        style="margin-top: 40rpx;"
-      >
-        {{ submitting ? '提交中...' : '确认加入小家' }}
-      </button>
+    <!-- 已完成加入界面 -->
+    <view class="card animate-in" wx:if="{{ joined }}">
+      <view class="success-state">
+        <view class="success-icon">✔️</view>
+        <text class="success-title">加入成功！</text>
+        <text class="success-desc">您已成功申请加入「{{ familyName }}」，请等待管理员审批后即可查看菜单。</text>
+        <button class="btn-primary" hover-class="btn-primary-hover" bindtap="onGoHome" style="margin-top: 40rpx;">前往首页</button>
+      </view>
     </view>
-  </view>
 
-  <!-- 家庭信息无效 -->
-  <view class="card animate-in" wx:elif="{{ !familyName && !loading }}">
-    <view class="empty-state">
-      <view class="empty-icon">⚠️</view>
-      <view class="empty-text">邀请链接无效或已过期
-请联系雇主重新生成邀请链接。</view>
+    <!-- 加入家庭表单 -->
+    <view wx:elif="{{ !joined && familyName }}" class="animate-in">
+      <view class="invite-banner">
+        <text class="invite-title">您收到了邀请！</text>
+        <text class="invite-desc">雇主邀请您加入家庭「{{ familyName }}」的厨房日历，一起规划家人每周的饮食。</text>
+      </view>
+
+      <view class="card">
+        <text class="section-title">填写您的署名</text>
+        <text class="nickname-tip">署名将被家庭成员看到，请输入您希望使用的名字或称呼。</text>
+        <input
+          class="input-field"
+          placeholder="例如：温馨小家阿姨、二宝妈妈"
+          value="{{ nickname }}"
+          bindinput="onNicknameInput"
+          style="margin-top: 16rpx;"
+          maxlength="20"
+        />
+
+        <button
+          class="btn-primary"
+          hover-class="btn-primary-hover"
+          bindtap="onSubmitJoin"
+          disabled="{{ submitting }}"
+          style="margin-top: 40rpx;"
+        >
+          {{ submitting ? '提交中...' : '确认加入小家' }}
+        </button>
+      </view>
     </view>
-  </view>
 
-  <!-- 加载中 -->
-  <view class="empty-state" wx:if="{{ loading }}">
-    <view class="empty-text">加载中...</view>
-  </view>
+    <!-- 家庭信息无效 -->
+    <view class="card animate-in" wx:elif="{{ !familyName }}">
+      <view class="empty-state">
+        <view class="empty-icon">⚠️</view>
+        <view class="empty-text">邀请链接无效或已过期\n请联系雇主重新生成邀请链接。</view>
+      </view>
+    </view>
+  </block>
 
 </view>

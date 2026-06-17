@@ -68,75 +68,104 @@
         <text>返回设置菜单</text>
       </view>
 
-      <!-- 当前家庭 -->
-      <view class="card">
-        <view class="section-title">当前家庭</view>
-        <view class="family-info-row">
-          <text class="family-info-name">{{ currentFamilyName || '未加入任何家庭' }}</text>
-          <view class="badge badge-gold">{{ approvedMembers.length }}人</view>
-        </view>
-
-        <!-- 邀请按钮 -->
-        <button
-          class="btn-primary"
-          hover-class="btn-primary-hover"
-          open-type="share"
-          wx:if="{{ currentFamilyId }}"
-          style="margin-top: 28rpx;"
-        >
-          📤 微信邀请新成员
-        </button>
-      </view>
-
-      <!-- 待审批列表 -->
-      <view class="card pending-card" wx:if="{{ pendingMembers.length > 0 }}">
-        <view class="pending-header">
-          <text class="section-title" style="color: #F57F17; margin-bottom: 0;">待审批申请</text>
-          <view class="badge badge-pending">{{ pendingMembers.length }}个申请</view>
-        </view>
-
-        <view class="member-list">
-          <view class="member-item" wx:for="{{ pendingMembers }}" wx:key="_id">
-            <view class="member-avatar-wrap">
-              <text class="member-avatar-letter">{{ item.nickname ? item.nickname[0] : '?' }}</text>
-            </view>
-            <view class="member-info">
-              <text class="member-name">{{ item.nickname }}</text>
-              <text class="member-sub">申请加入</text>
-            </view>
-            <view class="approve-actions">
-              <view class="approve-btn blue" bindtap="onApprove" data-id="{{ item._id }}" data-role="write">设为家人</view>
-              <view class="approve-btn" bindtap="onApprove" data-id="{{ item._id }}" data-role="read">设为阿姨</view>
-              <view class="reject-btn" bindtap="onReject" data-id="{{ item._id }}">拒绝</view>
-            </view>
+      <!-- 骨架屏加载状态 -->
+      <block wx:if="{{ membersLoading }}">
+        <!-- 当前家庭骨架 -->
+        <view class="card skeleton-card">
+          <view class="shimmer-line skeleton-settings-section-title"></view>
+          <view class="family-info-row skeleton-family-info-row">
+            <view class="shimmer-line skeleton-family-name"></view>
+            <view class="shimmer-line skeleton-badge"></view>
           </view>
+          <view class="shimmer-line skeleton-btn-placeholder" style="margin-top: 28rpx; height: 84rpx;"></view>
         </view>
-      </view>
 
-      <!-- 已加入成员 -->
-      <view class="card">
-        <text class="section-title">家庭成员 ({{ approvedMembers.length }})</text>
-        <view class="member-list">
-          <view class="member-item" wx:for="{{ approvedMembers }}" wx:key="_id">
-            <view class="member-avatar-wrap">
-              <text class="member-avatar-letter">{{ item.nickname ? item.nickname[0] : '?' }}</text>
-            </view>
-            <view class="member-info">
-              <text class="member-name">{{ item.nickname }}</text>
-              <view class="role-tags">
-                <text class="role-tag admin" wx:if="{{ item.role === 'admin' }}">管理员</text>
-                <text class="role-tag write" wx:if="{{ item.role === 'write' }}">家人 (可读写)</text>
-                <text class="role-tag read" wx:if="{{ item.role === 'read' }}">阿姨 (只读)</text>
+        <!-- 成员列表骨架 -->
+        <view class="card skeleton-card">
+          <view class="shimmer-line skeleton-settings-section-title" style="width: 220rpx;"></view>
+          <view class="member-list skeleton-member-list">
+            <view class="member-item skeleton-member-item" wx:for="{{ 3 }}" wx:key="index">
+              <view class="shimmer-line skeleton-member-avatar"></view>
+              <view class="member-info skeleton-member-info">
+                <view class="shimmer-line skeleton-member-name"></view>
+                <view class="shimmer-line skeleton-member-role-tag"></view>
               </view>
             </view>
-            <!-- 管理员操作按钮 -->
-            <view class="member-actions" wx:if="{{ item.role !== 'admin' }}">
-              <view class="action-btn" bindtap="onEditMember" data-id="{{ item._id }}" data-nickname="{{ item.nickname }}" data-role="{{ item.role }}">编辑</view>
-              <view class="action-btn danger" bindtap="onRemoveMember" data-id="{{ item._id }}" data-name="{{ item.nickname }}">移除</view>
+          </view>
+        </view>
+      </block>
+
+      <block wx:else>
+        <!-- 当前家庭 -->
+        <view class="card">
+          <view class="section-title">当前家庭</view>
+          <view class="family-info-row">
+            <text class="family-info-name">{{ currentFamilyName || '未加入任何家庭' }}</text>
+            <view class="badge badge-gold">{{ approvedMembers.length }}人</view>
+          </view>
+
+          <!-- 邀请按钮 -->
+          <button
+            class="btn-primary"
+            hover-class="btn-primary-hover"
+            open-type="share"
+            wx:if="{{ currentFamilyId }}"
+            style="margin-top: 28rpx;"
+          >
+            📤 微信邀请新成员
+          </button>
+        </view>
+
+        <!-- 待审批列表 -->
+        <view class="card pending-card" wx:if="{{ pendingMembers.length > 0 }}">
+          <view class="pending-header">
+            <text class="section-title" style="color: #F57F17; margin-bottom: 0;">待审批申请</text>
+            <view class="badge badge-pending">{{ pendingMembers.length }}个申请</view>
+          </view>
+
+          <view class="member-list">
+            <view class="member-item" wx:for="{{ pendingMembers }}" wx:key="_id">
+              <view class="member-avatar-wrap">
+                <text class="member-avatar-letter">{{ item.nickname ? item.nickname[0] : '?' }}</text>
+              </view>
+              <view class="member-info">
+                <text class="member-name">{{ item.nickname }}</text>
+                <text class="member-sub">申请加入</text>
+              </view>
+              <view class="approve-actions">
+                <view class="approve-btn blue" bindtap="onApprove" data-id="{{ item._id }}" data-role="write">设为家人</view>
+                <view class="approve-btn" bindtap="onApprove" data-id="{{ item._id }}" data-role="read">设为阿姨</view>
+                <view class="reject-btn" bindtap="onReject" data-id="{{ item._id }}">拒绝</view>
+              </view>
             </view>
           </view>
         </view>
-      </view>
+
+        <!-- 已加入成员 -->
+        <view class="card">
+          <text class="section-title">家庭成员 ({{ approvedMembers.length }})</text>
+          <view class="member-list">
+            <view class="member-item" wx:for="{{ approvedMembers }}" wx:key="_id">
+              <view class="member-avatar-wrap">
+                <text class="member-avatar-letter">{{ item.nickname ? item.nickname[0] : '?' }}</text>
+              </view>
+              <view class="member-info">
+                <text class="member-name">{{ item.nickname }}</text>
+                <view class="role-tags">
+                  <text class="role-tag admin" wx:if="{{ item.role === 'admin' }}">管理员</text>
+                  <text class="role-tag write" wx:if="{{ item.role === 'write' }}">家人 (可读写)</text>
+                  <text class="role-tag read" wx:if="{{ item.role === 'read' }}">阿姨 (只读)</text>
+                </view>
+              </view>
+              <!-- 管理员操作按钮 -->
+              <view class="member-actions" wx:if="{{ item.role !== 'admin' }}">
+                <view class="action-btn" bindtap="onEditMember" data-id="{{ item._id }}" data-nickname="{{ item.nickname }}" data-role="{{ item.role }}">编辑</view>
+                <view class="action-btn danger" bindtap="onRemoveMember" data-id="{{ item._id }}" data-name="{{ item.nickname }}">移除</view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
     </view>
 
     <!-- 子页 2：大模型配置 -->

@@ -21,7 +21,8 @@ Page({
     baseUrl: '',
     modelName: '',
     saving: false,
-    loading: false
+    loading: false,
+    membersLoading: false
   },
 
   onLoad: function () {
@@ -74,7 +75,6 @@ Page({
   // 获取大模型配置
   fetchSystemConfig: function () {
     this.setData({ loading: true });
-    wx.showLoading({ title: '获取配置中' });
     wx.cloud.callFunction({
       name: 'adminService',
       data: { action: 'getLLMConfig' },
@@ -93,7 +93,7 @@ Page({
         }
       },
       fail: err => console.error('获取配置失败', err),
-      complete: () => { this.setData({ loading: false }); wx.hideLoading(); }
+      complete: () => { this.setData({ loading: false }); }
     });
   },
 
@@ -102,6 +102,7 @@ Page({
   fetchMembers: async function () {
     const familyId = this.data.currentFamilyId;
     if (!familyId) return;
+    this.setData({ membersLoading: true });
     try {
       const db = wx.cloud.database();
       const res = await db.collection('family_members').where({ family_id: familyId }).get();
@@ -113,6 +114,8 @@ Page({
       this.setData({ approvedMembers: approved, pendingMembers: pending });
     } catch (err) {
       console.error('获取成员失败', err);
+    } finally {
+      this.setData({ membersLoading: false });
     }
   },
 

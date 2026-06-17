@@ -7,7 +7,7 @@ Page({
     memberRole: '',
     dishes: [],
     filteredDishes: [],
-    loading: false,
+    loading: true,
     tabs: ['全部', '热菜', '凉菜', '汤品', '主食', '其它'],
     activeTab: '全部',
     searchQuery: '',
@@ -45,7 +45,6 @@ Page({
 
   fetchDishes: async function () {
     this.setData({ loading: true });
-    wx.showLoading({ title: '加载中' });
     try {
       const db = wx.cloud.database();
       const res = await db.collection('dishes').where({ family_id: this.data.familyId }).limit(200).get();
@@ -55,7 +54,6 @@ Page({
       wx.showToast({ title: '加载失败', icon: 'error' });
     } finally {
       this.setData({ loading: false });
-      wx.hideLoading();
     }
   },
 

@@ -1,131 +1,189 @@
 <!-- miniprogram/pages/index/index.wxml -->
 <view class="page-container index-page">
 
-  <!-- 顶部家庭选择器 -->
-  <view class="family-bar">
-    <view class="family-selector" bindtap="toggleFamilySelector">
-      <text class="family-name">{{ activeFamily ? activeFamily.name : '创建家庭' }}</text>
-      <text class="family-arrow {{ showFamilySelector ? 'open' : '' }}">▾</text>
+  <!-- 骨架屏加载状态 -->
+  <block wx:if="{{ initialLoading }}">
+    <!-- 顶部栏骨架 -->
+    <view class="family-bar skeleton-bar">
+      <view class="shimmer-line skeleton-title-placeholder"></view>
+      <view class="shimmer-line skeleton-badge-placeholder"></view>
     </view>
-    <view class="role-chip" wx:if="{{ activeFamily }}">
-      <text wx:if="{{ memberRole === 'admin' }}">👑 管理员</text>
-      <text wx:elif="{{ memberRole === 'write' }}">✏️ 家人</text>
-      <text wx:else>👁 只读</text>
-    </view>
-  </view>
 
-  <!-- 家庭下拉菜单 -->
-  <view class="family-dropdown animate-in" wx:if="{{ showFamilySelector }}">
-    <view
-      class="family-drop-item {{ activeFamily && activeFamily._id === item._id ? 'active' : '' }}"
-      wx:for="{{ families }}"
-      wx:key="_id"
-      bindtap="onSelectFamily"
-      data-family="{{ item }}"
-    >
-      <text>{{ item.name }}</text>
-      <text class="check-mark" wx:if="{{ activeFamily && activeFamily._id === item._id }}">✓</text>
-    </view>
-    <view class="family-drop-item add-item" bindtap="onCreateFamily">＋ 创建新家庭</view>
-  </view>
+    <!-- 日历卡片骨架 -->
+    <view class="card calendar-card skeleton-card">
+      <view class="cal-header">
+        <view class="shimmer-line skeleton-month-placeholder"></view>
+        <view class="cal-nav">
+          <view class="shimmer-line skeleton-nav-btn"></view>
+          <view class="shimmer-line skeleton-nav-btn"></view>
+        </view>
+      </view>
+      
+      <!-- 静态星期表头 -->
+      <view class="week-row">
+        <view class="week-cell">日</view>
+        <view class="week-cell">一</view>
+        <view class="week-cell">二</view>
+        <view class="week-cell">三</view>
+        <view class="week-cell">四</view>
+        <view class="week-cell">五</view>
+        <view class="week-cell">六</view>
+      </view>
 
-  <!-- 无家庭时的引导 -->
-  <view class="card empty-guide animate-in" wx:if="{{ !activeFamily && !loading }}">
-    <view class="empty-state">
-      <view class="empty-icon">🍳</view>
-      <view class="empty-text">还没有家庭群组\n点击上方创建您的第一个家庭吧</view>
-    </view>
-    <button class="btn-primary" hover-class="btn-primary-hover" bindtap="onCreateFamily">
-      ＋ 创建我的家庭
-    </button>
-  </view>
-
-  <!-- 日历卡片 -->
-  <view class="card calendar-card animate-in" wx:if="{{ activeFamily }}">
-    <view class="cal-header">
-      <text class="cal-month">{{ currentYear }}年 {{ currentMonth }}月</text>
-      <view class="cal-nav">
-        <view class="cal-nav-btn" bindtap="onChangeMonth" data-direction="prev">◀</view>
-        <view class="cal-nav-btn" bindtap="onChangeMonth" data-direction="next">▶</view>
+      <!-- 35个日历方块骨架 -->
+      <view class="cal-grid">
+        <view class="shimmer-line skeleton-day" wx:for="{{ 35 }}" wx:key="index"></view>
       </view>
     </view>
 
-    <!-- 星期表头 -->
-    <view class="week-row">
-      <view class="week-cell">日</view>
-      <view class="week-cell">一</view>
-      <view class="week-cell">二</view>
-      <view class="week-cell">三</view>
-      <view class="week-cell">四</view>
-      <view class="week-cell">五</view>
-      <view class="week-cell">六</view>
+    <!-- 今日菜谱详情卡片骨架 -->
+    <view class="card today-card skeleton-card">
+      <view class="today-card-header">
+        <view class="shimmer-line skeleton-today-title"></view>
+        <view class="shimmer-line skeleton-edit-link"></view>
+      </view>
+      
+      <!-- 菜品药丸骨架 -->
+      <view class="dish-pills">
+        <view class="shimmer-line skeleton-dish-pill" style="width: 160rpx;"></view>
+        <view class="shimmer-line skeleton-dish-pill" style="width: 200rpx;"></view>
+        <view class="shimmer-line skeleton-dish-pill" style="width: 140rpx;"></view>
+      </view>
+
+      <!-- 排餐按钮骨架 -->
+      <view class="shimmer-line skeleton-btn-placeholder"></view>
+      <view class="shimmer-line skeleton-tip-placeholder"></view>
+    </view>
+  </block>
+
+  <block wx:else>
+    <!-- 顶部家庭选择器 -->
+    <view class="family-bar">
+      <view class="family-selector" bindtap="toggleFamilySelector">
+        <text class="family-name">{{ activeFamily ? activeFamily.name : '创建家庭' }}</text>
+        <text class="family-arrow {{ showFamilySelector ? 'open' : '' }}">▾</text>
+      </view>
+      <view class="role-chip" wx:if="{{ activeFamily }}">
+        <text wx:if="{{ memberRole === 'admin' }}">👑 管理员</text>
+        <text wx:elif="{{ memberRole === 'write' }}">✏️ 家人</text>
+        <text wx:else>👁 只读</text>
+      </view>
     </view>
 
-    <!-- 日历网格 -->
-    <view class="cal-grid">
+    <!-- 家庭下拉菜单 -->
+    <view class="family-dropdown animate-in" wx:if="{{ showFamilySelector }}">
       <view
-        class="cal-day {{ !item.isCurrentMonth ? 'other-month' : '' }} {{ item.isToday ? 'today' : '' }} {{ item.isSelected ? 'selected' : '' }} {{ item.hasMenu ? 'has-menu' : '' }}"
-        wx:for="{{ days }}"
-        wx:key="index"
-        bindtap="onSelectDate"
-        data-datestr="{{ item.dateStr }}"
+        class="family-drop-item {{ activeFamily && activeFamily._id === item._id ? 'active' : '' }}"
+        wx:for="{{ families }}"
+        wx:key="_id"
+        bindtap="onSelectFamily"
+        data-family="{{ item }}"
       >
-        <text class="cal-day-num">{{ item.day }}</text>
-        <view class="menu-dot" wx:if="{{ item.hasMenu }}"></view>
+        <text>{{ item.name }}</text>
+        <text class="check-mark" wx:if="{{ activeFamily && activeFamily._id === item._id }}">✓</text>
       </view>
+      <view class="family-drop-item add-item" bindtap="onCreateFamily">＋ 创建新家庭</view>
     </view>
-  </view>
 
-  <!-- 今日菜谱详情卡片 -->
-  <view class="card today-card animate-in" wx:if="{{ activeFamily }}">
-    <view class="today-card-header">
-      <text class="today-title">{{ selectedDateStr ? selectedDateStr + ' 菜单' : '今日菜单' }}</text>
-      <view
-        class="edit-link"
-        bindtap="onGoToEditMenu"
-        wx:if="{{ memberRole !== 'read' }}"
-      >
-        {{ selectedDateMenu && selectedDateMenu.dishes.length > 0 ? '编辑' : '规划' }} ›
+    <!-- 无家庭时的引导 -->
+    <view class="card empty-guide animate-in" wx:if="{{ !activeFamily && !loading }}">
+      <view class="empty-state">
+        <view class="empty-icon">🍳</view>
+        <view class="empty-text">还没有家庭群组\n点击上方创建您的第一个家庭吧</view>
       </view>
-    </view>
-
-    <!-- 已规划菜品 -->
-    <view class="dish-pills" wx:if="{{ selectedDateMenu && selectedDateMenu.dishes.length > 0 }}">
-      <view class="dish-pill" wx:for="{{ selectedDateMenu.dishes }}" wx:key="index">
-        🥘 {{ item.name }}
-      </view>
-    </view>
-
-    <!-- 未规划 -->
-    <view class="empty-state" wx:else>
-      <view class="empty-text">暂无已规划菜品{{ memberRole === 'read' ? '，请等待管理员安排' : '，点击右上方规划' }}</view>
-    </view>
-
-    <!-- AI 智能周排餐（非只读可见） -->
-    <view wx:if="{{ memberRole !== 'read' }}" style="margin-top: 32rpx;">
-      <button
-        class="btn-primary"
-        hover-class="btn-primary-hover"
-        bindtap="onWeekAIPlan"
-        disabled="{{ aiPlanLoading }}"
-      >
-        <text>✦ {{ aiPlanLoading ? 'AI 排餐中...' : '大模型智能排餐（下周5天）' }}</text>
+      <button class="btn-primary" hover-class="btn-primary-hover" bindtap="onCreateFamily">
+        ＋ 创建我的家庭
       </button>
-      <text class="ai-btn-tip">💡 提示：排餐范围为从明天开始顺延的 5 个工作日（避开周末）</text>
     </view>
 
-    <!-- 只读提示 -->
-    <view class="read-only-tip" wx:else>
-      💡 只读模式：您可浏览菜单，无法修改
-    </view>
-  </view>
+    <!-- 日历卡片 -->
+    <view class="card calendar-card animate-in" wx:if="{{ activeFamily }}">
+      <view class="cal-header">
+        <text class="cal-month">{{ currentYear }}年 {{ currentMonth }}月</text>
+        <view class="cal-nav">
+          <view class="cal-nav-btn" bindtap="onChangeMonth" data-direction="prev">◀</view>
+          <view class="cal-nav-btn" bindtap="onChangeMonth" data-direction="next">▶</view>
+        </view>
+      </view>
 
-  <!-- AI 排餐加载骨架屏 -->
-  <view class="card" wx:if="{{ aiPlanLoading }}">
-    <view class="shimmer-line" style="width: 40%;"></view>
-    <view class="shimmer-line" style="width: 100%; height: 60rpx; border-radius: 12rpx;"></view>
-    <view class="shimmer-line" style="width: 70%;"></view>
-    <view class="shimmer-line" style="width: 100%; height: 60rpx; border-radius: 12rpx;"></view>
-  </view>
+      <!-- 星期表头 -->
+      <view class="week-row">
+        <view class="week-cell">日</view>
+        <view class="week-cell">一</view>
+        <view class="week-cell">二</view>
+        <view class="week-cell">三</view>
+        <view class="week-cell">四</view>
+        <view class="week-cell">五</view>
+        <view class="week-cell">六</view>
+      </view>
+
+      <!-- 日历网格 -->
+      <view class="cal-grid">
+        <view
+          class="cal-day {{ !item.isCurrentMonth ? 'other-month' : '' }} {{ item.isToday ? 'today' : '' }} {{ item.isSelected ? 'selected' : '' }} {{ item.hasMenu ? 'has-menu' : '' }}"
+          wx:for="{{ days }}"
+          wx:key="index"
+          bindtap="onSelectDate"
+          data-datestr="{{ item.dateStr }}"
+        >
+          <text class="cal-day-num">{{ item.day }}</text>
+          <view class="menu-dot" wx:if="{{ item.hasMenu }}"></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 今日菜谱详情卡片 -->
+    <view class="card today-card animate-in" wx:if="{{ activeFamily }}">
+      <view class="today-card-header">
+        <text class="today-title">{{ selectedDateStr ? selectedDateStr + ' 菜单' : '今日菜单' }}</text>
+        <view
+          class="edit-link"
+          bindtap="onGoToEditMenu"
+          wx:if="{{ memberRole !== 'read' }}"
+        >
+          {{ selectedDateMenu && selectedDateMenu.dishes.length > 0 ? '编辑' : '规划' }} ›
+        </view>
+      </view>
+
+      <!-- 已规划菜品 -->
+      <view class="dish-pills" wx:if="{{ selectedDateMenu && selectedDateMenu.dishes.length > 0 }}">
+        <view class="dish-pill" wx:for="{{ selectedDateMenu.dishes }}" wx:key="index">
+          🥘 {{ item.name }}
+        </view>
+      </view>
+
+      <!-- 未规划 -->
+      <view class="empty-state" wx:else>
+        <view class="empty-text">暂无已规划菜品{{ memberRole === 'read' ? '，请等待管理员安排' : '，点击右上方规划' }}</view>
+      </view>
+
+      <!-- AI 智能周排餐（非只读可见） -->
+      <view wx:if="{{ memberRole !== 'read' }}" style="margin-top: 32rpx;">
+        <button
+          class="btn-primary"
+          hover-class="btn-primary-hover"
+          bindtap="onWeekAIPlan"
+          disabled="{{ aiPlanLoading }}"
+        >
+          <text>✦ {{ aiPlanLoading ? 'AI 排餐中...' : '大模型智能排餐（下周5天）' }}</text>
+        </button>
+        <text class="ai-btn-tip">💡 提示：排餐范围为从明天开始顺延的 5 个工作日（避开周末）</text>
+      </view>
+
+      <!-- 只读提示 -->
+      <view class="read-only-tip" wx:else>
+        💡 只读模式：您可浏览菜单，无法修改
+      </view>
+    </view>
+
+    <!-- AI 排餐加载骨架屏 -->
+    <view class="card" wx:if="{{ aiPlanLoading }}">
+      <view class="shimmer-line" style="width: 40%;"></view>
+      <view class="shimmer-line" style="width: 100%; height: 60rpx; border-radius: 12rpx;"></view>
+      <view class="shimmer-line" style="width: 70%;"></view>
+      <view class="shimmer-line" style="width: 100%; height: 60rpx; border-radius: 12rpx;"></view>
+    </view>
+  </block>
 
 </view>
+

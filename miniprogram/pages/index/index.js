@@ -3,6 +3,7 @@ const app = getApp();
 
 Page({
   data: {
+    initialLoading: true,
     isSystemAdmin: false,
     memberRole: '',
     families: [],
@@ -48,9 +49,15 @@ Page({
   },
 
   initUserAndData: async function () {
-    this.setData({ isSystemAdmin: app.globalData.isSystemAdmin });
-    await this.fetchFamiliesList();
-    this.initCalendar();
+    this.setData({ isSystemAdmin: app.globalData.isSystemAdmin, initialLoading: true });
+    try {
+      await this.fetchFamiliesList();
+      this.initCalendar();
+    } catch (err) {
+      console.error('初始化数据失败', err);
+    } finally {
+      this.setData({ initialLoading: false });
+    }
   },
 
   fetchFamiliesList: async function () {
@@ -81,7 +88,7 @@ Page({
       if (families.length > 0) {
         const lastId = wx.getStorageSync('last_family_id');
         const selected = families.find(f => f._id === lastId) || families[0];
-        this.selectFamily(selected);
+        await this.selectFamily(selected);
       }
     } catch (err) {
       console.error('获取家庭列表失败', err);
@@ -90,16 +97,25 @@ Page({
     }
   },
 
-  selectFamily: function (family) {
+  selectFamily: async function (family) {
     app.globalData.activeFamily = family;
     wx.setStorageSync('last_family_id', family._id);
     this.setData({ activeFamily: family, showFamilySelector: false });
-    this.fetchUserRoleInFamily();
-    this.fetchMonthlyMenus();
+    await Promise.all([
+      this.fetchUserRoleInFamily(),
+      this.fetchMonthlyMenus()
+    ]);
   },
 
-  onSelectFamily: function (e) {
-    this.selectFamily(e.currentTarget.dataset.family);
+  onSelectFamily: async function (e) {
+    wx.showLoading({ title: '切换中...' });
+    try {
+      await this.selectFamily(e.currentTarget.dataset.family);
+    } catch (err) {
+      console.error('选择家庭失败', err);
+    } finally {
+      wx.hideLoading();
+    }
   },
 
   toggleFamilySelector: function () {

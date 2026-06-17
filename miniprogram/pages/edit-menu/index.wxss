@@ -347,3 +347,138 @@
   font-size: 36rpx;
   font-weight: 300;
 }
+
+/* 骨架屏组件样式 */
+.skeleton-date-header {
+  pointer-events: none;
+}
+
+.skeleton-date-title-placeholder {
+  width: 260rpx;
+  height: 48rpx;
+  margin-bottom: 12rpx !important;
+}
+
+.skeleton-date-sub-placeholder {
+  width: 160rpx;
+  height: 32rpx;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-menu-card {
+  pointer-events: none;
+}
+
+.skeleton-section-title {
+  width: 180rpx;
+  height: 42rpx;
+  margin-bottom: 24rpx !important;
+}
+
+.skeleton-dish-row {
+  border-bottom: 1rpx solid var(--border);
+  padding: 24rpx 0;
+  pointer-events: none;
+}
+
+.skeleton-dish-cat {
+  width: 80rpx;
+  height: 32rpx;
+  border-radius: 8rpx !important;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-dish-name {
+  width: 220rpx;
+  height: 36rpx;
+  border-radius: 8rpx !important;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-add-input-row {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 32rpx;
+  align-items: center;
+}
+
+.skeleton-cat-btn {
+  width: 130rpx;
+  height: 80rpx;
+  border-radius: var(--radius-sm) !important;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-input {
+  flex: 1;
+  height: 80rpx;
+  border-radius: var(--radius-sm) !important;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-add-circle {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50% !important;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-repo-btn {
+  width: 100%;
+  height: 88rpx;
+  border-radius: var(--radius-sm) !important;
+  margin-bottom: 24rpx !important;
+}
+
+.skeleton-quick-btns {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.skeleton-quick-btn {
+  flex: 1;
+  height: 88rpx;
+  border-radius: var(--radius-sm) !important;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-ai-card {
+  pointer-events: none;
+}
+
+.skeleton-ai-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.skeleton-ai-star {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50% !important;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-ai-title {
+  width: 240rpx;
+  height: 40rpx;
+  border-radius: 8rpx !important;
+  margin-bottom: 0 !important;
+}
+
+.skeleton-ai-desc {
+  width: 100%;
+  height: 32rpx;
+  border-radius: 8rpx !important;
+  margin-bottom: 24rpx !important;
+}
+
+.skeleton-ai-btn {
+  width: 100%;
+  height: 84rpx;
+  border-radius: var(--radius-sm) !important;
+  margin-bottom: 0 !important;
+}
+
