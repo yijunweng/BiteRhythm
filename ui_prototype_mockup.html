@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>胃口周刊 - 交互式 UI 原型初稿</title>
+    <title>BiteRhythm (食之律动) - 交互式 UI 原型初稿</title>
     <style>
         /* 全局样式与极简乳白/香槟金配色 */
         :root {
@@ -1020,8 +1020,8 @@
 
     <!-- 侧边说明与配置面板 -->
     <div class="control-panel">
-        <h1>胃口周刊原型设计</h1>
-        <p class="desc">这是基于《胃口周刊 PRD》设计的低保真交互原型初稿。您可以通过右侧的模拟手机进行交互，也可以使用下方的<b>角色身份切换面板</b>，测试不同的权限在界面中的实际呈现效果方式。</p>
+        <h1>BiteRhythm (食之律动)原型设计</h1>
+        <p class="desc">这是基于《BiteRhythm (食之律动) PRD》设计的低保真交互原型初稿。您可以通过右侧的模拟手机进行交互，也可以使用下方的<b>角色身份切换面板</b>，测试不同的权限在界面中的实际呈现效果方式。</p>
 
         <!-- 身份切换控制 -->
         <div class="role-switch-box">
@@ -1082,7 +1082,7 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                     返回
                 </div>
-                <div class="nav-title" id="nav-page-title">胃口周刊</div>
+                <div class="nav-title" id="nav-page-title">BiteRhythm (食之律动)</div>
                 <div class="mini-menu-capsule">
                     <span></span>
                     <span></span>
@@ -1457,7 +1457,7 @@
         document.getElementById(`tab-${tabId}`).classList.add('active');
         
         if (tabId === 'calendar') {
-            document.getElementById('nav-page-title').innerText = '胃口周刊';
+            document.getElementById('nav-page-title').innerText = 'BiteRhythm (食之律动)';
             document.getElementById('page-calendar').classList.add('active');
             renderCalendarGrid();
             renderTodayMenu();

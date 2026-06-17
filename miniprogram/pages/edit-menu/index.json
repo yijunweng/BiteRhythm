@@ -1,4 +1,4 @@
 {
-  "navigationBarTitleText": "规划菜单",
-  "usingComponents": {}
+  "navigationBarTitleText": "编辑菜谱",
+  "enablePullDownRefresh": false
 }

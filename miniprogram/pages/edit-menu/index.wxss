@@ -1,318 +1,349 @@
 /* miniprogram/pages/edit-menu/index.wxss */
 
-.edit-container {
-  padding: 30rpx;
-  min-height: 100vh;
-}
-
-/* 顶部信息 */
-.header-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30rpx;
-}
-
-.date-badge {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: var(--text-main);
-  background: var(--card-bg);
-  padding: 12rpx 30rpx;
-  border-radius: 20rpx;
-  border: 1rpx solid var(--card-border);
-}
-
-/* 已添加列表 */
-.dish-list-card {
-  margin-bottom: 30rpx;
-}
-
-.current-dishes {
+.edit-page {
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  padding-top: 24rpx;
+  padding-bottom: 32rpx !important;
+  box-sizing: border-box;
 }
 
-.edit-dish-item {
+/* 日期标题 */
+.edit-date-header {
+  margin-bottom: 32rpx;
+  padding: 0 4rpx;
+}
+
+.edit-date-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--text-main);
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.edit-date-sub {
+  font-size: 24rpx;
+  color: var(--text-muted);
+}
+
+.menu-card {
+  flex: 1;
+  min-height: 0;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.4);
-  border: 1rpx solid rgba(108,142,191,0.08);
-  border-radius: 20rpx;
-  padding: 24rpx 32rpx;
-  animation: fadeIn 0.3s ease;
+  flex-direction: column;
+  margin-bottom: 20rpx !important;
 }
 
-.dish-left {
+.menu-card .empty-state {
+  flex: 1;
+  padding: 40rpx 0;
+}
+
+/* 菜品列表 */
+.edit-dish-list {
+  flex: 1;
+  min-height: 0;
+  margin-bottom: 12rpx;
+}
+
+.edit-dish-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+
+.edit-dish-row:last-child {
+  border-bottom: none;
+}
+
+.edit-dish-left {
   display: flex;
   align-items: center;
   gap: 16rpx;
-}
-
-.dish-label {
-  font-size: 28rpx;
-  font-weight: 600;
-}
-
-.btn-remove {
-  font-size: 36rpx;
-  color: var(--accent-color);
-  padding: 0 10rpx;
-}
-
-/* 手动添加输入面板 */
-.add-panel {
-  display: flex;
-  gap: 20rpx;
-  margin-bottom: 30rpx;
-}
-
-.input-box {
   flex: 1;
 }
 
-.category-picker {
-  width: 160rpx;
-  background: rgba(255, 255, 255, 0.7);
-  border: 2rpx solid rgba(108, 142, 191, 0.15);
-  border-radius: 20rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26rpx;
+.dish-category-dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: var(--gold);
+  flex-shrink: 0;
+}
+
+.edit-dish-name {
+  font-size: 28rpx;
+  font-weight: 600;
   color: var(--text-main);
-  height: 90rpx;
+  flex: 1;
 }
 
-.btn-add-circle {
-  width: 90rpx;
-  height: 90rpx;
-  border-radius: 20rpx;
-  background: linear-gradient(135deg, #7FA2D4 0%, #6C8EBF 100%);
+.edit-dish-cat {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  background: #F5F5F5;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  margin-right: 16rpx;
+}
+
+.delete-btn {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: #FFF0F0;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 28rpx;
+  color: #E53935;
+  flex-shrink: 0;
+}
+
+/* 添加输入行 */
+.add-input-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+.add-input {
+  flex: 1;
+  height: 80rpx;
+  font-size: 26rpx;
+}
+
+.cat-picker-btn {
+  height: 80rpx;
+  padding: 0 20rpx;
+  background: #F5F5F5;
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  font-size: 24rpx;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+.add-circle-btn {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: var(--gold);
   color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 40rpx;
-  box-shadow: 0 8rpx 24rpx rgba(108, 142, 191, 0.2);
+  font-weight: 300;
+  flex-shrink: 0;
 }
 
-/* AI智能卡片与魔幻呼吸灯效果 */
-.ai-helper-card {
-  border: 2rpx solid rgba(155, 184, 167, 0.3);
-  position: relative;
-  overflow: hidden;
+/* 快捷操作按钮组 */
+.quick-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
 }
 
-.ai-helper-card::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 32rpx;
-  border: 2rpx solid transparent;
-  background: linear-gradient(135deg, rgba(155, 184, 167, 0.4), rgba(108, 142, 191, 0.4)) border-box;
-  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  opacity: 0.7;
+.btn-quick {
+  width: 100% !important;
+  margin: 0 !important;
+  background: #FFFFFF;
+  color: var(--text-main);
+  border: 1rpx solid var(--border);
+  padding: 20rpx 0 !important;
+  border-radius: var(--radius-sm);
+  font-size: 24rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  line-height: 1;
+}
+
+.btn-quick-hover {
+  background: #FAF7F2;
+  border-color: var(--gold);
+}
+
+.btn-clear {
+  color: #E53935;
+  border-color: #FFEBEE;
+  background: #FFF8F8;
+}
+
+/* AI 卡片 */
+.ai-card {
+  border-left: 6rpx solid var(--gold);
+  background: linear-gradient(135deg, #FDFCF9 0%, #FAF6EE 100%);
 }
 
 .ai-card-header {
   display: flex;
   align-items: center;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.ai-star {
+  font-size: 28rpx;
+  color: var(--gold);
+}
+
+.ai-card-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.ai-card-desc {
+  font-size: 24rpx;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.ai-result-panel {
+  margin-top: 24rpx;
+}
+
+.ai-result-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 16rpx;
+}
+
+.ai-result-list {
+  display: flex;
+  flex-direction: column;
   gap: 16rpx;
   margin-bottom: 24rpx;
 }
 
-.ai-logo {
-  font-size: 36rpx;
+.ai-result-item {
+  background: #FFFFFF;
+  border: 1rpx solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20rpx 24rpx;
 }
 
-.ai-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: var(--green-color);
-}
-
-.ai-desc {
-  font-size: 24rpx;
-  color: var(--text-sub);
-  margin-bottom: 30rpx;
-}
-
-/* AI 推荐结果展示 */
-.ai-recommend-box {
-  background: rgba(155, 184, 167, 0.08);
-  border-radius: 24rpx;
-  padding: 30rpx;
-  margin-top: 20rpx;
-  border: 1rpx dashed rgba(155, 184, 167, 0.3);
-  animation: fadeIn 0.4s ease;
-}
-
-.ai-recommend-title {
-  font-size: 26rpx;
-  font-weight: 700;
-  color: var(--green-color);
-  margin-bottom: 20rpx;
-}
-
-.ai-recommend-item {
+.ai-result-left {
   display: flex;
-  flex-direction: column;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid rgba(155, 184, 167, 0.1);
-}
-
-.ai-recommend-item:last-child {
-  border-bottom: none;
-}
-
-.ai-dish-header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 16rpx;
+  margin-bottom: 8rpx;
 }
 
-.ai-dish-name {
+.ai-result-name {
   font-size: 28rpx;
   font-weight: 600;
   color: var(--text-main);
 }
 
-.ai-dish-reason {
+.ai-result-cat {
   font-size: 22rpx;
-  color: var(--text-sub);
-  margin-top: 8rpx;
+  color: var(--text-muted);
+  background: #F5F5F5;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+}
+
+.ai-result-reason {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  line-height: 1.5;
   font-style: italic;
 }
 
-.ai-btn-group {
-  display: flex;
-  gap: 20rpx;
-  margin-top: 30rpx;
-}
-
-/* 遮罩及弹窗样式 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(51, 60, 72, 0.4);
-  backdrop-filter: blur(10px);
-  z-index: 1000;
-  display: flex;
-  align-items: flex-end;
-}
-
-.modal-content {
-  background: #F6F8FC;
-  width: 100%;
-  max-height: 80vh;
-  border-radius: 40rpx 40rpx 0 0;
-  padding: 40rpx;
-  box-shadow: 0 -10rpx 40rpx rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30rpx;
-}
-
-.modal-title {
-  font-size: 34rpx;
-  font-weight: 700;
-}
-
-.modal-close {
-  font-size: 44rpx;
-  color: var(--text-light);
-  padding: 0 10rpx;
-}
-
-/* 弹窗搜索框 */
-.modal-search {
-  margin-bottom: 30rpx;
-}
-
-/* 分类过滤器小药丸 */
-.modal-filter-pills {
+.ai-action-row {
   display: flex;
   gap: 16rpx;
-  margin-bottom: 30rpx;
-  overflow-x: auto;
+  margin-top: 16rpx;
+}
+
+/* 保存按钮 */
+.save-btn {
+  margin-top: 16rpx;
+  margin-bottom: 40rpx;
+}
+
+/* 菜品库弹窗 */
+.filter-pills-row {
+  display: flex;
   white-space: nowrap;
-  padding-bottom: 10rpx;
+  margin-bottom: 24rpx;
 }
 
 .filter-pill {
   display: inline-block;
-  padding: 12rpx 28rpx;
-  background: #FFFFFF;
-  border: 1rpx solid rgba(0,0,0,0.05);
-  border-radius: 16rpx;
+  padding: 10rpx 28rpx;
+  border-radius: 32rpx;
   font-size: 24rpx;
-  color: var(--text-sub);
+  font-weight: 600;
+  color: var(--text-muted);
+  background: #FFFFFF;
+  border: 1rpx solid var(--border);
+  margin-right: 12rpx;
+  white-space: nowrap;
 }
 
 .filter-pill.active {
-  background: var(--primary-light);
-  color: var(--primary-color);
-  border-color: rgba(108,142,191,0.2);
-  font-weight: 600;
+  background: var(--text-main);
+  color: #FFFFFF;
+  border-color: var(--text-main);
 }
 
-/* 候选菜品滚动列表 */
-.modal-scroll-list {
-  flex: 1;
-  overflow-y: auto;
-  margin-bottom: 30rpx;
+.repo-scroll {
+  height: 600rpx;
 }
 
 .repo-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 24rpx 30rpx;
-  background: #FFFFFF;
-  border-radius: 20rpx;
-  margin-bottom: 16rpx;
-  border: 1rpx solid rgba(0,0,0,0.02);
+  justify-content: space-between;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid var(--border);
+}
+
+.repo-item:last-child {
+  border-bottom: none;
+}
+
+.repo-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
 }
 
 .repo-item-name {
   font-size: 28rpx;
-  font-weight: 500;
-}
-
-.btn-repo-add {
-  font-size: 24rpx;
-  background: var(--primary-light);
-  color: var(--primary-color);
-  padding: 10rpx 24rpx;
-  border-radius: 12rpx;
   font-weight: 600;
+  color: var(--text-main);
 }
 
-/* 底部主保存按钮 */
-.save-btn-bar {
-  margin-top: 40rpx;
+.repo-item-cat {
+  font-size: 22rpx;
+  color: var(--text-muted);
+}
+
+.repo-add-btn {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: var(--gold-light);
+  color: var(--gold);
   display: flex;
-  gap: 20rpx;
-}
-
-.save-btn-bar button {
-  flex: 1;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  font-weight: 300;
 }

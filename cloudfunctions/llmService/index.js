@@ -21,6 +21,7 @@ exports.main = async (event, context) => {
 
   const { api_key, base_url, model_name } = configRes.data;
 
+  let rawResponse = '';
   try {
     switch (action) {
       case 'recommendToday': {
@@ -75,6 +76,7 @@ JSON 数组格式示例如下:
 
         // 1.5 请求 LLM
         const response = await callLLM(base_url, api_key, model_name, prompt);
+        rawResponse = response;
         const recommendations = cleanAndParseJson(response);
 
         return {
@@ -100,6 +102,7 @@ JSON 数组格式示例如下:
 ]`;
 
         const response = await callLLM(base_url, api_key, model_name, prompt);
+        rawResponse = response;
         const parsedDishes = cleanAndParseJson(response);
 
         return {
@@ -117,7 +120,8 @@ JSON 数组格式示例如下:
     return {
       success: false,
       message: '智能分析服务异常，请稍后重试',
-      error: err.toString()
+      error: err.toString(),
+      rawResponse: rawResponse
     };
   }
 };

@@ -1,94 +1,207 @@
 <!-- miniprogram/pages/admin-settings/index.wxml -->
-<view class="app-container settings-container">
+<view class="page-container settings-page">
 
-  <!-- ================= 非超级管理员锁定界面 ================= -->
-  <block wx:if="{{ !isSystemAdmin }}">
-    <view class="glass-card unauthorized-card animate-fade-in">
-      <view class="lock-icon">🔒</view>
-      <text class="lock-title">配置已锁定</text>
-      <text class="lock-desc">您当前不是系统的超级管理员，无权配置大模型 API 凭证。</text>
-      
-      <!-- 展示当前用户的 OpenID 便于其配置 -->
-      <view class="glass-card openid-card" style="width: 100%; text-align: left; box-shadow: none;">
-        <view class="openid-title">您的微信 OpenID</view>
-        <view class="openid-value-box">
-          <text>{{ myOpenid || '获取中...' }}</text>
-          <view class="btn-copy" bindtap="onCopyOpenid" wx:if="{{ myOpenid }}">复制</view>
+  <!-- ======= 非超管锁屏界面 ======= -->
+  <view wx:if="{{ !isSystemAdmin }}">
+    <view class="lock-screen animate-in">
+      <!-- Shield SVG 图标 -->
+      <view class="lock-icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#D4B28C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+      </view>
+      <text class="lock-title">系统配置已锁定保护</text>
+      <text class="lock-desc">为保障家庭数据隐私与大模型密鑰安全，此设置页面仅超级管理员（雇主）可访问查看。</text>
+
+      <!-- 展示当前 OpenID -->
+      <view class="card openid-card">
+        <text class="openid-label">您的微信 OpenID</text>
+        <view class="openid-value-row">
+          <text class="openid-text" selectable>{{ myOpenid || '获取中...' }}</text>
+          <view class="copy-btn" bindtap="onCopyOpenid" wx:if="{{ myOpenid }}">复制</view>
         </view>
-        <view class="openid-tips">
-          💡 如果您是超级管理员（雇主/主开发者），请复制此 OpenID 并将其配置到项目文件 <text style="font-family: monospace;">miniprogram/config.js</text> 中的 <text style="font-family: monospace;">superAdminOpenId</text>，重新编译即可。
-        </view>
+        <text class="openid-tip">💡 如果您是超级管理员（雇主/主开发者），请复制此 OpenID 并将其配置到项目文件 miniprogram/config.js 中的 superAdminOpenId 字段，重新编译即可。</text>
       </view>
     </view>
-  </block>
+  </view>
 
-  <!-- ================= 超级管理员配置界面 ================= -->
+  <!-- ======= 超管界面 ======= -->
   <block wx:else>
-    <!-- 顶层重要警示 -->
-    <view class="glass-card openid-card animate-fade-in">
-      <view class="openid-title">👑 超级管理员权限锁定已启用</view>
-      <view class="openid-value-box">
-        <text style="font-size: 22rpx;">{{ myOpenid }}</text>
+
+    <!-- 主菜单页 -->
+    <view wx:if="{{ subpage === 'home' }}" class="animate-in">
+      <!-- 项目信息卡 -->
+      <view class="card admin-info-card">
+        <view class="admin-badge">👑 超级管理员权限已启用</view>
+        <text class="admin-openid" selectable>{{ myOpenid }}</text>
+        <text class="admin-tip">您的 OpenID 已成功匹配超管凭证。以下配置保存在微信云端数据库，对任何家庭成员及做饥阿姨不公开。</text>
       </view>
-      <view class="openid-tips">您的 OpenID 已成功匹配超管凭证。以下配置保存在微信云端数据库，前端逻辑调用云函数时在底层安全加载，不对任何家庭成员及做饭阿姨公开。</view>
-    </view>
 
-    <!-- 配置表单卡片 -->
-    <view class="glass-card form-card animate-fade-in">
-      <view class="section-title">LLM 大模型配置</view>
-
-      <view class="form-group">
-        <text class="form-label">API 提供商</text>
-        <picker bindchange="onProviderChange" value="{{ selectedProviderIndex }}" range="{{ providers }}">
-          <view class="form-picker">
-            {{ providers[selectedProviderIndex] }} ▾
+      <!-- 菜单列表 -->
+      <view class="settings-menu-item" bindtap="onGoSubpage" data-page="members">
+        <view class="settings-menu-left">
+          <text class="settings-menu-icon">👥</text>
+          <view>
+            <text class="settings-menu-title">成员与协作管理</text>
+            <text class="settings-menu-desc">审批新成员、调整权限、生成邀请链接</text>
           </view>
-        </picker>
+        </view>
+        <text class="chevron">›</text>
       </view>
 
-      <view class="form-group">
-        <text class="form-label">API Key</text>
-        <input 
-          class="custom-input" 
-          placeholder="请输入 API 密钥 (API Key)..." 
-          password="true" 
-          value="{{ apiKey }}"
-          bindinput="setData"
-          model:value="{{ apiKey }}"
-        />
+      <view class="settings-menu-item" bindtap="onGoSubpage" data-page="llm">
+        <view class="settings-menu-left">
+          <text class="settings-menu-icon">🤖</text>
+          <view>
+            <text class="settings-menu-title">大模型参数配置</text>
+            <text class="settings-menu-desc">设置 API 提供商、密鑰与模型名称</text>
+          </view>
+        </view>
+        <text class="chevron">›</text>
       </view>
-
-      <view class="form-group">
-        <text class="form-label">API Base URL (端点)</text>
-        <input 
-          class="custom-input" 
-          placeholder="例如: https://api.deepseek.com/v1" 
-          value="{{ baseUrl }}"
-          bindinput="setData"
-          model:value="{{ baseUrl }}"
-        />
-      </view>
-
-      <view class="form-group">
-        <text class="form-label">模型名称 (Model Name)</text>
-        <input 
-          class="custom-input" 
-          placeholder="例如: deepseek-chat / gpt-4o-mini" 
-          value="{{ modelName }}"
-          bindinput="setData"
-          model:value="{{ modelName }}"
-        />
-      </view>
-
-      <button 
-        class="btn-primary" 
-        style="width: 100%; margin-top: 40rpx;" 
-        bindtap="onSaveConfig"
-        disabled="{{ saving }}"
-      >
-        {{ saving ? '正在保存...' : '保存配置' }}
-      </button>
     </view>
-  </block>
 
+    <!-- 子页 1：成员管理 -->
+    <view wx:if="{{ subpage === 'members' }}" class="animate-in">
+      <view class="subpage-back" bindtap="onBackToHome">
+        <text>‹</text>
+        <text>返回设置菜单</text>
+      </view>
+
+      <!-- 当前家庭 -->
+      <view class="card">
+        <view class="section-title">当前家庭</view>
+        <view class="family-info-row">
+          <text class="family-info-name">{{ currentFamilyName || '未加入任何家庭' }}</text>
+          <view class="badge badge-gold">{{ approvedMembers.length }}人</view>
+        </view>
+
+        <!-- 邀请按钮 -->
+        <button
+          class="btn-primary"
+          hover-class="btn-primary-hover"
+          open-type="share"
+          wx:if="{{ currentFamilyId }}"
+          style="margin-top: 28rpx;"
+        >
+          📤 微信邀请新成员
+        </button>
+      </view>
+
+      <!-- 待审批列表 -->
+      <view class="card pending-card" wx:if="{{ pendingMembers.length > 0 }}">
+        <view class="pending-header">
+          <text class="section-title" style="color: #F57F17; margin-bottom: 0;">待审批申请</text>
+          <view class="badge badge-pending">{{ pendingMembers.length }}个申请</view>
+        </view>
+
+        <view class="member-list">
+          <view class="member-item" wx:for="{{ pendingMembers }}" wx:key="_id">
+            <view class="member-avatar-wrap">
+              <text class="member-avatar-letter">{{ item.nickname ? item.nickname[0] : '?' }}</text>
+            </view>
+            <view class="member-info">
+              <text class="member-name">{{ item.nickname }}</text>
+              <text class="member-sub">申请加入</text>
+            </view>
+            <view class="approve-actions">
+              <view class="approve-btn blue" bindtap="onApprove" data-id="{{ item._id }}" data-role="write">设为家人</view>
+              <view class="approve-btn" bindtap="onApprove" data-id="{{ item._id }}" data-role="read">设为阿姨</view>
+              <view class="reject-btn" bindtap="onReject" data-id="{{ item._id }}">拒绝</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 已加入成员 -->
+      <view class="card">
+        <text class="section-title">家庭成员 ({{ approvedMembers.length }})</text>
+        <view class="member-list">
+          <view class="member-item" wx:for="{{ approvedMembers }}" wx:key="_id">
+            <view class="member-avatar-wrap">
+              <text class="member-avatar-letter">{{ item.nickname ? item.nickname[0] : '?' }}</text>
+            </view>
+            <view class="member-info">
+              <text class="member-name">{{ item.nickname }}</text>
+              <view class="role-tags">
+                <text class="role-tag admin" wx:if="{{ item.role === 'admin' }}">管理员</text>
+                <text class="role-tag write" wx:if="{{ item.role === 'write' }}">家人 (可读写)</text>
+                <text class="role-tag read" wx:if="{{ item.role === 'read' }}">阿姨 (只读)</text>
+              </view>
+            </view>
+            <!-- 管理员操作按钮 -->
+            <view class="member-actions" wx:if="{{ item.role !== 'admin' }}">
+              <view class="action-btn" bindtap="onEditMember" data-id="{{ item._id }}" data-nickname="{{ item.nickname }}" data-role="{{ item.role }}">编辑</view>
+              <view class="action-btn danger" bindtap="onRemoveMember" data-id="{{ item._id }}" data-name="{{ item.nickname }}">移除</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 子页 2：大模型配置 -->
+    <view wx:if="{{ subpage === 'llm' }}" class="animate-in">
+      <view class="subpage-back" bindtap="onBackToHome">
+        <text>‹</text>
+        <text>返回设置菜单</text>
+      </view>
+
+      <view class="card">
+        <text class="section-title">大模型参数配置</text>
+        <text class="llm-desc">配置安全保存于微信云开发数据库，对家庭成员完全屏蔽。</text>
+
+        <view class="form-group" style="margin-top: 32rpx;">
+          <text class="form-label">API 提供商</text>
+          <picker bindchange="onProviderChange" value="{{ selectedProviderIndex }}" range="{{ providers }}">
+            <view class="form-picker">
+              <text>{{ providers[selectedProviderIndex] }}</text>
+              <text style="color: var(--text-muted);">▾</text>
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">API Key</text>
+          <input
+            class="input-field"
+            placeholder="请输入 API 密鑰 (API Key)..."
+            password="true"
+            value="{{ apiKey }}"
+            bindinput="onApiKeyInput"
+          />
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">API Base URL (端点)</text>
+          <input
+            class="input-field"
+            placeholder="例如: https://api.deepseek.com/v1"
+            value="{{ baseUrl }}"
+            bindinput="onBaseUrlInput"
+          />
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">模型名称 (Model Name)</text>
+          <input
+            class="input-field"
+            placeholder="例如: deepseek-chat / gpt-4o-mini"
+            value="{{ modelName }}"
+            bindinput="onModelNameInput"
+          />
+        </view>
+
+        <button
+          class="btn-primary"
+          hover-class="btn-primary-hover"
+          bindtap="onSaveConfig"
+          disabled="{{ saving }}"
+          style="margin-top: 16rpx;"
+        >
+          {{ saving ? '保存中...' : '保存配置' }}
+        </button>
+      </view>
+    </view>
+
+  </block>
 </view>

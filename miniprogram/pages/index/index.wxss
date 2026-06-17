@@ -1,313 +1,272 @@
 /* miniprogram/pages/index/index.wxss */
 
-.index-container {
-  padding: 30rpx;
-  min-height: 100vh;
+.index-page {
+  padding-top: 24rpx;
 }
 
-/* 顶部状态栏与家庭选择器 */
-.header-bar {
+/* 顶部家庭选择器栏 */
+.family-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30rpx;
+  margin-bottom: 24rpx;
+  padding: 0 4rpx;
 }
 
-.family-selector-wrapper {
-  position: relative;
-}
-
-.family-selector-btn {
+.family-selector {
   display: flex;
   align-items: center;
-  padding: 16rpx 32rpx;
-  background: var(--card-bg);
-  backdrop-filter: blur(10px);
-  border: 1rpx solid var(--card-border);
-  border-radius: 24rpx;
-  font-weight: 600;
-  color: var(--text-main);
-  box-shadow: 0 4rpx 16rpx var(--shadow-color);
+  gap: 8rpx;
+  cursor: pointer;
 }
 
-.arrow-icon {
-  margin-left: 10rpx;
-  font-size: 20rpx;
-  transition: transform 0.3s ease;
-}
-
-.arrow-icon.open {
-  transform: rotate(180deg);
-}
-
-.family-dropdown {
-  position: absolute;
-  top: 90rpx;
-  left: 0;
-  width: 320rpx;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1rpx solid var(--card-border);
-  border-radius: 24rpx;
-  box-shadow: 0 16rpx 48rpx rgba(108, 142, 191, 0.15);
-  z-index: 100;
-  padding: 16rpx 0;
-  overflow: hidden;
-  animation: fadeIn 0.2s ease forwards;
-}
-
-.family-item {
-  padding: 24rpx 32rpx;
-  font-size: 28rpx;
-  color: var(--text-main);
-  border-bottom: 1rpx solid rgba(0,0,0,0.03);
-}
-
-.family-item:last-child {
-  border-bottom: none;
-}
-
-.family-item.active {
-  color: var(--primary-color);
-  font-weight: 600;
-  background-color: var(--primary-light);
-}
-
-.btn-add-family {
-  color: var(--accent-color);
-  font-weight: 600;
-  text-align: center;
-}
-
-/* 导航小药丸 */
-.nav-pill-wrapper {
-  display: flex;
-  gap: 15rpx;
-}
-
-.nav-pill {
-  padding: 14rpx 28rpx;
-  background: rgba(255, 255, 255, 0.6);
-  border: 1rpx solid var(--card-border);
-  border-radius: 20rpx;
-  font-size: 24rpx;
-  color: var(--text-sub);
-  transition: all 0.2s ease;
-}
-
-.nav-pill-active {
-  background: var(--primary-light);
-  color: var(--primary-color);
-  border-color: rgba(108,142,191,0.3);
-}
-
-/* 日历区域 */
-.calendar-card {
-  padding: 30rpx;
-}
-
-.calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30rpx;
-}
-
-.month-title {
+.family-name {
   font-size: 34rpx;
   font-weight: 700;
   color: var(--text-main);
 }
 
-.month-btn-group {
-  display: flex;
-  gap: 20rpx;
+.family-arrow {
+  font-size: 24rpx;
+  color: var(--text-muted);
+  transition: transform 0.25s ease;
+  display: inline-block;
 }
 
-.month-nav-btn {
-  width: 64rpx;
-  height: 64rpx;
+.family-arrow.open {
+  transform: rotate(180deg);
+}
+
+.role-chip {
+  background: var(--gold-light);
+  color: var(--gold);
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+/* 下拉菜单 */
+.family-dropdown {
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  border: 1rpx solid var(--border);
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.08);
+  margin-bottom: 24rpx;
+  overflow: hidden;
+}
+
+.family-drop-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28rpx 32rpx;
+  font-size: 28rpx;
+  color: var(--text-main);
+  border-bottom: 1rpx solid var(--border);
+  font-weight: 500;
+}
+
+.family-drop-item:last-child {
+  border-bottom: none;
+}
+
+.family-drop-item.active {
+  color: var(--gold);
+  font-weight: 700;
+  background: var(--gold-light);
+}
+
+.family-drop-item.add-item {
+  color: var(--gold);
+  font-weight: 600;
+  justify-content: center;
+}
+
+.check-mark {
+  font-size: 28rpx;
+  color: var(--gold);
+}
+
+/* 空引导卡片 */
+.empty-guide {
+  text-align: center;
+  padding: 64rpx 32rpx;
+}
+
+/* 日历卡片 */
+.calendar-card {
+  padding: 32rpx;
+}
+
+.cal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28rpx;
+}
+
+.cal-month {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.cal-nav {
+  display: flex;
+  gap: 16rpx;
+}
+
+.cal-nav-btn {
+  width: 56rpx;
+  height: 56rpx;
   border-radius: 50%;
-  background: rgba(108, 142, 191, 0.1);
+  background: #F5F5F5;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-color);
-  font-size: 28rpx;
+  font-size: 22rpx;
+  color: var(--text-main);
   font-weight: bold;
 }
 
-/* 星期头部 */
-.weeks-row {
+/* 星期表头 */
+.week-row {
   display: flex;
-  margin-bottom: 20rpx;
+  margin-bottom: 12rpx;
 }
 
 .week-cell {
   flex: 1;
   text-align: center;
-  font-size: 24rpx;
-  color: var(--text-light);
+  font-size: 22rpx;
+  color: var(--text-muted);
   font-weight: 600;
 }
 
-/* 日子网络 */
-.days-grid {
+/* 日历网格 */
+.cal-grid {
   display: flex;
   flex-wrap: wrap;
-  row-gap: 20rpx;
 }
 
-.day-cell {
-  width: 14.28%; /* 7列等分 */
-  height: 90rpx;
+.cal-day {
+  width: 14.2857%;
+  aspect-ratio: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  border-radius: 16rpx;
   position: relative;
+  cursor: pointer;
+  background: #FAF8F5;
+  margin: 3rpx 0;
 }
 
-.day-num-box {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28rpx;
-  font-weight: 500;
+.cal-day-num {
+  font-size: 26rpx;
+  font-weight: 600;
   color: var(--text-main);
-  transition: all 0.2s ease;
+  line-height: 1;
 }
 
-/* 非本月日期变淡 */
-.day-cell.other-month {
+.cal-day.other-month {
   opacity: 0.25;
+  background: transparent;
 }
 
-/* 今天高亮 */
-.day-cell.is-today .day-num-box {
-  background-color: var(--accent-light);
-  color: var(--accent-color);
-  font-weight: 700;
+.cal-day.today .cal-day-num {
+  color: var(--gold);
+  font-weight: 800;
 }
 
-/* 选中日期高亮 */
-.day-cell.is-selected .day-num-box {
-  background: linear-gradient(135deg, #7FA2D4 0%, #6C8EBF 100%);
+.cal-day.selected {
+  background: var(--text-main);
+}
+
+.cal-day.selected .cal-day-num {
   color: #FFFFFF;
-  box-shadow: 0 6rpx 16rpx rgba(108, 142, 191, 0.35);
   font-weight: 700;
 }
 
-/* 已配餐小绿点 */
+.cal-day.selected.today .cal-day-num {
+  color: var(--gold);
+}
+
+/* 已配餐指示点 */
 .menu-dot {
   width: 8rpx;
   height: 8rpx;
-  background-color: var(--green-color);
   border-radius: 50%;
+  background: var(--gold);
   position: absolute;
-  bottom: 4rpx;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 6rpx;
 }
 
-/* 菜单详情区域 */
-.menu-details-card {
-  margin-top: 30rpx;
+.cal-day.selected .menu-dot {
+  background: #FFFFFF;
 }
 
-.date-title-bar {
+/* 今日菜单卡片 */
+.today-card {
+  border-left: 6rpx solid var(--gold);
+}
+
+.today-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1rpx solid rgba(108, 142, 191, 0.1);
-  padding-bottom: 20rpx;
   margin-bottom: 24rpx;
 }
 
-.date-text {
-  font-size: 32rpx;
+.today-title {
+  font-size: 30rpx;
   font-weight: 700;
   color: var(--text-main);
 }
 
-.role-badge {
-  font-size: 20rpx;
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
-  background: rgba(155, 184, 167, 0.15);
-  color: var(--green-color);
-}
-
-/* 菜品展示 */
-.dishes-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  margin-bottom: 30rpx;
-}
-
-.dish-item {
-  display: flex;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.5);
-  padding: 24rpx 32rpx;
-  border-radius: 20rpx;
-  border: 1rpx solid rgba(108, 142, 191, 0.08);
-}
-
-.dish-num {
+.edit-link {
   font-size: 26rpx;
-  color: var(--primary-color);
+  color: var(--gold);
   font-weight: 600;
-  margin-right: 20rpx;
+  padding: 8rpx 16rpx;
+  background: var(--gold-light);
+  border-radius: 12rpx;
 }
 
-.dish-name {
-  font-size: 28rpx;
-  color: var(--text-main);
-  font-weight: 500;
-  flex: 1;
-}
-
-.dish-tag {
-  font-size: 22rpx;
-  color: var(--text-sub);
-  background: rgba(0,0,0,0.03);
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
-}
-
-/* 页面底部管理员及快捷导航 */
-.quick-nav {
-  margin-top: 40rpx;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20rpx;
-}
-
-.nav-card {
-  background: var(--card-bg);
-  border: 1rpx solid var(--card-border);
-  box-shadow: 0 8rpx 24rpx var(--shadow-color);
-  border-radius: 24rpx;
-  padding: 30rpx 20rpx;
+/* 菜品药丸标签 */
+.dish-pills {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-bottom: 8rpx;
 }
 
-.nav-icon {
-  font-size: 44rpx;
-  margin-bottom: 12rpx;
-}
-
-.nav-label {
-  font-size: 24rpx;
-  font-weight: 600;
+.dish-pill {
+  background: #FCFAF2;
   color: var(--text-main);
+  border: 1rpx solid var(--border);
+  padding: 12rpx 24rpx;
+  border-radius: 40rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+}
+
+.read-only-tip {
+  margin-top: 24rpx;
+  font-size: 24rpx;
+  color: var(--text-muted);
+  background: #FDFDFB;
+  padding: 20rpx 24rpx;
+  border-radius: 12rpx;
+  border: 1rpx solid var(--border);
+}
+
+.ai-btn-tip {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 12rpx;
+  display: block;
 }

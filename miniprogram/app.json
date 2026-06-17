@@ -6,11 +6,37 @@
     "pages/members/index",
     "pages/admin-settings/index"
   ],
+  "tabBar": {
+    "color": "#9E9E9E",
+    "selectedColor": "#2A2A2A",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "日历",
+        "iconPath": "images/calendar.png",
+        "selectedIconPath": "images/calendar-sel.png"
+      },
+      {
+        "pagePath": "pages/dishes/index",
+        "text": "菜品库",
+        "iconPath": "images/dishes.png",
+        "selectedIconPath": "images/dishes-sel.png"
+      },
+      {
+        "pagePath": "pages/admin-settings/index",
+        "text": "设置",
+        "iconPath": "images/settings.png",
+        "selectedIconPath": "images/settings-sel.png"
+      }
+    ]
+  },
   "window": {
-    "backgroundColor": "#F7F8FC",
+    "backgroundColor": "#FDFDFB",
     "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#FFFFFF",
-    "navigationBarTitleText": "胃口周刊",
+    "navigationBarBackgroundColor": "#FDFDFB",
+    "navigationBarTitleText": "BiteRhythm (食之律动)",
     "navigationBarTextStyle": "black"
   },
   "style": "v2",

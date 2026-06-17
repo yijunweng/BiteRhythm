@@ -1,277 +1,108 @@
 // miniprogram/pages/members/index.js
+// 该页面为微信邀请分享落地页，新成员点击分享卡片后进入此页提交加入申请
 const app = getApp();
 
 Page({
   data: {
     familyId: '',
     familyName: '',
-    currentUserRole: '', // 当前用户在此家庭的角色
-    
-    approvedMembers: [], // 已加入成员
-    pendingMembers: [],  // 待审批成员
-    
-    // 是否为被分享进入的加入页面
-    isJoinFlow: false,
-    inviterName: '',
-
-    loading: false
+    nickname: '',
+    submitting: false,
+    joined: false,
+    loading: true
   },
 
-  onLoad: function (options) {
-    const { familyId, action, inviter } = options;
-    
+  onLoad: async function (options) {
+    const { familyId, action } = options;
     if (!familyId) {
-      wx.showToast({ title: '参数错误', icon: 'none' });
-      setTimeout(() => wx.navigateBack(), 1500);
+      this.setData({ loading: false });
       return;
     }
-
     this.setData({ familyId });
 
-    if (action === 'join') {
-      // 申请加入流程
-      this.setData({
-        isJoinFlow: true,
-        inviterName: inviter || '您的家人'
-      });
-      this.fetchFamilyDetails();
-    } else {
-      // 正常管理流程
-      this.setData({
-        currentUserRole: app.globalData.memberRole || ''
-      });
-      this.fetchFamilyDetails();
-      this.fetchMembers();
-    }
-  },
-
-  // 获取家庭基本资料
-  fetchFamilyDetails: async function() {
+    // 获取家庭名称
     try {
       const db = wx.cloud.database();
-      const res = await db.collection('families').doc(this.data.familyId).get();
-      this.setData({
-        familyName: res.data.name
-      });
-    } catch(err) {
-      console.error('获取家庭详情失败', err);
-    }
-  },
-
-  // 获取当前家庭所有成员
-  fetchMembers: async function() {
-    this.setData({ loading: true });
-    try {
-      const db = wx.cloud.database();
-      const res = await db.collection('family_members')
-        .where({
-          family_id: this.data.familyId
-        }).get();
-
-      const approved = [];
-      const pending = [];
-
-      res.data.forEach(m => {
-        if (m.status === 'approved') {
-          approved.push(m);
-        } else if (m.status === 'pending') {
-          pending.push(m);
-        }
-      });
-
-      this.setData({
-        approvedMembers: approved,
-        pendingMembers: pending
-      });
-    } catch(err) {
-      console.error('获取成员列表失败', err);
+      const res = await db.collection('families').doc(familyId).get();
+      this.setData({ familyName: res.data.name || '' });
+    } catch (err) {
+      console.error('获取家庭失败', err);
     } finally {
       this.setData({ loading: false });
     }
-  },
 
-  // 微信分享配置：生成邀请链接
-  onShareAppMessage: function () {
+    // 检查是否已经是成员
     const openid = app.globalData.openid;
-    return {
-      title: `邀请您加入我的“胃口周刊”家庭：${this.data.familyName}`,
-      path: `/pages/members/index?familyId=${this.data.familyId}&action=join&inviter=${encodeURIComponent(app.globalData.userInfo?.nickName || '家人')}`,
-      imageUrl: '/images/share_cover.png' // 可选，微信默认截屏
-    };
+    if (openid) {
+      try {
+        const db = wx.cloud.database();
+        const r = await db.collection('family_members').where({ family_id: familyId, openid }).get();
+        if (r.data.length > 0) {
+          this.setData({ joined: true });
+        }
+      } catch { }
+    }
   },
 
-  // 申请加入家庭提交
-  onSubmitJoinRequest: async function() {
-    wx.showLoading({ title: '正在提交' });
+  onNicknameInput: function (e) {
+    this.setData({ nickname: e.detail.value });
+  },
+
+  onSubmitJoin: async function () {
+    const { familyId, nickname } = this.data;
+    if (!nickname.trim()) {
+      wx.showToast({ title: '请输入您的属名', icon: 'none' });
+      return;
+    }
+
+    // 确保 openid 已就绪
+    if (!app.globalData.openid) {
+      wx.showToast({ title: '登录状态异常，请重试', icon: 'none' });
+      return;
+    }
+
+    this.setData({ submitting: true });
+    wx.showLoading({ title: '提交中...' });
+
     try {
       const db = wx.cloud.database();
       const openid = app.globalData.openid;
 
-      // 1. 检查是否已经是成员或已申请
-      const checkRes = await db.collection('family_members')
-        .where({
-          family_id: this.data.familyId,
-          openid: openid
-        }).get();
-
-      if (checkRes.data.length > 0) {
-        const m = checkRes.data[0];
-        if (m.status === 'approved') {
-          wx.showToast({ title: '您已经是该家庭成员了', icon: 'none' });
-        } else {
-          wx.showToast({ title: '已提交过申请，请等待管理员审批', icon: 'none' });
+      // 检查是否已申请
+      const existRes = await db.collection('family_members').where({ family_id: familyId, openid }).get();
+      if (existRes.data.length > 0) {
+        if (existRes.data[0].status === 'approved') {
+          this.setData({ joined: true });
+          wx.showToast({ title: '您已是家庭成员', icon: 'success' });
+          return;
         }
-        setTimeout(() => wx.reLaunch({ url: '/pages/index/index' }), 1500);
+        wx.showToast({ title: '您的申请正在审批中', icon: 'none' });
         return;
       }
 
-      // 2. 插入申请记录
-      // 备注：这里由于没有接入完整的微信用户信息，昵称先使用“微信用户”
+      // 提交待审申请
       await db.collection('family_members').add({
         data: {
-          family_id: this.data.familyId,
-          openid: openid,
-          nickname: app.globalData.userInfo?.nickName || '新成员',
-          avatar_url: app.globalData.userInfo?.avatarUrl || '',
-          role: 'read', // 申请者默认分配只读角色，等待管理员修改
-          status: 'pending',
+          family_id: familyId,
+          openid,
+          nickname: nickname.trim(),
+          role: 'read',           // 默认只读，管理员可调权
+          status: 'pending',      // 待审批
           created_at: db.serverDate()
         }
       });
-
-      wx.showToast({ title: '申请提交成功，请联系群主审批', icon: 'success' });
-      setTimeout(() => {
-        wx.reLaunch({ url: '/pages/index/index' });
-      }, 2000);
-    } catch(err) {
-      console.error('申请加入失败', err);
+      this.setData({ joined: true });
+      wx.showToast({ title: '申请已提交', icon: 'success' });
+    } catch (err) {
+      console.error('提交申请失败', err);
       wx.showToast({ title: '提交失败，请重试', icon: 'none' });
     } finally {
+      this.setData({ submitting: false });
       wx.hideLoading();
     }
   },
 
-  // 审批通过并设定角色
-  onApprove: async function(e) {
-    const { id, role } = e.currentTarget.dataset;
-    wx.showLoading({ title: '审批中' });
-    try {
-      const db = wx.cloud.database();
-      
-      // 更新成员状态
-      await db.collection('family_members').doc(id).update({
-        data: {
-          status: 'approved',
-          role: role // 'write' 或 'read'
-        }
-      });
-
-      // 增加 families 表中的成员数计数
-      await wx.cloud.callFunction({
-        name: 'adminService',
-        data: {
-          action: 'incrementMemberCount',
-          familyId: this.data.familyId
-        }
-      });
-
-      wx.showToast({ title: '审批通过', icon: 'success' });
-      this.fetchMembers();
-    } catch(err) {
-      console.error('审批失败', err);
-      wx.showToast({ title: '审批失败', icon: 'error' });
-    } finally {
-      wx.hideLoading();
-    }
-  },
-
-  // 拒绝申请
-  onReject: async function(e) {
-    const { id } = e.currentTarget.dataset;
-    const that = this;
-    wx.showModal({
-      title: '确认拒绝',
-      content: '确定要拒绝该用户的加入申请吗？',
-      success: async (res) => {
-        if (res.confirm) {
-          wx.showLoading({ title: '处理中' });
-          try {
-            const db = wx.cloud.database();
-            await db.collection('family_members').doc(id).remove();
-            wx.showToast({ title: '已拒绝申请', icon: 'success' });
-            that.fetchMembers();
-          } catch(err) {
-            console.error('拒绝申请失败', err);
-          } finally {
-            wx.hideLoading();
-          }
-        }
-      }
-    });
-  },
-
-  // 修改已有成员角色
-  onChangeMemberRole: function(e) {
-    const { id, currentrole } = e.currentTarget.dataset;
-    const that = this;
-    
-    // 如果是自己，不修改
-    const member = this.data.approvedMembers.find(m => m._id === id);
-    if (member && member.openid === app.globalData.openid) {
-      wx.showToast({ title: '无法修改自己的角色', icon: 'none' });
-      return;
-    }
-
-    const rolesList = ['家人 (读写)', '阿姨 (只读)'];
-    wx.showActionSheet({
-      itemList: rolesList,
-      success: async (res) => {
-        const index = res.tapIndex;
-        const targetRole = index === 0 ? 'write' : 'read';
-        
-        if (targetRole === currentrole) return;
-
-        wx.showLoading({ title: '修改中' });
-        try {
-          const db = wx.cloud.database();
-          await db.collection('family_members').doc(id).update({
-            data: { role: targetRole }
-          });
-          wx.showToast({ title: '修改成功', icon: 'success' });
-          that.fetchMembers();
-        } catch(err) {
-          console.error('修改角色失败', err);
-        } finally {
-          wx.hideLoading();
-        }
-      }
-    });
-  },
-
-  // 移除家庭成员
-  onRemoveMember: function(e) {
-    const { id, name } = e.currentTarget.dataset;
-    const that = this;
-
-    wx.showModal({
-      title: '移除成员',
-      content: `确定要将“${name}”移出家庭吗？`,
-      confirmColor: '#E29B9B',
-      success: async (res) => {
-        if (res.confirm) {
-          wx.showLoading({ title: '移出中' });
-          try {
-            const db = wx.cloud.database();
-            await db.collection('family_members').doc(id).remove();
-            wx.showToast({ title: '已成功移出', icon: 'success' });
-            that.fetchMembers();
-          } catch(err) {
-            console.error('移除成员失败', err);
-          } finally {
-            wx.hideLoading();
-          }
-        }
-      }
-    });
+  onGoHome: function () {
+    wx.switchTab({ url: '/pages/index/index' });
   }
 });

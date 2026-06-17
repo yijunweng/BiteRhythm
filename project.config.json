@@ -37,12 +37,24 @@
     "minifyWXML": true,
     "showES6CompileOption": false,
     "useCompilerModule": true,
-    "useStaticHTML": false
+    "useStaticHTML": false,
+    "compileWorklet": false,
+    "uploadWithSourceMap": true,
+    "localPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true
   },
-  "appid": "touristappid",
-  "projectname": "appetite-weekly",
+  "appid": "wxddfcc5999fc19e01",
+  "projectname": "BiteRhythm",
   "libVersion": "2.25.0",
   "simulatorType": "wechat",
   "simulatorPluginLibVersion": {},
-  "condition": {}
+  "condition": {},
+  "compileType": "miniprogram",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "editorSetting": {}
 }

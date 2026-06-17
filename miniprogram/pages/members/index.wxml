@@ -1,128 +1,66 @@
 <!-- miniprogram/pages/members/index.wxml -->
-<view class="app-container members-container">
+<view class="page-container members-page">
 
-  <!-- ================= 申请加入视图 (Share Landing Page) ================= -->
-  <view class="glass-card join-flow-card animate-fade-in" wx:if="{{ isJoinFlow }}">
-    <view class="join-icon">🏡</view>
-    <text class="join-title">申请加入家庭群组</text>
-    <text class="join-inviter">“{{ inviterName }}” 邀请您共同管理“{{ familyName }}”的厨房日历。</text>
-    
-    <button 
-      class="btn-primary" 
-      style="width: 100%;" 
-      bindtap="onSubmitJoinRequest"
-    >
-      申请加入
-    </button>
+  <!-- 项目 Logo / 品牌头 -->
+  <view class="brand-header animate-in">
+    <view class="brand-logo">🍳</view>
+    <text class="brand-name">BiteRhythm (食之律动)</text>
+    <text class="brand-sub">家庭小厨晚安排助手</text>
   </view>
 
-  <!-- ================= 正常成员管理视图 ================= -->
-  <block wx:else>
-    <!-- 家庭基本信息 -->
-    <view class="glass-card family-title-card animate-fade-in">
-      <view class="family-label">当前家庭</view>
-      <view class="family-name-text">{{ familyName || '加载中...' }}</view>
-      
-      <!-- 只有管理员及普通读写家人可生成邀请 -->
-      <button 
-        class="btn-secondary" 
-        open-type="share"
-        wx:if="{{ currentUserRole !== 'read' }}"
-        style="margin-top: 30rpx; width: 100%; font-size: 26rpx;"
+  <!-- 已完成加入界面 -->
+  <view class="card animate-in" wx:if="{{ joined }}">
+    <view class="success-state">
+      <view class="success-icon">✔️</view>
+      <text class="success-title">加入成功！</text>
+      <text class="success-desc">您已成功申请加入「{{ familyName }}」，请等待管理员审批后即可查看菜单。</text>
+      <button class="btn-primary" hover-class="btn-primary-hover" bindtap="onGoHome" style="margin-top: 40rpx;">前往首页</button>
+    </view>
+  </view>
+
+  <!-- 加入家庭表单 -->
+  <view wx:elif="{{ !joined && familyName }}" class="animate-in">
+    <view class="invite-banner">
+      <text class="invite-title">您收到了邀请！</text>
+      <text class="invite-desc">雇主邀请您加入家庭「{{ familyName }}」的咒房日历，一起规划家人每周的呀食。</text>
+    </view>
+
+    <view class="card">
+      <text class="section-title">填写您的属名</text>
+      <text class="nickname-tip">属名将被家庭成员看到，请输入您希望使用的名字或称呼。</text>
+      <input
+        class="input-field"
+        placeholder="例如：温馨小家阿姨、二宝妈妈"
+        value="{{ nickname }}"
+        bindinput="onNicknameInput"
+        style="margin-top: 16rpx;"
+        maxlength="20"
+      />
+
+      <button
+        class="btn-primary"
+        hover-class="btn-primary-hover"
+        bindtap="onSubmitJoin"
+        disabled="{{ submitting }}"
+        style="margin-top: 40rpx;"
       >
-        📤 微信邀请新成员
+        {{ submitting ? '提交中...' : '确认加入小家' }}
       </button>
     </view>
+  </view>
 
-    <!-- 待审批列表 (仅对管理员可见) -->
-    <view 
-      class="glass-card list-section-card pending-card animate-fade-in" 
-      wx:if="{{ currentUserRole === 'admin' && pendingMembers.length > 0 }}"
-    >
-      <view class="section-title" style="color: var(--accent-color);">新加入申请</view>
-      <view class="member-list">
-        <view class="member-card" wx:for="{{ pendingMembers }}" wx:key="_id">
-          <view class="member-info-left">
-            <view class="member-avatar">{{ item.nickname[0] || '?' }}</view>
-            <view class="member-detail">
-              <text class="member-name">{{ item.nickname }}</text>
-              <text style="font-size: 20rpx; color: var(--text-light);">申请加入</text>
-            </view>
-          </view>
-          
-          <view class="pending-actions">
-            <view 
-              class="approve-btn-small green" 
-              bindtap="onApprove" 
-              data-id="{{ item._id }}" 
-              data-role="write"
-            >
-              设为家人
-            </view>
-            <view 
-              class="approve-btn-small" 
-              bindtap="onApprove" 
-              data-id="{{ item._id }}" 
-              data-role="read"
-            >
-              设为阿姨
-            </view>
-            <view 
-              class="reject-btn-small" 
-              bindtap="onReject" 
-              data-id="{{ item._id }}"
-            >
-              拒绝
-            </view>
-          </view>
-        </view>
-      </view>
+  <!-- 家庭信息无效 -->
+  <view class="card animate-in" wx:elif="{{ !familyName && !loading }}">
+    <view class="empty-state">
+      <view class="empty-icon">⚠️</view>
+      <view class="empty-text">邀请链接无效或已过期
+请联系雇主重新生成邀请链接。</view>
     </view>
+  </view>
 
-    <!-- 成员列表 -->
-    <view class="glass-card list-section-card animate-fade-in">
-      <view class="section-title">家庭成员 ({{ approvedMembers.length }})</view>
-      
-      <view class="member-list">
-        <view class="member-card" wx:for="{{ approvedMembers }}" wx:key="_id">
-          <view class="member-info-left">
-            <view class="member-avatar">{{ item.nickname[0] || '?' }}</view>
-            <view class="member-detail">
-              <text class="member-name">{{ item.nickname }}</text>
-              <view style="display: flex; gap: 8rpx; align-items: center;">
-                <text class="role-tag admin" wx:if="{{ item.role === 'admin' }}">管理员</text>
-                <text class="role-tag write" wx:if="{{ item.role === 'write' }}">家人 (可读写)</text>
-                <text class="role-tag read" wx:if="{{ item.role === 'read' }}">阿姨 (只读)</text>
-              </view>
-            </view>
-          </view>
-          
-          <!-- 只有管理员可以操作其他成员 -->
-          <view 
-            class="member-action-right" 
-            wx:if="{{ currentUserRole === 'admin' && item.role !== 'admin' }}"
-          >
-            <view 
-              class="action-dot-btn" 
-              bindtap="onChangeMemberRole" 
-              data-id="{{ item._id }}"
-              data-currentrole="{{ item.role }}"
-            >
-              ✏️
-            </view>
-            <view 
-              class="action-dot-btn" 
-              bindtap="onRemoveMember" 
-              data-id="{{ item._id }}"
-              data-name="{{ item.nickname }}"
-              style="color: var(--accent-color);"
-            >
-              ✕
-            </view>
-          </view>
-        </view>
-      </view>
-    </view>
-  </block>
+  <!-- 加载中 -->
+  <view class="empty-state" wx:if="{{ loading }}">
+    <view class="empty-text">加载中...</view>
+  </view>
 
 </view>

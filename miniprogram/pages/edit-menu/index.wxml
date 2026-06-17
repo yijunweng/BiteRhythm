@@ -1,162 +1,202 @@
 <!-- miniprogram/pages/edit-menu/index.wxml -->
-<view class="app-container edit-container">
+<view class="page-container edit-page">
 
-  <!-- 顶部状态栏 -->
-  <view class="header-info">
-    <view class="date-badge">🗓️ {{ dateStr }}</view>
-    <view style="font-size: 24rpx; color: var(--text-sub);">工作日健康搭配</view>
+  <!-- 日期标题 -->
+  <view class="edit-date-header">
+    <text class="edit-date-title">🗓 {{ dateStr }}</text>
+    <text class="edit-date-sub">今日菜单编辑</text>
   </view>
 
-  <!-- 当天已选菜品卡片 -->
-  <view class="glass-card dish-list-card">
+  <!-- 只读提示条 -->
+  <view class="read-only-banner" wx:if="{{ isReadOnly }}">
+    🔒 您当前是只读角色，可浏览菜单但无法修改
+  </view>
+
+  <!-- 当日已选菜品卡片 -->
+  <view class="card menu-card">
     <view class="section-title">今日菜谱</view>
-    
-    <view class="current-dishes" wx:if="{{ dishesList.length > 0 }}">
-      <view class="edit-dish-item" wx:for="{{ dishesList }}" wx:key="index">
-        <view class="dish-left">
-          <text class="badge badge-primary">{{ item.category || '热菜' }}</text>
-          <text class="dish-label">{{ item.name }}</text>
+
+    <!-- 菜品列表 -->
+    <scroll-view class="edit-dish-list" scroll-y="true" wx:if="{{ dishesList.length > 0 }}">
+      <view class="edit-dish-row" wx:for="{{ dishesList }}" wx:key="index">
+        <view class="edit-dish-left">
+          <text class="edit-dish-cat">{{ item.category || '热菜' }}</text>
+          <text class="edit-dish-name">{{ item.name }}</text>
         </view>
-        <view class="btn-remove" bindtap="onRemoveDish" data-index="{{ index }}">×</view>
+        <view class="delete-btn" bindtap="onRemoveDish" data-index="{{ index }}" wx:if="{{ !isReadOnly }}">
+          <text>✕</text>
+        </view>
       </view>
-    </view>
-    
-    <view class="empty-placeholder" style="padding: 40rpx 0;" wx:else>
+    </scroll-view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:else>
       <view class="empty-icon">🍲</view>
-      <text class="empty-text">今天吃什么？快来添加吧！</text>
+      <view class="empty-text">今天吃什么？快来添加吧！</view>
+    </view>
+
+    <!-- 快捷添加输入区（只读时隐藏） -->
+    <view class="add-input-row" wx:if="{{ !isReadOnly }}">
+      <picker bindchange="onCategoryChange" value="{{ categoryIndex }}" range="{{ categories }}">
+        <view class="cat-picker-btn">{{ customDishCategory }} ▾</view>
+      </picker>
+      <input
+        class="input-field add-input"
+        placeholder="输入新菜名..."
+        value="{{ customDishName }}"
+        bindinput="onCustomDishInput"
+        confirm-type="done"
+        bindconfirm="onAddCustomDish"
+      />
+      <view class="add-circle-btn" bindtap="onAddCustomDish">＋</view>
     </view>
   </view>
 
-  <!-- 手动快捷添加面板 -->
-  <view class="add-panel">
-    <input 
-      class="custom-input input-box" 
-      placeholder="输入新菜名..." 
-      value="{{ customDishName }}"
-      bindinput="setData"
-      data-custom-dish-name="detail.value"
-      model:value="{{ customDishName }}"
-    />
-    
-    <picker bindchange="onCategoryChange" value="{{ 0 }}" range="{{ categories }}">
-      <view class="category-picker">
-        {{ customDishCategory }} ▾
-      </view>
-    </picker>
-    
-    <view class="btn-add-circle" bindtap="onAddCustomDish">+</view>
+  <!-- 操作按钮区（只读时隐藏） -->
+  <view wx:if="{{ !isReadOnly }}">
+    <!-- 从菜品库选择 -->
+    <button
+      class="btn-secondary"
+      hover-class="btn-secondary-hover"
+      bindtap="onOpenRepository"
+      style="margin-bottom: 24rpx;"
+    >
+      📖 从收藏菜品库选择
+    </button>
+
+    <!-- 快捷操作 -->  
+    <view class="quick-btns">
+      <button class="btn-quick" hover-class="btn-quick-hover" bindtap="onCopyYesterdayMenu">
+        📋 复制昨日
+      </button>
+      <button class="btn-quick btn-clear" hover-class="btn-quick-hover" bindtap="onClearMenu">
+        🗑 清空菜单
+      </button>
+    </view>
   </view>
 
-  <!-- 从库中选择入口 -->
-  <button 
-    class="btn-secondary" 
-    hover-class="btn-secondary-hover" 
-    bindtap="onOpenRepository"
-    style="width: 100%; margin-bottom: 30rpx;"
+  <!-- AI 智能搞配卡片（只读时隐藏） -->
+  <view class="card ai-card" wx:if="{{ !isReadOnly }}">
+    <view class="ai-card-header">
+      <text class="ai-star">✦</text>
+      <text class="ai-card-title">AI 智能搞配助理</text>
+    </view>
+    <view class="ai-card-desc">根据家庭唇好、忌口和最近吃过的菜，自动推荐最合适的今日搞配。</view>
+
+    <!-- 调用按钮 -->
+    <button
+      class="btn-primary"
+      hover-class="btn-primary-hover"
+      bindtap="onCallAIRecommend"
+      disabled="{{ aiLoading }}"
+      wx:if="{{ !showAiPanel }}"
+      style="margin-top: 24rpx;"
+    >
+      🪴 {{ aiLoading ? 'AI 思考中...' : 'AI 一键推荐搞配' }}
+    </button>
+
+    <!-- AI 推荐结果面板 -->
+    <view class="ai-result-panel" wx:if="{{ showAiPanel }}">
+      <!-- 加载状态 -->
+      <view wx:if="{{ aiLoading }}">
+        <view class="shimmer-line" style="width: 50%; margin-top: 24rpx;"></view>
+        <view class="shimmer-line" style="width: 100%; height: 60rpx; border-radius: 12rpx;"></view>
+        <view class="shimmer-line" style="width: 80%;"></view>
+        <view class="shimmer-line" style="width: 100%; height: 60rpx; border-radius: 12rpx;"></view>
+      </view>
+
+      <!-- 推荐列表 -->
+      <view wx:if="{{ !aiLoading }}">
+        <view class="ai-result-title">🤖 AI 推荐了以下搞配：</view>
+        <view class="ai-result-list" wx:if="{{ aiRecommendations.length > 0 }}">
+          <view class="ai-result-item" wx:for="{{ aiRecommendations }}" wx:key="index">
+            <view class="ai-result-left">
+              <text class="ai-result-name">{{ item.name }}</text>
+              <text class="ai-result-cat">{{ item.category }}</text>
+            </view>
+            <text class="ai-result-reason" wx:if="{{ item.reason }}">{{ item.reason }}</text>
+          </view>
+        </view>
+        <view class="empty-state" wx:else>
+          <view class="empty-text">未获得推荐，请检查 API 配置或重试</view>
+        </view>
+
+        <!-- 操作按钮 -->
+        <view class="ai-action-row">
+          <button
+            class="btn-primary"
+            hover-class="btn-primary-hover"
+            style="flex: 1;"
+            bindtap="onApplyAiRecommend"
+            disabled="{{ aiRecommendations.length === 0 }}"
+          >
+            应用推荐
+          </button>
+          <button
+            class="btn-secondary"
+            hover-class="btn-secondary-hover"
+            style="flex: 1;"
+            bindtap="onCallAIRecommend"
+          >
+            换一批
+          </button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 保存按钮（只读时隐藏） -->
+  <button
+    class="btn-primary save-btn"
+    hover-class="btn-primary-hover"
+    bindtap="onSaveMenu"
+    disabled="{{ saving }}"
+    wx:if="{{ !isReadOnly }}"
   >
-    📖 从我的收藏/菜品库选择
+    {{ saving ? '保存中...' : '确认并保存菜单' }}
   </button>
 
-  <!-- AI 智能排餐助手卡片 -->
-  <view class="glass-card ai-helper-card">
-    <view class="ai-card-header">
-      <text class="ai-logo">✨</text>
-      <text class="ai-title">AI 智能搭配助理</text>
-    </view>
-    <view class="ai-desc">根据家庭偏好、忌口、历史吃过的菜，自动推荐最合适的今日搭配。</view>
-    
-    <button 
-      class="btn-primary" 
-      style="background: linear-gradient(135deg, #9BB8A7 0%, #87A995 100%); box-shadow: 0 8rpx 24rpx rgba(155, 184, 167, 0.3); width: 100%;" 
-      bindtap="onCallAIRecommend"
-      wx:if="{{ !showAiPanel }}"
-    >
-      🪄 智能搭配推荐
-    </button>
-
-    <!-- AI 推荐展示面板 -->
-    <view class="ai-recommend-box" wx:if="{{ showAiPanel }}">
-      <view class="ai-recommend-title" wx:if="{{ !aiLoading }}">🤖 AI 推荐了以下搭配：</view>
-      
-      <!-- 推荐载入状态 -->
-      <view class="empty-placeholder" style="padding: 40rpx 0;" wx:if="{{ aiLoading }}">
-        <view class="empty-icon" style="animation: spin 2s linear infinite;">💫</view>
-        <text class="empty-text">AI 正在研究你的菜谱习惯与忌口...</text>
-      </view>
-
-      <!-- 推荐结果列表 -->
-      <view class="ai-recommend-list" wx:if="{{ !aiLoading && aiRecommendations.length > 0 }}">
-        <view class="ai-recommend-item" wx:for="{{ aiRecommendations }}" wx:key="index">
-          <view class="ai-dish-header">
-            <text class="ai-dish-name">{{ item.name }}</text>
-            <text class="badge badge-green">{{ item.category || '推荐' }}</text>
-          </view>
-          <text class="ai-dish-reason" wx:if="{{ item.reason }}">“{{ item.reason }}”</text>
-        </view>
-      </view>
-
-      <view class="empty-placeholder" style="padding: 20rpx 0;" wx:if="{{ !aiLoading && aiRecommendations.length === 0 }}">
-        <text class="empty-text">未获得推荐，请检查 API 配置或重试</text>
-      </view>
-
-      <!-- 动作按钮 -->
-      <view class="ai-btn-group" wx:if="{{ !aiLoading }}">
-        <button class="btn-primary" style="flex: 1; font-size: 26rpx;" bindtap="onApplyAiRecommend" disabled="{{ aiRecommendations.length === 0 }}">
-          应用推荐
-        </button>
-        <button class="btn-secondary" style="flex: 1; font-size: 26rpx;" bindtap="onCallAIRecommend">
-          换一批
-        </button>
-      </view>
-    </view>
-  </view>
-
-  <!-- 底部保存/返回 -->
-  <view class="save-btn-bar">
-    <button class="btn-secondary" bindtap="onCloseRepository" bindtap="onSaveMenu" disabled="{{ saving }}">
-      保存今日菜单
-    </button>
-  </view>
-
-  <!-- 菜品库选择浮窗 Modal -->
-  <view class="modal-overlay" wx:if="{{ showRepositoryModal }}" bindtap="onCloseRepository">
-    <view class="modal-content animate-fade-in" catchtap="true">
+  <!-- 菜品库选择弹窗 -->
+  <view class="modal-mask" wx:if="{{ showRepositoryModal }}" bindtap="onCloseRepository">
+    <view class="modal-sheet" catchtap="noop">
       <view class="modal-header">
         <text class="modal-title">我的菜品库</text>
         <view class="modal-close" bindtap="onCloseRepository">×</view>
       </view>
 
-      <!-- 搜索栏 -->
-      <view class="modal-search">
-        <input 
-          class="custom-input" 
-          placeholder="🔍 输入菜名搜索..." 
-          value="{{ searchKeyword }}"
-          bindinput="onSearchInput"
-        />
-      </view>
+      <!-- 搜索 -->
+      <input
+        class="input-field"
+        placeholder="🔍 搜索菜品..."
+        value="{{ searchKeyword }}"
+        bindinput="onSearchInput"
+        style="margin-bottom: 24rpx;"
+      />
 
-      <!-- 分类筛选小药丸 -->
-      <view class="modal-filter-pills">
-        <view class="filter-pill {{ selectedRepoCategory === '全部' ? 'active' : '' }}" bindtap="onSelectCategoryFilter" data-category="全部">全部</view>
-        <view class="filter-pill {{ selectedRepoCategory === '热菜' ? 'active' : '' }}" bindtap="onSelectCategoryFilter" data-category="热菜">热菜</view>
-        <view class="filter-pill {{ selectedRepoCategory === '凉菜' ? 'active' : '' }}" bindtap="onSelectCategoryFilter" data-category="凉菜">凉菜</view>
-        <view class="filter-pill {{ selectedRepoCategory === '汤品' ? 'active' : '' }}" bindtap="onSelectCategoryFilter" data-category="汤品">汤品</view>
-        <view class="filter-pill {{ selectedRepoCategory === '主食' ? 'active' : '' }}" bindtap="onSelectCategoryFilter" data-category="主食">主食</view>
-      </view>
+      <!-- 分类过滤 -->
+      <scroll-view class="filter-pills-row" scroll-x="true">
+        <view
+          class="filter-pill {{ selectedRepoCategory === item ? 'active' : '' }}"
+          wx:for="{{ repoCategories }}"
+          wx:key="index"
+          bindtap="onSelectCategoryFilter"
+          data-category="{{ item }}"
+        >
+          {{ item }}
+        </view>
+      </scroll-view>
 
-      <!-- 滚动菜品列表 -->
-      <scroll-view class="modal-scroll-list" scroll-y="true">
+      <!-- 菜品列表 -->
+      <scroll-view class="repo-scroll" scroll-y="true">
         <view class="repo-item" wx:for="{{ filteredRepoDishes }}" wx:key="_id">
-          <view style="display: flex; align-items: center; gap: 12rpx;">
-            <text class="badge badge-primary">{{ item.category }}</text>
+          <view class="repo-item-info">
             <text class="repo-item-name">{{ item.name }}</text>
+            <text class="repo-item-cat">{{ item.category }}</text>
           </view>
-          <view class="btn-repo-add" bindtap="onAddRepoDish" data-dish="{{ item }}">+ 添加</view>
-        </scroll-view>
-        
-        <view class="empty-placeholder" style="padding: 40rpx 0;" wx:if="{{ filteredRepoDishes.length === 0 }}">
-          <text class="empty-text">没有找到符合条件的菜品</text>
+          <view class="repo-add-btn" bindtap="onAddRepoDish" data-dish="{{ item }}">＋</view>
+        </view>
+        <view class="empty-state" wx:if="{{ filteredRepoDishes.length === 0 }}">
+          <view class="empty-text">没有找到符合条件的菜品</view>
         </view>
       </scroll-view>
     </view>

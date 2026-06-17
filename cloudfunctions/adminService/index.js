@@ -5,9 +5,6 @@ cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 });
 
-// 超级管理员 OpenID (部署时请替换为您真实的 OpenID)
-const SUPER_ADMIN_OPENID = 'SUPER_ADMIN_OPENID';
-
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext();
   const openid = wxContext.OPENID;
@@ -16,9 +13,32 @@ exports.main = async (event, context) => {
 
   const { action, config, familyId } = event;
 
-  // 1. 系统级 LLM 配置的读写操作必须强制校验超级管理员 OpenID
-  if (action === 'saveLLMConfig' || action === 'getLLMConfig') {
-    if (openid !== SUPER_ADMIN_OPENID) {
+  // ============================================================
+  // 超级管理员 OpenID 校验
+  // 从 system_config 读取 super_admin_openid，实现运行时动态校验，
+  // 避免硬编码在云函数代码中（部署更新时无需重新上传）
+  // ============================================================
+  const getSuperAdminOpenid = async () => {
+    try {
+      const res = await db.collection('system_config').doc('global_config').get().catch(() => null);
+      if (res && res.data && res.data.super_admin_openid) {
+        return res.data.super_admin_openid;
+      }
+    } catch (e) { /* ignore */ }
+    return null;
+  };
+
+  // 需要超管权限的操作
+  const adminRequiredActions = ['saveLLMConfig', 'getLLMConfig'];
+  if (adminRequiredActions.includes(action)) {
+    const superAdminOpenid = await getSuperAdminOpenid();
+    if (!superAdminOpenid) {
+      return {
+        success: false,
+        message: '系统尚未初始化超管 OpenID，请先调用 initSuperAdmin 完成初始化。'
+      };
+    }
+    if (openid !== superAdminOpenid) {
       return {
         success: false,
         message: '权限不足：您当前不是超级管理员，无法操作 API 凭证'
@@ -28,63 +48,80 @@ exports.main = async (event, context) => {
 
   try {
     switch (action) {
+
+      // 初始化：写入超管 OpenID（仅允许调用一次，已存在则拒绝）
+      case 'initSuperAdmin': {
+        const existRes = await db.collection('system_config').doc('global_config').get().catch(() => null);
+        if (existRes && existRes.data && existRes.data.super_admin_openid) {
+          // 已存在超管，拒绝覆盖（防止被普通用户劫持）
+          return { success: false, message: '超管 OpenID 已初始化，不可重复设置。' };
+        }
+        // 第一次调用：将当前调用者的 openid 设为超管
+        const configData = {
+          super_admin_openid: openid,
+          initialized_at: db.serverDate()
+        };
+        if (existRes) {
+          await db.collection('system_config').doc('global_config').update({ data: configData });
+        } else {
+          await db.collection('system_config').add({ data: { _id: 'global_config', ...configData } });
+        }
+        return { success: true, message: '超管 OpenID 初始化成功', openid };
+      }
+
+      case 'getSuperAdminStatus': {
+        // 返回当前用户是否是超管（不暴露 OpenID）
+        const superAdminOpenid = await getSuperAdminOpenid();
+        return {
+          success: true,
+          isSystemAdmin: openid === superAdminOpenid,
+          initialized: !!superAdminOpenid
+        };
+      }
+
       case 'saveLLMConfig': {
-        // 保存 API 配置，保持全局单条记录在 system_config 中 (以 'global_config' 为 id)
         const configId = 'global_config';
+        // 只更新提供的字段，api_key 若未传入则不覆盖原值
         const configData = {
           llm_provider: config.llm_provider,
-          api_key: config.api_key,
           base_url: config.base_url,
           model_name: config.model_name,
           updated_at: db.serverDate()
         };
-
-        // 尝试获取，若存在则更新，不存在则新增
+        if (config.api_key) {
+          configData.api_key = config.api_key;
+        }
         const existRes = await db.collection('system_config').doc(configId).get().catch(() => null);
-        
         if (existRes) {
-          await db.collection('system_config').doc(configId).update({
-            data: configData
-          });
+          await db.collection('system_config').doc(configId).update({ data: configData });
         } else {
-          await db.collection('system_config').add({
-            data: {
-              _id: configId,
-              ...configData
-            }
-          });
+          await db.collection('system_config').add({ data: { _id: configId, ...configData } });
         }
         return { success: true, message: '配置保存成功' };
       }
 
+
       case 'getLLMConfig': {
-        // 获取 API 配置
         const configId = 'global_config';
         const res = await db.collection('system_config').doc(configId).get().catch(() => null);
         if (res) {
-          return { success: true, config: res.data };
-        } else {
-          return { success: true, config: {} };
+          // 不返回 api_key 的明文，只返回有无配置的状态 + 其他字段
+          const { api_key, ...safeData } = res.data;
+          return { success: true, config: { ...safeData, api_key_set: !!api_key } };
         }
+        return { success: true, config: {} };
       }
 
       case 'incrementMemberCount': {
-        // 增加家庭的成员数计数 (供审批通过时内部调用)
-        if (!familyId) {
-          return { success: false, message: '参数缺失 familyId' };
-        }
-        await db.collection('families').doc(familyId).update({
-          data: {
-            members_count: _.inc(1)
-          }
-        });
+        if (!familyId) return { success: false, message: '参数缺失 familyId' };
+        await db.collection('families').doc(familyId).update({ data: { members_count: _.inc(1) } });
         return { success: true };
       }
 
       default:
         return { success: false, message: `不支持的操作 action: ${action}` };
     }
-  } catch(err) {
+  } catch (err) {
     console.error('adminService 错误', err);
     return {
       success: false,

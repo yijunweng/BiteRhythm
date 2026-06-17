@@ -1,206 +1,192 @@
 /* miniprogram/pages/dishes/index.wxss */
 
-.dishes-container {
-  padding: 30rpx;
-  min-height: 100vh;
+.dishes-page {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding-top: 24rpx;
+  padding-bottom: 32rpx !important;
+  box-sizing: border-box;
 }
 
-/* 顶部操作区 */
-.action-header {
+.dishes-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30rpx;
+  margin-bottom: 28rpx;
+  padding: 0 4rpx;
 }
 
-.title-section {
-  font-size: 34rpx;
+.dishes-title {
+  font-size: 36rpx;
   font-weight: 700;
   color: var(--text-main);
 }
 
-.header-buttons {
+.header-actions {
   display: flex;
   gap: 16rpx;
+  align-items: center;
 }
 
-.mini-btn {
+.icon-btn {
   padding: 12rpx 24rpx;
-  font-size: 24rpx;
   border-radius: 16rpx;
+  font-size: 24rpx;
   font-weight: 600;
+  border: 1rpx solid var(--border);
 }
 
-/* 搜索框 */
-.search-wrapper {
-  margin-bottom: 24rpx;
+.ai-btn {
+  background: var(--gold-light);
+  color: var(--gold);
+  border-color: rgba(212, 178, 140, 0.3);
 }
 
-/* 选项卡栏 */
+.add-btn {
+  background: var(--text-main);
+  color: #FFFFFF;
+  border-color: var(--text-main);
+}
+
+.search-bar {
+  margin-bottom: 20rpx;
+}
+
+.search-input {
+  height: 80rpx;
+  font-size: 26rpx;
+  border-radius: 40rpx;
+  padding: 0 32rpx;
+}
+
 .tab-scroll {
+  display: flex;
   white-space: nowrap;
-  margin-bottom: 30rpx;
-  padding-bottom: 10rpx;
+  margin-bottom: 24rpx;
 }
 
 .tab-pill {
   display: inline-block;
-  padding: 14rpx 32rpx;
-  background: var(--card-bg);
-  border: 1rpx solid var(--card-border);
-  border-radius: 20rpx;
-  margin-right: 16rpx;
+  padding: 12rpx 32rpx;
+  border-radius: 32rpx;
   font-size: 26rpx;
-  color: var(--text-sub);
-  transition: all 0.2s ease;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: #FFFFFF;
+  border: 1rpx solid var(--border);
+  margin-right: 12rpx;
+  white-space: nowrap;
 }
 
 .tab-pill.active {
-  background: var(--primary-light);
-  color: var(--primary-color);
-  border-color: rgba(108,142,191,0.3);
-  font-weight: 700;
+  background: var(--text-main);
+  color: #FFFFFF;
+  border-color: var(--text-main);
 }
 
-/* 菜品展示列表 */
-.dishes-list-wrapper {
+.dish-list-scroll {
+  flex: 1;
+  min-height: 0;
+  margin-bottom: 16rpx;
+}
+
+.dish-list {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 24rpx;
+  padding-bottom: 24rpx;
 }
 
-.dish-repo-card {
+.dishes-page .empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40rpx 0;
+}
+
+.dish-card {
+  position: relative;
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  padding: 24rpx 28rpx;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--card-bg);
-  border: 1rpx solid var(--card-border);
-  box-shadow: 0 8rpx 24rpx var(--shadow-color);
-  border-radius: 24rpx;
-  padding: 30rpx;
-  animation: fadeIn 0.3s ease;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.03);
+  border: 1rpx solid var(--border);
 }
 
-.dish-repo-info {
+.ai-star-badge {
+  position: absolute;
+  top: -14rpx;
+  left: 6rpx;
+  font-size: 28rpx;
+  color: var(--gold);
+  z-index: 5;
+  line-height: 1;
+}
+
+.dish-info {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 8rpx;
-  flex: 1;
 }
 
-.dish-repo-title-row {
+.dish-name-row {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  gap: 16rpx;
 }
 
-.dish-repo-name {
-  font-size: 30rpx;
+.dish-card-name {
+  font-size: 28rpx;
   font-weight: 600;
   color: var(--text-main);
 }
 
-.dish-repo-remark {
-  font-size: 24rpx;
-  color: var(--text-sub);
+.dish-card-cat {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  background: #F5F5F5;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  margin-right: 16rpx;
+}
+
+.dish-card-remark {
+  font-size: 22rpx;
+  color: var(--text-muted);
   font-style: italic;
 }
 
-.btn-delete-trash {
-  font-size: 32rpx;
-  color: var(--accent-color);
+.trash-btn {
+  font-size: 36rpx;
+  padding: 8rpx;
   opacity: 0.6;
-  padding: 10rpx;
 }
 
-.btn-delete-trash:active {
-  opacity: 1;
-}
-
-/* AI 批量解析面板样式 */
 .ai-textarea {
   width: 100%;
-  height: 240rpx;
-  background: rgba(255, 255, 255, 0.6);
-  border: 2rpx solid rgba(155, 184, 167, 0.2);
-  border-radius: 20rpx;
-  padding: 24rpx;
-  font-size: 28rpx;
-  color: var(--text-main);
-  margin-bottom: 20rpx;
-}
-
-.ai-textarea:focus {
-  background: #FFFFFF;
-  border-color: var(--green-color);
-}
-
-.ai-tips {
-  font-size: 22rpx;
-  color: var(--text-sub);
-  margin-bottom: 30rpx;
-}
-
-/* 表单输入组 */
-.form-group {
-  margin-bottom: 24rpx;
-}
-
-.form-label {
+  min-height: 200rpx;
+  padding: 20rpx 24rpx;
+  background: #FDFDFB;
+  border: 2rpx solid var(--border);
+  border-radius: var(--radius-sm);
   font-size: 26rpx;
-  font-weight: 600;
-  color: var(--text-sub);
-  margin-bottom: 12rpx;
-  display: block;
+  color: var(--text-main);
+  line-height: 1.6;
 }
 
-.form-picker {
-  background: rgba(255, 255, 255, 0.6);
-  border: 2rpx solid rgba(108, 142, 191, 0.15);
-  border-radius: 20rpx;
-  height: 90rpx;
-  display: flex;
-  align-items: center;
-  padding: 0 30rpx;
-  font-size: 28rpx;
-}
-
-/* 浮窗 Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(51, 60, 72, 0.4);
-  backdrop-filter: blur(10px);
-  z-index: 1000;
-  display: flex;
-  align-items: flex-end;
-}
-
-.modal-content {
-  background: #F6F8FC;
-  width: 100%;
-  border-radius: 40rpx 40rpx 0 0;
-  padding: 40rpx;
-  box-shadow: 0 -10rpx 40rpx rgba(0,0,0,0.1);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30rpx;
-}
-
-.modal-title {
-  font-size: 34rpx;
-  font-weight: 700;
-}
-
-.modal-close {
-  font-size: 44rpx;
-  color: var(--text-light);
-  padding: 0 10rpx;
+.ai-tip {
+  font-size: 24rpx;
+  color: var(--text-muted);
+  background: var(--gold-light);
+  padding: 16rpx 20rpx;
+  border-radius: var(--radius-sm);
+  line-height: 1.6;
 }
