@@ -310,7 +310,8 @@
 
 .skeleton-day {
   width: 14.2857%;
-  aspect-ratio: 1;
+  height: unset !important;
+  aspect-ratio: 1 !important;
   border-radius: 16rpx !important;
   margin: 3rpx 0;
   margin-bottom: 0 !important;
