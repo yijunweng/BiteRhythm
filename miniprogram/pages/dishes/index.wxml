@@ -79,7 +79,7 @@
       <view class="dish-list">
         <view class="dish-card {{ item.remark === 'AI导入' ? 'is-ai-imported' : '' }}" wx:for="{{ filteredDishes }}" wx:key="_id">
           <text class="iconfont iconfont-ai ai-star-badge" wx:if="{{ item.remark === 'AI导入' }}"></text>
-          <view class="dish-info">
+          <view class="dish-info" bindtap="onOpenEditModal" data-dish="{{ item }}">
             <view class="dish-name-row">
               <text class="dish-card-cat">{{ item.category }}</text>
               <text class="dish-card-name">{{ item.name }}</text>
@@ -204,6 +204,68 @@
         >
           <text class="iconfont iconfont-ai"></text>
           <text>{{ importLoading ? 'AI 分析导入中...' : '开始 AI 解析并导入' }}</text>
+        </button>
+      </view>
+    </view>
+    <!-- 编辑菜品 Modal -->
+    <view class="modal-mask" wx:if="{{ showEditModal }}" bindtap="onCloseEditModal">
+      <view class="modal-sheet" catchtap="noop">
+        <view class="modal-header">
+          <text class="modal-title">编辑菜品</text>
+          <view class="modal-close" bindtap="onCloseEditModal">
+            <text class="iconfont iconfont-wrong"></text>
+          </view>
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">菜品名称</text>
+          <input
+            class="input-field"
+            placeholder="请输入菜品名称，如「辣椒炒肉」"
+            value="{{ editDishName }}"
+            bindinput="onEditDishNameInput"
+          />
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">菜品类别</text>
+          <view class="custom-select-container open-up">
+            <view class="form-picker {{ showEditCategoryPicker ? 'active' : '' }}" bindtap="onToggleEditCategoryPicker">
+              <text>{{ editDishCategory }}</text>
+              <text class="iconfont iconfont-down-line select-arrow {{ showEditCategoryPicker ? 'open' : '' }}"></text>
+            </view>
+            <view class="custom-select-options {{ showEditCategoryPicker ? 'show' : '' }}">
+              <view
+                class="custom-select-option {{ editCategoryIndex === index ? 'selected' : '' }}"
+                wx:for="{{ categories }}"
+                wx:key="index"
+                bindtap="onSelectEditCategory"
+                data-index="{{ index }}"
+              >
+                <text>{{ item }}</text>
+              </view>
+            </view>
+            <view class="custom-select-backdrop" wx:if="{{ showEditCategoryPicker }}" bindtap="onCloseEditCategoryPicker"></view>
+          </view>
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">备注 / 描述（可选）</text>
+          <input
+            class="input-field"
+            placeholder="如「不放辣/宝贝爱吃」"
+            value="{{ editDishRemark }}"
+            bindinput="onEditDishRemarkInput"
+          />
+        </view>
+
+        <button
+          class="btn-primary"
+          hover-class="btn-primary-hover"
+          bindtap="onUpdateDish"
+          style="margin-top: 16rpx;"
+        >
+          确认保存
         </button>
       </view>
     </view>

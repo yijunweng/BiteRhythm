@@ -103,19 +103,24 @@
         <view class="card">
           <view class="section-title">当前家庭</view>
           <view class="family-info-row">
-            <text class="family-info-name">{{ currentFamilyName || '未加入任何家庭' }}</text>
-            <view class="badge badge-gold">{{ approvedMembers.length }}人</view>
+            <view style="display: flex; align-items: center; gap: 16rpx;">
+              <text class="family-info-name">{{ currentFamilyName || '未加入任何家庭' }}</text>
+              <view class="badge badge-gold" wx:if="{{ currentFamilyId }}">{{ approvedMembers.length }}人</view>
+            </view>
+            <view class="family-action-icons" wx:if="{{ currentFamilyId }}">
+              <text class="iconfont iconfont-modify" bindtap="onOpenRenameFamilyModal"></text>
+              <text class="iconfont iconfont-delete" bindtap="onDeleteFamily"></text>
+            </view>
           </view>
 
           <!-- 邀请按钮 -->
           <button
-            class="btn-primary"
+            class="btn-primary btn-invite"
             hover-class="btn-primary-hover"
             open-type="share"
             wx:if="{{ currentFamilyId }}"
-            style="margin-top: 28rpx;"
           >
-            <text class="iconfont iconfont-wechat" style="font-size: 48rpx;"></text>
+            <text class="iconfont iconfont-wechat" style="font-size: 36rpx;"></text>
             <text>微信邀请新成员</text>
           </button>
         </view>
@@ -244,6 +249,37 @@
           style="margin-top: 16rpx;"
         >
           {{ saving ? '保存中...' : '保存配置' }}
+        </button>
+      </view>
+    </view>
+
+    <!-- 修改家庭名称 Modal -->
+    <view class="modal-mask" wx:if="{{ showRenameFamilyModal }}" bindtap="onCloseRenameFamilyModal">
+      <view class="modal-sheet" catchtap="noop" style="padding-bottom: 80rpx;">
+        <view class="modal-header">
+          <text class="modal-title">修改家庭名称</text>
+          <view class="modal-close" bindtap="onCloseRenameFamilyModal">
+            <text class="iconfont iconfont-wrong"></text>
+          </view>
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">家庭新名称</text>
+          <input
+            class="input-field"
+            placeholder="请输入新的家庭名称"
+            value="{{ renameFamilyName }}"
+            bindinput="onRenameFamilyNameInput"
+          />
+        </view>
+
+        <button
+          class="btn-primary"
+          hover-class="btn-primary-hover"
+          bindtap="onCommitRenameFamily"
+          style="margin-top: 16rpx;"
+        >
+          确认修改
         </button>
       </view>
     </view>

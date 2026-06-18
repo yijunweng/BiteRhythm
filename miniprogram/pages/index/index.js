@@ -16,7 +16,9 @@ Page({
     selectedDateMenu: null,
     monthlyMenus: {},
     loading: false,
-    aiPlanLoading: false
+    aiPlanLoading: false,
+    showCreateFamilyModal: false,
+    newFamilyName: ''
   },
 
   onLoad: function () {
@@ -143,34 +145,52 @@ Page({
   },
 
   onCreateFamily: function () {
-    const that = this;
-    wx.showModal({
-      title: '创建新家庭',
-      placeholderText: '请输入家庭名称，如"温馨小家"',
-      editable: true,
-      success: async (res) => {
-        if (res.confirm && res.content && res.content.trim()) {
-          const name = res.content.trim();
-          wx.showLoading({ title: '创建中' });
-          try {
-            const db = wx.cloud.database();
-            const openid = app.globalData.openid;
-            const addRes = await db.collection('families').add({
-              data: { name, creator_openid: openid, preferences: '', members_count: 1, created_at: db.serverDate() }
-            });
-            await db.collection('family_members').add({
-              data: { family_id: addRes._id, openid, nickname: '管理员', role: 'admin', status: 'approved', created_at: db.serverDate() }
-            });
-            wx.showToast({ title: '创建成功', icon: 'success' });
-            await that.fetchFamiliesList();
-          } catch (err) {
-            wx.showToast({ title: '创建失败', icon: 'error' });
-          } finally {
-            wx.hideLoading();
-          }
-        }
+    this.setData({ showCreateFamilyModal: true, newFamilyName: '' });
+  },
+
+  onCloseCreateFamilyModal: function () {
+    this.setData({ showCreateFamilyModal: false });
+  },
+
+  onNewFamilyNameInput: function (e) {
+    this.setData({ newFamilyName: e.detail.value });
+  },
+
+  noop: function () {},
+
+  onCommitCreateFamily: async function () {
+    const name = this.data.newFamilyName.trim();
+    if (!name) {
+      wx.showToast({ title: '请输入家庭名称', icon: 'none' });
+      return;
+    }
+    wx.showLoading({ title: '检查重名中...' });
+    try {
+      const db = wx.cloud.database();
+      
+      // 检查是否重名
+      const checkRes = await db.collection('families').where({ name }).get();
+      if (checkRes.data.length > 0) {
+        wx.showToast({ title: '已存在同名家庭', icon: 'none' });
+        return;
       }
-    });
+
+      wx.showLoading({ title: '创建中' });
+      const openid = app.globalData.openid;
+      const addRes = await db.collection('families').add({
+        data: { name, creator_openid: openid, preferences: '', members_count: 1, created_at: db.serverDate() }
+      });
+      await db.collection('family_members').add({
+        data: { family_id: addRes._id, openid, nickname: '管理员', role: 'admin', status: 'approved', created_at: db.serverDate() }
+      });
+      wx.showToast({ title: '创建成功', icon: 'success' });
+      this.setData({ showCreateFamilyModal: false });
+      await this.fetchFamiliesList();
+    } catch (err) {
+      wx.showToast({ title: '创建失败', icon: 'error' });
+    } finally {
+      wx.hideLoading();
+    }
   },
 
   fetchMonthlyMenus: async function () {

@@ -118,6 +118,29 @@ exports.main = async (event, context) => {
         return { success: true };
       }
 
+      case 'deleteFamily': {
+        if (!familyId) return { success: false, message: '参数缺失 familyId' };
+        
+        // 1. 校验当前用户是否为该家庭的管理员
+        const memberRes = await db.collection('family_members').where({
+          family_id: familyId,
+          openid: openid,
+          role: 'admin'
+        }).get();
+        
+        if (memberRes.data.length === 0) {
+          return { success: false, message: '权限不足：只有家庭管理员可以删除该家庭' };
+        }
+        
+        // 2. 依次删除关联的所有数据
+        await db.collection('dishes').where({ family_id: familyId }).remove();
+        await db.collection('menus').where({ family_id: familyId }).remove();
+        await db.collection('family_members').where({ family_id: familyId }).remove();
+        await db.collection('families').doc(familyId).remove();
+        
+        return { success: true, message: '家庭及关联数据已成功删除' };
+      }
+
       default:
         return { success: false, message: `不支持的操作 action: ${action}` };
     }

@@ -23,7 +23,9 @@ Page({
     modelName: '',
     saving: false,
     loading: false,
-    membersLoading: false
+    membersLoading: false,
+    showRenameFamilyModal: false,
+    renameFamilyName: ''
   },
 
   onLoad: function () {
@@ -279,6 +281,115 @@ Page({
       },
       fail: () => wx.showToast({ title: '云端保存失败', icon: 'none' }),
       complete: () => { this.setData({ saving: false }); wx.hideLoading(); }
+    });
+  },
+
+  onOpenRenameFamilyModal: function () {
+    this.setData({
+      showRenameFamilyModal: true,
+      renameFamilyName: this.data.currentFamilyName
+    });
+  },
+
+  onCloseRenameFamilyModal: function () {
+    this.setData({
+      showRenameFamilyModal: false
+    });
+  },
+
+  onRenameFamilyNameInput: function (e) {
+    this.setData({
+      renameFamilyName: e.detail.value
+    });
+  },
+
+  noop: function () {},
+
+  onCommitRenameFamily: async function () {
+    const name = this.data.renameFamilyName.trim();
+    if (!name) {
+      wx.showToast({ title: '请输入家庭名称', icon: 'none' });
+      return;
+    }
+    
+    // 检查是否重名
+    wx.showLoading({ title: '检查重名中...' });
+    try {
+      const db = wx.cloud.database();
+      const checkRes = await db.collection('families').where({ name }).get();
+      const duplicate = checkRes.data.find(f => f._id !== this.data.currentFamilyId);
+      if (duplicate) {
+        wx.showToast({ title: '已存在同名家庭', icon: 'none' });
+        return;
+      }
+
+      wx.showLoading({ title: '修改中...' });
+      await db.collection('families').doc(this.data.currentFamilyId).update({
+        data: { name }
+      });
+
+      if (app.globalData.activeFamily && app.globalData.activeFamily._id === this.data.currentFamilyId) {
+        app.globalData.activeFamily.name = name;
+      }
+
+      this.setData({
+        currentFamilyName: name,
+        showRenameFamilyModal: false
+      });
+      wx.showToast({ title: '修改成功', icon: 'success' });
+    } catch (err) {
+      console.error(err);
+      wx.showToast({ title: '修改失败', icon: 'none' });
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
+  onDeleteFamily: function () {
+    const myOpenid = this.data.myOpenid;
+    const isFamilyAdmin = this.data.approvedMembers.some(m => m.openid === myOpenid && m.role === 'admin');
+    
+    if (!isFamilyAdmin) {
+      wx.showToast({ title: '只有家庭管理员可以删除家庭', icon: 'none' });
+      return;
+    }
+    
+    wx.showModal({
+      title: '确认删除家庭',
+      content: `确定要解散并删除家庭「${this.data.currentFamilyName}」吗？此操作将永久清除该家庭下的所有成员、菜品及排餐记录，且无法恢复！`,
+      confirmColor: '#E53935',
+      success: async (res) => {
+        if (res.confirm) {
+          wx.showLoading({ title: '正在删除...' });
+          try {
+            const callRes = await wx.cloud.callFunction({
+              name: 'adminService',
+              data: {
+                action: 'deleteFamily',
+                familyId: this.data.currentFamilyId
+              }
+            });
+            
+            if (callRes.result && callRes.result.success) {
+              wx.showToast({ title: '删除成功', icon: 'success' });
+              app.globalData.activeFamily = null;
+              app.globalData.memberRole = '';
+              setTimeout(() => {
+                wx.reLaunch({
+                  url: '/pages/index/index'
+                });
+              }, 1500);
+            } else {
+              wx.showToast({ title: callRes.result.message || '删除失败', icon: 'none' });
+            }
+          } catch (err) {
+            console.error('删除家庭失败', err);
+            wx.showToast({ title: '删除失败', icon: 'none' });
+          } finally {
+            wx.hideLoading();
+          }
+        }
+      }
     });
   }
 });

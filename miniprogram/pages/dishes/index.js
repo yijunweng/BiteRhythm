@@ -20,7 +20,14 @@ Page({
     newDishRemark: '',
     showAiImportModal: false,
     bulkImportText: '',
-    importLoading: false
+    importLoading: false,
+    showEditModal: false,
+    editDishId: '',
+    editDishName: '',
+    editDishCategory: '热菜',
+    editCategoryIndex: 0,
+    editDishRemark: '',
+    showEditCategoryPicker: false
   },
 
   onLoad: function (options) {
@@ -108,7 +115,7 @@ Page({
   onAddDish: async function () {
     const name = this.data.newDishName.trim();
     if (!name) { wx.showToast({ title: '请输入菜名', icon: 'none' }); return; }
-    if (this.data.dishes.some(d => d.name === name)) { wx.showToast({ title: '菜品已在库中', icon: 'none' }); return; }
+    if (this.data.dishes.some(d => d.name === name)) { wx.showToast({ title: '已存在同名菜品', icon: 'none' }); return; }
     wx.showLoading({ title: '添加中' });
     try {
       const db = wx.cloud.database();
@@ -120,6 +127,100 @@ Page({
       wx.showToast({ title: '添加成功', icon: 'success' });
     } catch { wx.showToast({ title: '添加失败', icon: 'error' }); }
     finally { wx.hideLoading(); }
+  },
+
+  onOpenEditModal: function (e) {
+    if (this.data.memberRole === 'read') {
+      wx.showToast({ title: '只读权限，无法修改', icon: 'none' });
+      return;
+    }
+    const dish = e.currentTarget.dataset.dish;
+    if (!dish) return;
+    const catIdx = this.data.categories.indexOf(dish.category);
+    this.setData({
+      showEditModal: true,
+      editDishId: dish._id,
+      editDishName: dish.name,
+      editDishCategory: dish.category,
+      editCategoryIndex: catIdx >= 0 ? catIdx : 0,
+      editDishRemark: dish.remark || '',
+      showEditCategoryPicker: false
+    });
+  },
+
+  onCloseEditModal: function () {
+    this.setData({ showEditModal: false });
+  },
+
+  onEditDishNameInput: function (e) {
+    this.setData({ editDishName: e.detail.value });
+  },
+
+  onEditDishRemarkInput: function (e) {
+    this.setData({ editDishRemark: e.detail.value });
+  },
+
+  onToggleEditCategoryPicker: function () {
+    this.setData({ showEditCategoryPicker: !this.data.showEditCategoryPicker });
+  },
+
+  onCloseEditCategoryPicker: function () {
+    this.setData({ showEditCategoryPicker: false });
+  },
+
+  onSelectEditCategory: function (e) {
+    const idx = parseInt(e.currentTarget.dataset.index);
+    this.setData({
+      editCategoryIndex: idx,
+      editDishCategory: this.data.categories[idx],
+      showEditCategoryPicker: false
+    });
+  },
+
+  onUpdateDish: async function () {
+    const name = this.data.editDishName.trim();
+    const id = this.data.editDishId;
+    if (!name) {
+      wx.showToast({ title: '请输入菜名', icon: 'none' });
+      return;
+    }
+    if (this.data.dishes.some(d => d.name === name && d._id !== id)) {
+      wx.showToast({ title: '已存在同名菜品', icon: 'none' });
+      return;
+    }
+
+    wx.showLoading({ title: '保存中' });
+    try {
+      const db = wx.cloud.database();
+      await db.collection('dishes').doc(id).update({
+        data: {
+          name,
+          category: this.data.editDishCategory,
+          remark: this.data.editDishRemark
+        }
+      });
+      const updatedDishes = this.data.dishes.map(d => {
+        if (d._id === id) {
+          return {
+            ...d,
+            name,
+            category: this.data.editDishCategory,
+            remark: this.data.editDishRemark
+          };
+        }
+        return d;
+      });
+      this.setData({
+        dishes: updatedDishes,
+        showEditModal: false
+      }, () => this.filterDishes());
+      wx.showToast({ title: '修改成功', icon: 'success' });
+    } catch (err) {
+      console.error(err);
+      wx.showToast({ title: '修改失败', icon: 'error' });
+    } finally {
+      wx.hideLoading();
+    }
   },
 
   onDeleteDish: function (e) {

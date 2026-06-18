@@ -194,6 +194,36 @@
       <view class="shimmer-line" style="width: 70%;"></view>
       <view class="shimmer-line" style="width: 100%; height: 60rpx; border-radius: 12rpx;"></view>
     </view>
+    <!-- 创建家庭 Modal -->
+    <view class="modal-mask" wx:if="{{ showCreateFamilyModal }}" bindtap="onCloseCreateFamilyModal">
+      <view class="modal-sheet" catchtap="noop" style="padding-bottom: 80rpx;">
+        <view class="modal-header">
+          <text class="modal-title">创建新家庭</text>
+          <view class="modal-close" bindtap="onCloseCreateFamilyModal">
+            <text class="iconfont iconfont-wrong"></text>
+          </view>
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">家庭名称</text>
+          <input
+            class="input-field"
+            placeholder="请输入家庭名称，如「温馨小家」"
+            value="{{ newFamilyName }}"
+            bindinput="onNewFamilyNameInput"
+          />
+        </view>
+
+        <button
+          class="btn-primary"
+          hover-class="btn-primary-hover"
+          bindtap="onCommitCreateFamily"
+          style="margin-top: 16rpx;"
+        >
+          确认创建
+        </button>
+      </view>
+    </view>
   </block>
 
 </view>

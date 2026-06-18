@@ -418,3 +418,40 @@
   margin-bottom: 0 !important;
 }
 
+/* 家庭操作图标样式 */
+.family-action-icons {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.family-action-icons .iconfont {
+  font-size: 36rpx;
+  padding: 8rpx;
+  transition: opacity 0.2s ease;
+}
+
+.family-action-icons .iconfont:active {
+  opacity: 0.6;
+}
+
+.family-action-icons .iconfont-modify {
+  color: var(--theme-color);
+}
+
+.family-action-icons .iconfont-delete {
+  color: #E53935;
+}
+
+/* 邀请按钮缩小样式 */
+.btn-invite {
+  width: auto !important;
+  max-width: 420rpx;
+  padding: 16rpx 40rpx !important;
+  font-size: 26rpx !important;
+  border-radius: var(--radius-sm);
+  margin: 28rpx auto 0 !important;
+  gap: 8rpx !important;
+  box-shadow: 0 4rpx 12rpx rgba(212, 178, 140, 0.08);
+}
+
