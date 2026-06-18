@@ -25,7 +25,22 @@ Page({
     loading: false,
     membersLoading: false,
     showRenameFamilyModal: false,
-    renameFamilyName: ''
+    renameFamilyName: '',
+
+    // 编辑成员 Modal
+    showEditMemberModal: false,
+    editMemberId: '',
+    editMemberNickname: '',
+    editMemberRole: '',
+    showEditMemberRolePicker: false,
+
+    // 通用确认 Modal
+    showConfirmModal: false,
+    confirmTitle: '',
+    confirmContent: '',
+    confirmActionType: '', // 'deleteFamily' | 'removeMember'
+    confirmTargetId: '',
+    confirmTargetName: ''
   },
 
   onLoad: function () {
@@ -156,62 +171,79 @@ Page({
     });
   },
 
-  // 编辑成员（改名或调权）
+  // 编辑成员（打开自定义 Modal）
   onEditMember: function (e) {
     const { id, nickname, role } = e.currentTarget.dataset;
-    const rolesList = ['家人 (读写)', '阿姨 (只读)'];
-    wx.showActionSheet({
-      itemList: [`改名（当前：${nickname}）`, `调权：${role === 'write' ? '设为只读阿姨' : '设为读写家人'}`],
-      success: async res => {
-        if (res.tapIndex === 0) {
-          // 改名
-          wx.showModal({
-            title: '修改属名',
-            editable: true,
-            content: nickname,
-            placeholderText: '请输入新属名',
-            success: async r => {
-              if (r.confirm && r.content && r.content.trim()) {
-                wx.showLoading({ title: '修改中' });
-                try {
-                  await wx.cloud.database().collection('family_members').doc(id).update({ data: { nickname: r.content.trim() } });
-                  wx.showToast({ title: '修改成功', icon: 'success' });
-                  this.fetchMembers();
-                } catch { wx.showToast({ title: '修改失败', icon: 'error' }); }
-                finally { wx.hideLoading(); }
-              }
-            }
-          });
-        } else {
-          // 调权
-          const newRole = role === 'write' ? 'read' : 'write';
-          wx.showLoading({ title: '修改中' });
-          try {
-            await wx.cloud.database().collection('family_members').doc(id).update({ data: { role: newRole } });
-            wx.showToast({ title: '权限已修改', icon: 'success' });
-            this.fetchMembers();
-          } catch { wx.showToast({ title: '修改失败', icon: 'error' }); }
-          finally { wx.hideLoading(); }
-        }
-      }
+    this.setData({
+      showEditMemberModal: true,
+      editMemberId: id,
+      editMemberNickname: nickname,
+      editMemberRole: role,
+      showEditMemberRolePicker: false
     });
   },
 
-  // 移除成员
+  onCloseEditMemberModal: function () {
+    this.setData({ showEditMemberModal: false });
+  },
+
+  onEditMemberNicknameInput: function (e) {
+    this.setData({ editMemberNickname: e.detail.value });
+  },
+
+  onToggleEditMemberRolePicker: function () {
+    this.setData({ showEditMemberRolePicker: !this.data.showEditMemberRolePicker });
+  },
+
+  onCloseEditMemberRolePicker: function () {
+    this.setData({ showEditMemberRolePicker: false });
+  },
+
+  onSelectEditMemberRole: function (e) {
+    const role = e.currentTarget.dataset.role;
+    this.setData({
+      editMemberRole: role,
+      showEditMemberRolePicker: false
+    });
+  },
+
+  onCommitEditMember: async function () {
+    const id = this.data.editMemberId;
+    const nickname = this.data.editMemberNickname.trim();
+    const role = this.data.editMemberRole;
+    if (!nickname) {
+      wx.showToast({ title: '请输入成员昵称', icon: 'none' });
+      return;
+    }
+    wx.showLoading({ title: '保存中...' });
+    try {
+      const db = wx.cloud.database();
+      if (role === 'admin') {
+        await db.collection('family_members').doc(id).update({ data: { nickname } });
+      } else {
+        await db.collection('family_members').doc(id).update({ data: { nickname, role } });
+      }
+      wx.showToast({ title: '修改成功', icon: 'success' });
+      this.setData({ showEditMemberModal: false });
+      this.fetchMembers();
+    } catch (err) {
+      console.error(err);
+      wx.showToast({ title: '修改失败', icon: 'none' });
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
+  // 移除成员（打开自定义确认 Modal）
   onRemoveMember: function (e) {
     const { id, name } = e.currentTarget.dataset;
-    wx.showModal({
-      title: '移除成员', content: `确定要将「${name}」移出家庭吗？`, confirmColor: '#E53935',
-      success: async res => {
-        if (!res.confirm) return;
-        wx.showLoading({ title: '移除中' });
-        try {
-          await wx.cloud.database().collection('family_members').doc(id).remove();
-          wx.showToast({ title: '已移除', icon: 'success' });
-          this.fetchMembers();
-        } catch { wx.showToast({ title: '移除失败', icon: 'error' }); }
-        finally { wx.hideLoading(); }
-      }
+    this.setData({
+      showConfirmModal: true,
+      confirmTitle: '移除成员',
+      confirmContent: `确定要将「${name}」移出家庭吗？`,
+      confirmActionType: 'removeMember',
+      confirmTargetId: id,
+      confirmTargetName: name
     });
   },
 
@@ -345,51 +377,59 @@ Page({
     }
   },
 
-  onDeleteFamily: function () {
-    const myOpenid = this.data.myOpenid;
-    const isFamilyAdmin = this.data.approvedMembers.some(m => m.openid === myOpenid && m.role === 'admin');
+
+
+  onCloseConfirmModal: function () {
+    this.setData({ showConfirmModal: false });
+  },
+
+  onCommitConfirm: async function () {
+    const actionType = this.data.confirmActionType;
+    const targetId = this.data.confirmTargetId;
     
-    if (!isFamilyAdmin) {
-      wx.showToast({ title: '只有家庭管理员可以删除家庭', icon: 'none' });
-      return;
-    }
-    
-    wx.showModal({
-      title: '确认删除家庭',
-      content: `确定要解散并删除家庭「${this.data.currentFamilyName}」吗？此操作将永久清除该家庭下的所有成员、菜品及排餐记录，且无法恢复！`,
-      confirmColor: '#E53935',
-      success: async (res) => {
-        if (res.confirm) {
-          wx.showLoading({ title: '正在删除...' });
-          try {
-            const callRes = await wx.cloud.callFunction({
-              name: 'adminService',
-              data: {
-                action: 'deleteFamily',
-                familyId: this.data.currentFamilyId
-              }
-            });
-            
-            if (callRes.result && callRes.result.success) {
-              wx.showToast({ title: '删除成功', icon: 'success' });
-              app.globalData.activeFamily = null;
-              app.globalData.memberRole = '';
-              setTimeout(() => {
-                wx.reLaunch({
-                  url: '/pages/index/index'
-                });
-              }, 1500);
-            } else {
-              wx.showToast({ title: callRes.result.message || '删除失败', icon: 'none' });
-            }
-          } catch (err) {
-            console.error('删除家庭失败', err);
-            wx.showToast({ title: '删除失败', icon: 'none' });
-          } finally {
-            wx.hideLoading();
-          }
-        }
+    if (actionType === 'removeMember') {
+      wx.showLoading({ title: '移除中...' });
+      try {
+        await wx.cloud.database().collection('family_members').doc(targetId).remove();
+        wx.showToast({ title: '已移除', icon: 'success' });
+        this.setData({ showConfirmModal: false });
+        this.fetchMembers();
+      } catch (err) {
+        console.error(err);
+        wx.showToast({ title: '移除失败', icon: 'none' });
+      } finally {
+        wx.hideLoading();
       }
-    });
+    } else if (actionType === 'deleteFamily') {
+      wx.showLoading({ title: '正在删除...' });
+      try {
+        const callRes = await wx.cloud.callFunction({
+          name: 'adminService',
+          data: {
+            action: 'deleteFamily',
+            familyId: targetId
+          }
+        });
+        
+        if (callRes.result && callRes.result.success) {
+          wx.showToast({ title: '删除成功', icon: 'success' });
+          app.globalData.activeFamily = null;
+          app.globalData.memberRole = '';
+          this.setData({ showConfirmModal: false });
+          setTimeout(() => {
+            wx.reLaunch({
+              url: '/pages/index/index'
+            });
+          }, 1500);
+        } else {
+          wx.showToast({ title: callRes.result.message || '删除失败', icon: 'none' });
+        }
+      } catch (err) {
+        console.error('删除家庭失败', err);
+        wx.showToast({ title: '删除失败', icon: 'none' });
+      } finally {
+        wx.hideLoading();
+      }
+    }
   }
 });

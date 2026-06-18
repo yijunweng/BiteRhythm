@@ -393,5 +393,45 @@ Page({
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
+  },
+
+  onDeleteFamilyFromSwitcher: function (e) {
+    const { familyId, familyName } = e.currentTarget.dataset;
+    
+    // 由于是主页组件，直接检测该用户是否是这个家庭的管理员
+    // 注意：这里的删除在云函数端也会做超级管理员权限或者该家庭管理员 role === 'admin' 权限的安全校验。
+    wx.showModal({
+      title: '确认删除家庭',
+      content: `确定要解散并删除家庭「${familyName}」吗？此操作将永久清除该家庭下的所有成员、菜品及排餐记录，且无法恢复！`,
+      confirmColor: '#E53935',
+      success: async (res) => {
+        if (res.confirm) {
+          wx.showLoading({ title: '正在删除...' });
+          try {
+            const callRes = await wx.cloud.callFunction({
+              name: 'adminService',
+              data: {
+                action: 'deleteFamily',
+                familyId: familyId
+              }
+            });
+            
+            if (callRes.result && callRes.result.success) {
+              wx.showToast({ title: '删除成功', icon: 'success' });
+              // 重新拉取家庭列表并自动隐藏选择器
+              this.setData({ showFamilySelector: false });
+              await this.fetchFamiliesList();
+            } else {
+              wx.showToast({ title: callRes.result.message || '删除失败', icon: 'none' });
+            }
+          } catch (err) {
+            console.error('删除家庭失败', err);
+            wx.showToast({ title: '删除失败', icon: 'none' });
+          } finally {
+            wx.hideLoading();
+          }
+        }
+      }
+    });
   }
 });

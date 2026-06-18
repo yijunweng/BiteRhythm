@@ -79,8 +79,18 @@
         bindtap="onSelectFamily"
         data-family="{{ item }}"
       >
-        <text>{{ item.name }}</text>
-        <text class="check-mark" wx:if="{{ activeFamily && activeFamily._id === item._id }}">✓</text>
+        <view style="display: flex; align-items: center; gap: 12rpx;">
+          <text>{{ item.name }}</text>
+          <text class="check-mark" wx:if="{{ activeFamily && activeFamily._id === item._id }}">✓</text>
+        </view>
+        <text
+          class="iconfont iconfont-delete"
+          catchtap="onDeleteFamilyFromSwitcher"
+          data-family-id="{{ item._id }}"
+          data-family-name="{{ item.name }}"
+          wx:if="{{ !(activeFamily && activeFamily._id === item._id) }}"
+          style="font-size: 30rpx; color: #E53935; padding: 10rpx; margin-right: -10rpx;"
+        ></text>
       </view>
       <view class="family-drop-item add-item" bindtap="onCreateFamily">
         <text class="iconfont iconfont-add"></text>
