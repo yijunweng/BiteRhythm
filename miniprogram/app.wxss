@@ -1,4 +1,5 @@
 /** miniprogram/app.wxss **/
+@import "iconfont.wxss";
 
 /* 全局设计变量 - 极简乳白/香槟金风格 */
 page {

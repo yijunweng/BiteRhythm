@@ -53,12 +53,12 @@
     <scroll-view class="edit-scroll-area" scroll-y="true">
       <!-- 日期标题 -->
       <view class="edit-date-header">
-        <text class="edit-date-title">🗓 {{ dateStr }}</text>
+        <text class="edit-date-title"><text class="iconfont iconfont-calendar" style="margin-right: 8rpx;"></text>{{ dateStr }}</text>
       </view>
 
       <!-- 只读提示条 -->
       <view class="read-only-banner" wx:if="{{ isReadOnly }}">
-        🔒 您当前是只读角色，可浏览菜谱但无法修改
+        <text class="iconfont iconfont-lock" style="margin-right: 6rpx;"></text>您当前是只读角色，可浏览菜单但无法修改
       </view>
 
       <!-- 当日已选菜品卡片 -->
@@ -86,7 +86,7 @@
 
         <!-- 空状态 -->
         <view class="empty-state" wx:else>
-          <view class="empty-icon">🍲</view>
+          <view class="empty-icon iconfont iconfont-dish" style="font-size: 80rpx;"></view>
           <view class="empty-text">今天吃什么？快来添加吧！</view>
         </view>
 
@@ -103,7 +103,7 @@
             confirm-type="done"
             bindconfirm="onAddCustomDish"
           />
-          <view class="add-circle-btn" bindtap="onAddCustomDish">＋</view>
+          <view class="add-circle-btn" bindtap="onAddCustomDish"><text class="iconfont iconfont-add" style="font-size: 32rpx; line-height: 1;"></text></view>
         </view>
       </view>
 
@@ -116,17 +116,17 @@
           bindtap="onOpenRepository"
           style="margin-bottom: 24rpx;"
         >
-          📖 从收藏菜品库选择
+          从收藏菜品库选择
         </button>
       </view>
 
       <!-- AI 智能搭配卡片（只读时隐藏） -->
       <view class="card ai-card" wx:if="{{ !isReadOnly }}">
         <view class="ai-card-header">
-          <text class="ai-star">✦</text>
+          <text class="iconfont iconfont-ai ai-star" style="margin-right: 8rpx; font-weight: bold;"></text>
           <text class="ai-card-title">AI 智能搭配助理</text>
         </view>
-        <view class="ai-card-desc">根据家庭唇好、忌口和最近吃过的菜，自动推荐最合适的今日搭配。</view>
+        <view class="ai-card-desc">根据家庭偏好、忌口和最近吃过的菜，自动推荐最合适的今日搭配。</view>
 
         <!-- 调用按钮 -->
         <button
@@ -136,7 +136,7 @@
           disabled="{{ aiLoading }}"
           style="margin-top: 24rpx;"
         >
-          🪴 {{ aiLoading ? 'AI 思考中...' : 'AI 一键推荐搭配' }}
+          <text class="iconfont iconfont-ai" style="margin-right: 8rpx;"></text>{{ aiLoading ? 'AI 思考中...' : 'AI 一键推荐搭配' }}
         </button>
       </view>
     </scroll-view>
@@ -164,7 +164,7 @@
         <!-- 搜索 -->
         <input
           class="input-field"
-          placeholder="🔍 搜索菜品..."
+          placeholder="搜索菜品..."
           value="{{ searchKeyword }}"
           bindinput="onSearchInput"
           style="margin-bottom: 24rpx;"

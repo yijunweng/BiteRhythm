@@ -26,7 +26,7 @@
   <block wx:else>
     <!-- 项目 Logo / 品牌头 -->
     <view class="brand-header animate-in">
-      <view class="brand-logo">🍳</view>
+      <view class="brand-logo iconfont iconfont-dish" style="font-size: 80rpx;"></view>
       <text class="brand-name">BiteRhythm (食之律动)</text>
       <text class="brand-sub">家庭小厨晚安排助手</text>
     </view>
@@ -34,7 +34,7 @@
     <!-- 已完成加入界面 -->
     <view class="card animate-in" wx:if="{{ joined }}">
       <view class="success-state">
-        <view class="success-icon">✔️</view>
+        <view class="success-icon"></view>
         <text class="success-title">加入成功！</text>
         <text class="success-desc">您已成功申请加入「{{ familyName }}」，请等待管理员审批后即可查看菜单。</text>
         <button class="btn-primary" hover-class="btn-primary-hover" bindtap="onGoHome" style="margin-top: 40rpx;">前往首页</button>
@@ -75,7 +75,7 @@
     <!-- 家庭信息无效 -->
     <view class="card animate-in" wx:elif="{{ !familyName }}">
       <view class="empty-state">
-        <view class="empty-icon">⚠️</view>
+        <view class="empty-icon iconfont iconfont-info" style="font-size: 80rpx;"></view>
         <view class="empty-text">邀请链接无效或已过期\n请联系雇主重新生成邀请链接。</view>
       </view>
     </view>

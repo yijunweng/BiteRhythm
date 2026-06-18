@@ -82,17 +82,17 @@
         <text>{{ item.name }}</text>
         <text class="check-mark" wx:if="{{ activeFamily && activeFamily._id === item._id }}">✓</text>
       </view>
-      <view class="family-drop-item add-item" bindtap="onCreateFamily">＋ 创建新家庭</view>
+      <view class="family-drop-item add-item" bindtap="onCreateFamily"><text class="iconfont iconfont-add" style="margin-right: 8rpx;"></text>创建新家庭</view>
     </view>
 
     <!-- 无家庭时的引导 -->
     <view class="card empty-guide animate-in" wx:if="{{ !activeFamily && !loading }}">
       <view class="empty-state">
-        <view class="empty-icon">🍳</view>
+        <view class="empty-icon iconfont iconfont-dish" style="font-size: 80rpx;"></view>
         <view class="empty-text">还没有家庭群组\n点击上方创建您的第一个家庭吧</view>
       </view>
       <button class="btn-primary" hover-class="btn-primary-hover" bindtap="onCreateFamily">
-        ＋ 创建我的家庭
+        <text class="iconfont iconfont-add" style="margin-right: 8rpx;"></text>创建我的家庭
       </button>
     </view>
 
@@ -101,8 +101,8 @@
       <view class="cal-header">
         <text class="cal-month">{{ currentYear }}年 {{ currentMonth }}月</text>
         <view class="cal-nav">
-          <view class="cal-nav-btn" bindtap="onChangeMonth" data-direction="prev">◀</view>
-          <view class="cal-nav-btn" bindtap="onChangeMonth" data-direction="next">▶</view>
+          <view class="cal-nav-btn" bindtap="onChangeMonth" data-direction="prev"><text class="iconfont iconfont-left-line"></text></view>
+          <view class="cal-nav-btn" bindtap="onChangeMonth" data-direction="next"><text class="iconfont iconfont-right-line"></text></view>
         </view>
       </view>
 
@@ -148,7 +148,7 @@
       <!-- 已规划菜品 -->
       <view class="dish-pills" wx:if="{{ selectedDateMenu && selectedDateMenu.dishes.length > 0 }}">
         <view class="dish-pill" wx:for="{{ selectedDateMenu.dishes }}" wx:key="index">
-          🥘 {{ item.name }}
+          <text class="iconfont iconfont-dish" style="margin-right: 6rpx;"></text>{{ item.name }}
         </view>
       </view>
 
@@ -165,14 +165,14 @@
           bindtap="onWeekAIPlan"
           disabled="{{ aiPlanLoading }}"
         >
-          <text>✦ {{ aiPlanLoading ? 'AI 排餐中...' : '大模型智能排餐（下周5天）' }}</text>
+          <text><text class="iconfont iconfont-ai" style="margin-right: 8rpx;"></text>{{ aiPlanLoading ? '排餐中...' : '智能排餐（下周5天）' }}</text>
         </button>
-        <text class="ai-btn-tip">💡 提示：排餐范围为从明天开始顺延的 5 个工作日（避开周末）</text>
+        <view class="ai-btn-tip" style="text-align: center;"><text class="iconfont iconfont-info" style="margin-right: 6rpx;"></text>提示：排餐范围为从明天开始顺延的 5 个工作日（避开周末）</view>
       </view>
 
       <!-- 只读提示 -->
       <view class="read-only-tip" wx:else>
-        💡 只读模式：您可浏览菜单，无法修改
+        <text class="iconfont iconfont-info" style="margin-right: 6rpx;"></text>只读模式：您可浏览菜单，无法修改
       </view>
     </view>
 
