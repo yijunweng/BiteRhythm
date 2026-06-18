@@ -61,7 +61,7 @@
     <view class="family-bar">
       <view class="family-selector" bindtap="toggleFamilySelector">
         <text class="family-name">{{ activeFamily ? activeFamily.name : '创建家庭' }}</text>
-        <text class="family-arrow {{ showFamilySelector ? 'open' : '' }}">▾</text>
+        <text class="iconfont iconfont-down family-arrow {{ showFamilySelector ? 'open' : '' }}"></text>
       </view>
       <view class="role-chip" wx:if="{{ activeFamily }}">
         <text wx:if="{{ memberRole === 'admin' }}">管理员</text>

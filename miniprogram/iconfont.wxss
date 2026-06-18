@@ -74,11 +74,11 @@
   content: "\e601";
 }
 
-.iconfont-down-copy:before {
+.iconfont-down:before {
   content: "\e8bc";
 }
 
-.iconfont-left-copy:before {
+.iconfont-left:before {
   content: "\e8bb";
 }
 
