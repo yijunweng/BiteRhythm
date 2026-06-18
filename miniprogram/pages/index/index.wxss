@@ -91,7 +91,7 @@
 /* 空引导卡片 */
 .empty-guide {
   text-align: center;
-  padding: 64rpx 32rpx;
+  padding: 40rpx 32rpx;
 }
 
 /* 日历卡片 */
@@ -121,13 +121,20 @@
   width: 56rpx;
   height: 56rpx;
   border-radius: 50%;
-  background: #F5F5F5;
+  background: #FFFFFF;
+  color: var(--theme-color);
+  border: 2rpx solid var(--theme-color);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 22rpx;
-  color: var(--text-main);
   font-weight: bold;
+  transition: var(--transition);
+}
+
+.cal-nav-btn:active {
+  background: #FAF7F2;
+  opacity: 0.9;
 }
 
 /* 星期表头 */
@@ -176,13 +183,18 @@
   background: transparent;
 }
 
+.cal-day.today {
+  background: #FFFFFF;
+  border: 2rpx solid var(--theme-color);
+}
+
 .cal-day.today .cal-day-num {
-  color: var(--gold);
+  color: var(--theme-color);
   font-weight: 800;
 }
 
 .cal-day.selected {
-  background: var(--text-main);
+  background: var(--theme-color);
 }
 
 .cal-day.selected .cal-day-num {
@@ -190,8 +202,13 @@
   font-weight: 700;
 }
 
+.cal-day.selected.today {
+  background: var(--theme-color);
+  border-color: var(--theme-color);
+}
+
 .cal-day.selected.today .cal-day-num {
-  color: var(--gold);
+  color: #FFFFFF;
 }
 
 /* 已配餐指示点 */
@@ -199,7 +216,7 @@
   width: 8rpx;
   height: 8rpx;
   border-radius: 50%;
-  background: var(--gold);
+  background: #000000;
   position: absolute;
   bottom: 6rpx;
 }
@@ -210,7 +227,7 @@
 
 /* 今日菜单卡片 */
 .today-card {
-  border-left: 6rpx solid var(--gold);
+  border-left: 6rpx solid var(--theme-color);
 }
 
 .today-card-header {
@@ -228,10 +245,11 @@
 
 .edit-link {
   font-size: 26rpx;
-  color: var(--gold);
+  color: var(--theme-color);
   font-weight: 600;
   padding: 8rpx 16rpx;
-  background: var(--gold-light);
+  background: #FFFFFF;
+  border: 1rpx solid var(--theme-color);
   border-radius: 12rpx;
 }
 
@@ -349,5 +367,14 @@
   height: 24rpx;
   margin: 16rpx auto 0 auto !important;
   margin-bottom: 0 !important;
+}
+
+/* 优化首页空状态内边距 */
+.index-page .empty-state {
+  padding: 16rpx 0;
+}
+
+.empty-guide .btn-primary {
+  margin-top: 16rpx;
 }
 

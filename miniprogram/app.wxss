@@ -2,6 +2,7 @@
 
 /* 全局设计变量 - 极简乳白/香槟金风格 */
 page {
+  height: 100%;
   --primary: #2A2A2A;           /* 曜石墨黑 */
   --primary-hover: #151515;
   --gold: #D4B28C;              /* 柔和香槟金 */
@@ -19,6 +20,9 @@ page {
   --radius-lg: 32rpx;
   --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
+  /* 统一主题色定义（可指向 var(--gold) 或 var(--primary)） */
+  --theme-color: var(--gold);
+
   background-color: var(--bg);
   color: var(--text-main);
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
@@ -34,10 +38,10 @@ view, text, scroll-view, input, button, textarea, label {
 
 /* 页面容器 */
 .page-container {
-  min-height: 100vh;
+  min-height: 100%;
   background: var(--bg);
   padding: 0 32rpx;
-  padding-bottom: 120rpx;
+  padding-bottom: 32rpx;
 }
 
 /* 卡片 */
@@ -50,12 +54,12 @@ view, text, scroll-view, input, button, textarea, label {
   border: 1rpx solid var(--border);
 }
 
-/* 主按钮 - 香槟金边框白底 */
+/* 主要按钮：背景色为主题色，字色为白色 */
 .btn-primary {
   width: 100%;
-  background: #FFFFFF;
-  color: var(--text-main);
-  border: 2rpx solid var(--gold);
+  background: var(--theme-color);
+  color: #FFFFFF;
+  border: none;
   padding: 28rpx;
   border-radius: var(--radius-sm);
   font-size: 28rpx;
@@ -64,22 +68,29 @@ view, text, scroll-view, input, button, textarea, label {
   align-items: center;
   justify-content: center;
   gap: 12rpx;
-  box-shadow: 0 6rpx 20rpx rgba(212, 178, 140, 0.08);
+  box-shadow: 0 6rpx 20rpx rgba(212, 178, 140, 0.12);
   transition: var(--transition);
   line-height: 1;
+}
+
+.btn-primary[disabled] {
+  background: var(--border) !important;
+  color: var(--text-muted) !important;
+  box-shadow: none !important;
+  opacity: 0.6;
 }
 
 .btn-primary-hover {
-  background: #FAF7F2;
-  box-shadow: 0 10rpx 32rpx rgba(212, 178, 140, 0.14);
+  opacity: 0.9;
+  filter: brightness(0.95);
 }
 
-/* 次要按钮 - 灰边框 */
+/* 次要按钮：背景色为白色，字色为主题色，边框为主题色 */
 .btn-secondary {
   width: 100%;
   background: #FFFFFF;
-  color: var(--text-main);
-  border: 1rpx solid var(--border);
+  color: var(--theme-color);
+  border: 2rpx solid var(--theme-color);
   padding: 28rpx;
   border-radius: var(--radius-sm);
   font-size: 28rpx;
@@ -90,18 +101,62 @@ view, text, scroll-view, input, button, textarea, label {
   gap: 12rpx;
   transition: var(--transition);
   line-height: 1;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.02);
 }
 
 .btn-secondary-hover {
-  background: #FDFDFB;
-  border-color: var(--gold);
+  background: #FAF7F2;
+  opacity: 0.9;
 }
 
-/* 危险按钮 */
-.btn-danger {
+/* 其他按钮 (深底)：text类型，字色为白色 */
+.btn-text-white {
+  background: transparent;
+  color: #FFFFFF;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 26rpx;
+  line-height: normal;
+  display: inline-block;
+}
+
+/* 其他按钮 (浅底)：text类型，字色为主题色 */
+.btn-text-theme {
+  background: transparent;
+  color: var(--theme-color);
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: normal;
+  display: inline-block;
+}
+
+/* 其他按钮 (浅底辅助)：text类型，字色为柔灰 */
+.btn-text-muted {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 26rpx;
+  line-height: normal;
+  display: inline-block;
+}
+
+/* 重要操作按钮（删除等）：text 红色 */
+.btn-danger-text {
+  background: transparent;
   color: #E53935;
-  font-size: 24rpx;
-  font-weight: 500;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: normal;
+  display: inline-block;
 }
 
 /* 通用输入框 */
@@ -147,7 +202,7 @@ view, text, scroll-view, input, button, textarea, label {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80rpx 0;
+  padding: 32rpx 0;
   color: var(--text-muted);
 }
 

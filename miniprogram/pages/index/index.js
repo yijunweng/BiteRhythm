@@ -175,20 +175,51 @@ Page({
 
   fetchMonthlyMenus: async function () {
     if (!this.data.activeFamily) return;
-    const { currentYear, currentMonth, activeFamily } = this.data;
+    const { currentYear, currentMonth, activeFamily, selectedDateStr } = this.data;
     const pad = n => String(n).padStart(2, '0');
     const startStr = `${currentYear}-${pad(currentMonth)}-01`;
     const endStr = `${currentYear}-${pad(currentMonth)}-31`;
     this.setData({ loading: true });
     try {
       const db = wx.cloud.database();
-      const res = await db.collection('menus').where({
+      
+      const monthQuery = db.collection('menus').where({
         family_id: activeFamily._id,
         date: db.command.gte(startStr).and(db.command.lte(endStr))
       }).get();
-      console.log('【数据库读取成功】月度菜单数据 res.data:', res.data);
+
+      let selectedDateQuery = null;
+      if (selectedDateStr) {
+        const parts = selectedDateStr.split('-');
+        if (parts.length === 3) {
+          const selYear = parseInt(parts[0], 10);
+          const selMonth = parseInt(parts[1], 10);
+          if (selYear !== currentYear || selMonth !== currentMonth) {
+            selectedDateQuery = db.collection('menus').where({
+              family_id: activeFamily._id,
+              date: selectedDateStr
+            }).get();
+          }
+        }
+      }
+
+      const queries = [monthQuery, selectedDateQuery].filter(Boolean);
+      const results = await Promise.all(queries);
+      
+      const resMonth = results[0];
+      const resSel = results[1];
+
+      console.log('【数据库读取成功】月度菜单数据 resMonth.data:', resMonth.data);
+      if (resSel) {
+        console.log('【数据库读取成功】选中日期菜单数据 resSel.data:', resSel.data);
+      }
+
       const menusMap = {};
-      res.data.forEach(m => { menusMap[m.date] = m; });
+      resMonth.data.forEach(m => { menusMap[m.date] = m; });
+      if (resSel && resSel.data) {
+        resSel.data.forEach(m => { menusMap[m.date] = m; });
+      }
+
       this.setData({ monthlyMenus: menusMap });
       this.renderCalendarMenus();
       this.updateSelectedDateMenu();
@@ -198,6 +229,7 @@ Page({
       this.setData({ loading: false });
     }
   },
+
 
   initCalendar: function () {
     const { currentYear, currentMonth } = this.data;

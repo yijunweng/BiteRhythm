@@ -189,35 +189,36 @@ Page({
 
   // AI 推荐
   onCallAIRecommend: function () {
-    this.setData({ aiLoading: true, showAiPanel: true, aiRecommendations: [] });
+    this.setData({ aiLoading: true });
+    wx.showLoading({ title: 'AI 智能配餐中...', mask: true });
     wx.cloud.callFunction({
       name: 'llmService',
       data: { action: 'recommendToday', familyId: this.data.familyId, date: this.data.dateStr },
       success: res => {
-        if (res.result && res.result.success) {
-          this.setData({ aiRecommendations: res.result.recommendations || [] });
+        wx.hideLoading();
+        this.setData({ aiLoading: false });
+        if (res.result && res.result.success && res.result.recommendations) {
+          const recs = res.result.recommendations;
+          const merged = [...this.data.dishesList];
+          recs.forEach(d => {
+            if (!merged.some(x => x.name === d.name)) {
+              merged.push({ name: d.name, category: d.category || '热菜' });
+            }
+          });
+          this.setData({ dishesList: merged });
+          wx.showToast({ title: '已应用 AI 推荐', icon: 'success' });
         } else {
-          console.error('AI 推荐失败:', res.result ? res.result.message : '无返回消息', '错误详情:', res.result ? res.result.error : '无');
-          wx.showToast({ title: res.result.message || '推荐失败，请重试', icon: 'none' });
+          console.error('AI 推荐失败:', res.result ? res.result.message : '无返回消息');
+          wx.showToast({ title: (res.result && res.result.message) || '推荐失败，请重试', icon: 'none' });
         }
       },
       fail: err => {
+        wx.hideLoading();
+        this.setData({ aiLoading: false });
         console.error('调用 AI 推荐失败', err);
         wx.showToast({ title: 'AI 服务异常，请确认 API 配置', icon: 'none' });
-      },
-      complete: () => this.setData({ aiLoading: false })
-    });
-  },
-
-  onApplyAiRecommend: function () {
-    const merged = [...this.data.dishesList];
-    this.data.aiRecommendations.forEach(d => {
-      if (!merged.some(x => x.name === d.name)) {
-        merged.push({ name: d.name, category: d.category || '热菜' });
       }
     });
-    this.setData({ dishesList: merged, showAiPanel: false });
-    wx.showToast({ title: '已应用 AI 推荐', icon: 'success' });
   },
 
   onSaveMenu: function () {

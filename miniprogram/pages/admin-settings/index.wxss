@@ -69,10 +69,11 @@
 .copy-btn {
   font-size: 24rpx;
   font-weight: 600;
-  color: var(--gold);
+  color: var(--theme-color);
   white-space: nowrap;
   padding: 6rpx 16rpx;
-  background: var(--gold-light);
+  background: #FFFFFF;
+  border: 1rpx solid var(--theme-color);
   border-radius: 8rpx;
 }
 
@@ -286,13 +287,15 @@
   border-radius: 8rpx;
   font-size: 22rpx;
   font-weight: 600;
-  background: var(--gold-light);
-  color: var(--gold);
+  background: #FFFFFF;
+  color: var(--theme-color);
+  border: 1rpx solid var(--theme-color);
 }
 
 .approve-btn.blue {
-  background: #E3F2FD;
-  color: #1E88E5;
+  background: var(--theme-color);
+  color: #FFFFFF;
+  border: none;
 }
 
 .reject-btn {
@@ -300,8 +303,9 @@
   border-radius: 8rpx;
   font-size: 22rpx;
   font-weight: 600;
-  background: #FFEBEE;
+  background: transparent;
   color: #E53935;
+  border: none;
 }
 
 .member-actions {
@@ -315,13 +319,15 @@
   border-radius: 8rpx;
   font-size: 22rpx;
   font-weight: 600;
-  background: #F5F5F5;
-  color: var(--text-main);
+  background: #FFFFFF;
+  color: var(--theme-color);
+  border: 1rpx solid var(--theme-color);
 }
 
 .action-btn.danger {
-  background: #FFEBEE;
+  background: transparent;
   color: #E53935;
+  border: none;
 }
 
 /* 大模型配置子页 */

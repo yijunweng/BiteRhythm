@@ -1,13 +1,26 @@
 /* miniprogram/pages/edit-menu/index.wxss */
 
 .edit-page {
-  height: 100vh;
-  overflow: hidden;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   padding-top: 24rpx;
-  padding-bottom: 32rpx !important;
+  padding-bottom: 0 !important;
   box-sizing: border-box;
+}
+
+.edit-scroll-area {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.edit-bottom-bar {
+  width: 100%;
+  padding: 24rpx 0 calc(24rpx + env(safe-area-inset-bottom)) 0;
+  background: var(--bg);
+  border-top: 1rpx solid var(--border);
 }
 
 /* 日期标题 */
@@ -30,8 +43,6 @@
 }
 
 .menu-card {
-  flex: 1;
-  min-height: 0;
   display: flex;
   flex-direction: column;
   margin-bottom: 20rpx !important;
@@ -44,8 +55,6 @@
 
 /* 菜品列表 */
 .edit-dish-list {
-  flex: 1;
-  min-height: 0;
   margin-bottom: 12rpx;
 }
 
@@ -93,16 +102,14 @@
 }
 
 .delete-btn {
-  width: 48rpx;
-  height: 48rpx;
-  border-radius: 50%;
-  background: #FFF0F0;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28rpx;
   color: #E53935;
   flex-shrink: 0;
+  padding: 8rpx;
 }
 
 /* 添加输入行 */
@@ -135,7 +142,7 @@
   width: 80rpx;
   height: 80rpx;
   border-radius: 50%;
-  background: var(--gold);
+  background: var(--theme-color);
   color: #FFFFFF;
   display: flex;
   align-items: center;
@@ -272,8 +279,8 @@
 
 /* 保存按钮 */
 .save-btn {
-  margin-top: 16rpx;
-  margin-bottom: 40rpx;
+  width: 100% !important;
+  margin: 0 !important;
 }
 
 /* 菜品库弹窗 */
@@ -320,8 +327,8 @@
 
 .repo-item-info {
   display: flex;
-  flex-direction: column;
-  gap: 6rpx;
+  align-items: center;
+  gap: 16rpx;
 }
 
 .repo-item-name {
@@ -333,6 +340,10 @@
 .repo-item-cat {
   font-size: 22rpx;
   color: var(--text-muted);
+  background: #F5F5F5;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  flex-shrink: 0;
 }
 
 .repo-add-btn {
@@ -480,5 +491,33 @@
   height: 84rpx;
   border-radius: var(--radius-sm) !important;
   margin-bottom: 0 !important;
+}
+
+/* 顶部已选菜品卡片头部动作组 */
+.menu-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.menu-card-header .section-title {
+  margin-bottom: 0;
+}
+
+.menu-header-actions {
+  display: flex;
+  gap: 24rpx;
+}
+
+.action-text-btn {
+  font-size: 26rpx;
+  color: var(--gold);
+  font-weight: 600;
+  padding: 8rpx 0;
+}
+
+.action-text-btn.btn-clear-text {
+  color: #E53935;
 }
 

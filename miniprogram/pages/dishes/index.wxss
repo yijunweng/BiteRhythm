@@ -1,7 +1,7 @@
 /* miniprogram/pages/dishes/index.wxss */
 
 .dishes-page {
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -35,19 +35,29 @@
   border-radius: 16rpx;
   font-size: 24rpx;
   font-weight: 600;
-  border: 1rpx solid var(--border);
+  border: 2rpx solid var(--theme-color);
+  transition: var(--transition);
 }
 
 .ai-btn {
-  background: var(--gold-light);
-  color: var(--gold);
-  border-color: rgba(212, 178, 140, 0.3);
+  background: #FFFFFF;
+  color: var(--theme-color);
+}
+
+.ai-btn:active {
+  background: #FAF7F2;
+  opacity: 0.9;
 }
 
 .add-btn {
-  background: var(--text-main);
+  background: var(--theme-color);
   color: #FFFFFF;
-  border-color: var(--text-main);
+  border-color: var(--theme-color);
+}
+
+.add-btn:active {
+  opacity: 0.9;
+  filter: brightness(0.95);
 }
 
 .search-bar {
@@ -167,7 +177,8 @@
 .trash-btn {
   font-size: 36rpx;
   padding: 8rpx;
-  opacity: 0.6;
+  color: #E53935;
+  opacity: 0.9;
 }
 
 .ai-textarea {
