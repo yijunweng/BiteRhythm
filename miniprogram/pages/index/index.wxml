@@ -64,9 +64,9 @@
         <text class="family-arrow {{ showFamilySelector ? 'open' : '' }}">▾</text>
       </view>
       <view class="role-chip" wx:if="{{ activeFamily }}">
-        <text wx:if="{{ memberRole === 'admin' }}">👑 管理员</text>
-        <text wx:elif="{{ memberRole === 'write' }}">✏️ 家人</text>
-        <text wx:else>👁 只读</text>
+        <text wx:if="{{ memberRole === 'admin' }}">管理员</text>
+        <text wx:elif="{{ memberRole === 'write' }}">家人</text>
+        <text wx:else>只读</text>
       </view>
     </view>
 
