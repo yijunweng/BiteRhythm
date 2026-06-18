@@ -15,6 +15,7 @@ Page({
     newDishName: '',
     newDishCategory: '热菜',
     categoryIndex: 0,
+    showCategoryPicker: false,
     categories: ['热菜', '凉菜', '汤品', '主食', '其它'],
     newDishRemark: '',
     showAiImportModal: false,
@@ -82,10 +83,22 @@ Page({
 
   onOpenAddModal: function () {
     if (this.data.memberRole === 'read') { wx.showToast({ title: '只读权限，无法添加', icon: 'none' }); return; }
-    this.setData({ showAddModal: true, newDishName: '', newDishCategory: '热菜', categoryIndex: 0, newDishRemark: '' });
+    this.setData({ showAddModal: true, newDishName: '', newDishCategory: '热菜', categoryIndex: 0, newDishRemark: '', showCategoryPicker: false });
   },
 
   onCloseAddModal: function () { this.setData({ showAddModal: false }); },
+
+  onToggleCategoryPicker: function () {
+    this.setData({ showCategoryPicker: !this.data.showCategoryPicker });
+  },
+  onCloseCategoryPicker: function () {
+    this.setData({ showCategoryPicker: false });
+  },
+  onSelectCategory: function (e) {
+    const idx = e.currentTarget.dataset.index;
+    this.onCategoryChange({ detail: { value: idx } });
+    this.setData({ showCategoryPicker: false });
+  },
 
   onCategoryChange: function (e) {
     const idx = parseInt(e.detail.value);

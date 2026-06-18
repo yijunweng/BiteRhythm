@@ -96,9 +96,24 @@
 
         <!-- 快捷添加输入区（只读时隐藏） -->
         <view class="add-input-row" wx:if="{{ !isReadOnly }}">
-          <picker bindchange="onCategoryChange" value="{{ categoryIndex }}" range="{{ categories }}">
-            <view class="cat-picker-btn">{{ customDishCategory }} ▾</view>
-          </picker>
+          <view class="custom-select-container cat-select open-up">
+            <view class="cat-picker-btn {{ showCategoryPicker ? 'active' : '' }}" bindtap="onToggleCategoryPicker">
+              <text>{{ customDishCategory }}</text>
+              <text class="iconfont iconfont-down-line select-arrow {{ showCategoryPicker ? 'open' : '' }}" style="margin-left: 6rpx; font-size: 20rpx;"></text>
+            </view>
+            <view class="custom-select-options cat-options {{ showCategoryPicker ? 'show' : '' }}">
+              <view
+                class="custom-select-option {{ categoryIndex === index ? 'selected' : '' }}"
+                wx:for="{{ categories }}"
+                wx:key="index"
+                bindtap="onSelectCategory"
+                data-index="{{ index }}"
+              >
+                <text>{{ item }}</text>
+              </view>
+            </view>
+            <view class="custom-select-backdrop" wx:if="{{ showCategoryPicker }}" bindtap="onCloseCategoryPicker"></view>
+          </view>
           <input
             class="input-field add-input"
             placeholder="输入新菜名..."

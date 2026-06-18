@@ -17,6 +17,7 @@ Page({
     providers: ['DeepSeek (推荐)', 'OpenAI', '腾讯混元', '自定义 (兼容 OpenAI 格式)'],
     providerValues: ['deepseek', 'openai', 'hunyuan', 'custom'],
     selectedProviderIndex: 0,
+    showProviderPicker: false,
     apiKey: '',
     baseUrl: '',
     modelName: '',
@@ -223,6 +224,18 @@ Page({
   },
 
   // 大模型配置表单
+  onToggleProviderPicker: function () {
+    this.setData({ showProviderPicker: !this.data.showProviderPicker });
+  },
+  onCloseProviderPicker: function () {
+    this.setData({ showProviderPicker: false });
+  },
+  onSelectProvider: function (e) {
+    const idx = e.currentTarget.dataset.index;
+    this.onProviderChange({ detail: { value: idx } });
+    this.setData({ showProviderPicker: false });
+  },
+
   onProviderChange: function (e) {
     const idx = parseInt(e.detail.value);
     const pv = this.data.providerValues[idx];

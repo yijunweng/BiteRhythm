@@ -351,3 +351,134 @@ view, text, scroll-view, input, button, textarea, label {
   color: var(--text-main);
   margin-bottom: 24rpx;
 }
+
+/* 自定义 Select/Picker 组件 */
+.custom-select-container {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select-container.cat-select {
+  width: auto;
+}
+
+.form-picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card-bg);
+  border: 1rpx solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 24rpx 28rpx;
+  font-size: 28rpx;
+  color: var(--text-main);
+  transition: var(--transition);
+}
+
+.form-picker.active {
+  border-color: var(--theme-color);
+  box-shadow: 0 0 0 3rpx rgba(212, 178, 140, 0.15);
+}
+
+.select-arrow {
+  font-size: 24rpx;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+
+.select-arrow.open {
+  transform: rotate(180deg);
+}
+
+.custom-select-options {
+  position: absolute;
+  top: calc(100% + 8rpx);
+  left: 0;
+  width: 100%;
+  background: #FFFFFF;
+  border: 1rpx solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  display: none;
+  max-height: 400rpx;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.custom-select-options.cat-options {
+  width: 160rpx;
+}
+
+.custom-select-container.open-up .custom-select-options {
+  top: auto;
+  bottom: calc(100% + 8rpx);
+}
+
+.custom-select-options.show {
+  display: block;
+  animation: fadeInDown 0.15s ease-out;
+}
+
+.custom-select-container.open-up .custom-select-options.show {
+  animation: fadeInUp 0.15s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.custom-select-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 28rpx;
+  font-size: 28rpx;
+  color: var(--text-main);
+  transition: var(--transition);
+}
+
+.custom-select-option:hover,
+.custom-select-option:active {
+  background: var(--bg-main);
+}
+
+.custom-select-option.selected {
+  color: var(--theme-color);
+  font-weight: 600;
+  background: #FCFAF2;
+}
+
+.custom-select-option .iconfont-right {
+  font-size: 24rpx;
+  color: var(--theme-color);
+}
+
+/* 遮罩层，用于点击空白关闭 */
+.custom-select-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  background: transparent;
+}

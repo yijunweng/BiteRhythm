@@ -128,12 +128,24 @@
 
         <view class="form-group">
           <text class="form-label">菜品类别</text>
-          <picker bindchange="onCategoryChange" value="{{ categoryIndex }}" range="{{ categories }}">
-            <view class="form-picker">
+          <view class="custom-select-container open-up">
+            <view class="form-picker {{ showCategoryPicker ? 'active' : '' }}" bindtap="onToggleCategoryPicker">
               <text>{{ newDishCategory }}</text>
-              <text style="color: var(--text-muted);">▾</text>
+              <text class="iconfont iconfont-down-line select-arrow {{ showCategoryPicker ? 'open' : '' }}"></text>
             </view>
-          </picker>
+            <view class="custom-select-options {{ showCategoryPicker ? 'show' : '' }}">
+              <view
+                class="custom-select-option {{ categoryIndex === index ? 'selected' : '' }}"
+                wx:for="{{ categories }}"
+                wx:key="index"
+                bindtap="onSelectCategory"
+                data-index="{{ index }}"
+              >
+                <text>{{ item }}</text>
+              </view>
+            </view>
+            <view class="custom-select-backdrop" wx:if="{{ showCategoryPicker }}" bindtap="onCloseCategoryPicker"></view>
+          </view>
         </view>
 
         <view class="form-group">

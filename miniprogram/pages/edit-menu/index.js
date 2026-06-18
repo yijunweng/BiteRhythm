@@ -12,6 +12,7 @@ Page({
     customDishName: '',
     customDishCategory: '热菜',
     categoryIndex: 0,
+    showCategoryPicker: false,
     categories: ['热菜', '凉菜', '汤品', '主食', '其它'],
 
     showRepositoryModal: false,
@@ -101,6 +102,18 @@ Page({
     const list = [...this.data.dishesList];
     list.splice(index, 1);
     this.setData({ dishesList: list });
+  },
+
+  onToggleCategoryPicker: function () {
+    this.setData({ showCategoryPicker: !this.data.showCategoryPicker });
+  },
+  onCloseCategoryPicker: function () {
+    this.setData({ showCategoryPicker: false });
+  },
+  onSelectCategory: function (e) {
+    const idx = e.currentTarget.dataset.index;
+    this.onCategoryChange({ detail: { value: idx } });
+    this.setData({ showCategoryPicker: false });
   },
 
   onCategoryChange: function (e) {

@@ -185,12 +185,24 @@
 
         <view class="form-group" style="margin-top: 32rpx;">
           <text class="form-label">API 提供商</text>
-          <picker bindchange="onProviderChange" value="{{ selectedProviderIndex }}" range="{{ providers }}">
-            <view class="form-picker">
+          <view class="custom-select-container">
+            <view class="form-picker {{ showProviderPicker ? 'active' : '' }}" bindtap="onToggleProviderPicker">
               <text>{{ providers[selectedProviderIndex] }}</text>
-              <text style="color: var(--text-muted);">▾</text>
+              <text class="iconfont iconfont-down-line select-arrow {{ showProviderPicker ? 'open' : '' }}"></text>
             </view>
-          </picker>
+            <view class="custom-select-options {{ showProviderPicker ? 'show' : '' }}">
+              <view
+                class="custom-select-option {{ selectedProviderIndex === index ? 'selected' : '' }}"
+                wx:for="{{ providers }}"
+                wx:key="index"
+                bindtap="onSelectProvider"
+                data-index="{{ index }}"
+              >
+                <text>{{ item }}</text>
+              </view>
+            </view>
+            <view class="custom-select-backdrop" wx:if="{{ showProviderPicker }}" bindtap="onCloseProviderPicker"></view>
+          </view>
         </view>
 
         <view class="form-group">

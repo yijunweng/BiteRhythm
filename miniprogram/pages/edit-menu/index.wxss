@@ -130,14 +130,24 @@
 
 .cat-picker-btn {
   height: 80rpx;
-  padding: 0 20rpx;
-  background: #F5F5F5;
+  padding: 0 24rpx;
+  background: #FFFFFF;
+  border: 1rpx solid var(--border);
   border-radius: 12rpx;
   display: flex;
   align-items: center;
   font-size: 24rpx;
   color: var(--text-main);
   white-space: nowrap;
+  transition: var(--transition);
+  box-sizing: border-box;
+}
+
+.cat-picker-btn.active {
+  border-color: var(--theme-color);
+  background: #FFFFFF;
+  color: var(--theme-color);
+  box-shadow: 0 0 0 3rpx rgba(214, 178, 140, 0.15);
 }
 
 .add-circle-btn {
