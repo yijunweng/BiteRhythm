@@ -81,6 +81,7 @@
   color: var(--gold);
   font-weight: 600;
   justify-content: center;
+  gap: 8rpx;
 }
 
 .check-mark {
@@ -251,6 +252,13 @@
   background: #FFFFFF;
   border: 1rpx solid var(--theme-color);
   border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.edit-link .iconfont {
+  font-size: 20rpx;
 }
 
 /* 菜品药丸标签 */
@@ -269,6 +277,9 @@
   border-radius: 40rpx;
   font-size: 26rpx;
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
 }
 
 .read-only-tip {
@@ -279,14 +290,19 @@
   padding: 20rpx 24rpx;
   border-radius: 12rpx;
   border: 1rpx solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
 }
 
 .ai-btn-tip {
   font-size: 22rpx;
   color: var(--text-muted);
-  text-align: center;
   margin-top: 12rpx;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
 }
 
 /* 骨架屏组件样式 */

@@ -33,8 +33,10 @@
   font-size: 36rpx;
   font-weight: 700;
   color: var(--text-main);
-  display: block;
   margin-bottom: 6rpx;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
 }
 
 .edit-date-sub {
@@ -204,6 +206,7 @@
 .ai-star {
   font-size: 28rpx;
   color: var(--gold);
+  font-weight: bold;
 }
 
 .ai-card-title {

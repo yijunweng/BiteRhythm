@@ -40,14 +40,15 @@
     <view class="dishes-header">
       <text class="dishes-title">菜品库</text>
       <view class="header-actions" wx:if="{{ memberRole !== 'read' }}">
-        <view class="icon-btn ai-btn" bindtap="onOpenAiImport"><text class="iconfont iconfont-ai" style="margin-right: 6rpx;"></text>AI导入</view>
-        <view class="icon-btn add-btn" bindtap="onOpenAddModal"><text class="iconfont iconfont-add" style="margin-right: 6rpx;"></text>新增</view>
+        <view class="icon-btn ai-btn" bindtap="onOpenAiImport"><text class="iconfont iconfont-ai"></text><text>AI导入</text></view>
+        <view class="icon-btn add-btn" bindtap="onOpenAddModal"><text class="iconfont iconfont-add"></text><text>新增</text></view>
       </view>
     </view>
 
     <!-- 只读提示 -->
     <view class="read-only-banner" wx:if="{{ memberRole === 'read' }}">
-      <text class="iconfont iconfont-lock" style="margin-right: 6rpx;"></text>只读模式：您可浏览菜品库，无法添加或删除
+      <text class="iconfont iconfont-lock"></text>
+      <text>只读模式：您可浏览菜品库，无法添加或删除</text>
     </view>
 
     <!-- 搜索栏 -->
@@ -158,7 +159,10 @@
     <view class="modal-mask" wx:if="{{ showAiImportModal }}" bindtap="onCloseAiImport">
       <view class="modal-sheet" catchtap="noop">
         <view class="modal-header">
-          <view class="modal-title"><text class="iconfont iconfont-ai" style="margin-right: 8rpx;"></text>AI 批量解析导入</view>
+          <view class="modal-title">
+            <text class="iconfont iconfont-ai"></text>
+            <text>AI 批量解析导入</text>
+          </view>
           <view class="modal-close" bindtap="onCloseAiImport">×</view>
         </view>
 
@@ -171,7 +175,8 @@
         />
 
         <view class="ai-tip">
-          <text class="iconfont iconfont-info" style="margin-right: 6rpx;"></text>AI 会自动提取菜名并按类别（热菜/汤品/凉菜）分类，去重后存入菜品库。
+          <text class="iconfont iconfont-info"></text>
+          <text>AI 会自动提取菜名并按类别（热菜/汤品/凉菜）分类，去重后存入菜品库。</text>
         </view>
 
         <button
@@ -181,7 +186,8 @@
           disabled="{{ importLoading }}"
           style="margin-top: 24rpx;"
         >
-          <text class="iconfont iconfont-ai" style="margin-right: 8rpx;"></text>{{ importLoading ? 'AI 分析导入中...' : '开始 AI 解析并导入' }}
+          <text class="iconfont iconfont-ai"></text>
+          <text>{{ importLoading ? 'AI 分析导入中...' : '开始 AI 解析并导入' }}</text>
         </button>
       </view>
     </view>

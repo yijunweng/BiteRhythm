@@ -53,12 +53,16 @@
     <scroll-view class="edit-scroll-area" scroll-y="true">
       <!-- 日期标题 -->
       <view class="edit-date-header">
-        <text class="edit-date-title"><text class="iconfont iconfont-calendar" style="margin-right: 8rpx;"></text>{{ dateStr }}</text>
+        <view class="edit-date-title">
+          <text class="iconfont iconfont-calendar"></text>
+          <text>{{ dateStr }}</text>
+        </view>
       </view>
 
       <!-- 只读提示条 -->
       <view class="read-only-banner" wx:if="{{ isReadOnly }}">
-        <text class="iconfont iconfont-lock" style="margin-right: 6rpx;"></text>您当前是只读角色，可浏览菜单但无法修改
+        <text class="iconfont iconfont-lock"></text>
+        <text>您当前是只读角色，可浏览菜单但无法修改</text>
       </view>
 
       <!-- 当日已选菜品卡片 -->
@@ -123,7 +127,7 @@
       <!-- AI 智能搭配卡片（只读时隐藏） -->
       <view class="card ai-card" wx:if="{{ !isReadOnly }}">
         <view class="ai-card-header">
-          <text class="iconfont iconfont-ai ai-star" style="margin-right: 8rpx; font-weight: bold;"></text>
+          <text class="iconfont iconfont-ai ai-star"></text>
           <text class="ai-card-title">AI 智能搭配助理</text>
         </view>
         <view class="ai-card-desc">根据家庭偏好、忌口和最近吃过的菜，自动推荐最合适的今日搭配。</view>
@@ -136,7 +140,8 @@
           disabled="{{ aiLoading }}"
           style="margin-top: 24rpx;"
         >
-          <text class="iconfont iconfont-ai" style="margin-right: 8rpx;"></text>{{ aiLoading ? 'AI 思考中...' : 'AI 一键推荐搭配' }}
+          <text class="iconfont iconfont-ai"></text>
+          <text>{{ aiLoading ? 'AI 思考中...' : 'AI 一键推荐搭配' }}</text>
         </button>
       </view>
     </scroll-view>

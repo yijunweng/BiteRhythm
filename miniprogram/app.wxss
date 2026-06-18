@@ -274,6 +274,9 @@ view, text, scroll-view, input, button, textarea, label {
   font-size: 32rpx;
   font-weight: 700;
   color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
 }
 
 .modal-close {

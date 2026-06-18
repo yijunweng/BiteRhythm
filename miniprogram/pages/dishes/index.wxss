@@ -37,6 +37,9 @@
   font-weight: 600;
   border: 2rpx solid var(--theme-color);
   transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
 }
 
 .ai-btn {
@@ -200,6 +203,13 @@
   padding: 16rpx 20rpx;
   border-radius: var(--radius-sm);
   line-height: 1.6;
+  display: flex;
+  align-items: flex-start;
+  gap: 8rpx;
+}
+
+.ai-tip .iconfont {
+  margin-top: 6rpx;
 }
 
 /* 骨架屏组件样式 */

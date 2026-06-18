@@ -20,7 +20,10 @@
           <text class="openid-text" selectable>{{ myOpenid || '获取中...' }}</text>
           <view class="copy-btn" bindtap="onCopyOpenid" wx:if="{{ myOpenid }}">复制</view>
         </view>
-        <text class="openid-tip"><text class="iconfont iconfont-info" style="margin-right: 6rpx;"></text>如果您是超级管理员（雇主/主开发者），请复制此 OpenID 并将其配置到项目文件 miniprogram/config.js 中的 superAdminOpenId 字段，重新编译即可。</text>
+        <view class="openid-tip">
+          <text class="iconfont iconfont-info"></text>
+          <text>如果您是超级管理员（雇主/主开发者），请复制此 OpenID 并将其配置到项目文件 miniprogram/config.js 中的 superAdminOpenId 字段，重新编译即可。</text>
+        </view>
       </view>
     </view>
   </view>
@@ -40,31 +43,31 @@
       <!-- 菜单列表 -->
       <view class="settings-menu-item" bindtap="onGoSubpage" data-page="members">
         <view class="settings-menu-left">
-          <text class="settings-menu-icon iconfont iconfont-family" style="font-size: 36rpx;"></text>
+          <text class="settings-menu-icon iconfont iconfont-family"></text>
           <view>
             <text class="settings-menu-title">成员与协作管理</text>
             <text class="settings-menu-desc">审批新成员、调整权限、生成邀请链接</text>
           </view>
         </view>
-        <text class="chevron">›</text>
+        <text class="iconfont iconfont-right-line chevron"></text>
       </view>
 
       <view class="settings-menu-item" bindtap="onGoSubpage" data-page="llm">
         <view class="settings-menu-left">
-          <text class="settings-menu-icon iconfont iconfont-ai" style="font-size: 36rpx;"></text>
+          <text class="settings-menu-icon iconfont iconfont-ai"></text>
           <view>
             <text class="settings-menu-title">大模型参数配置</text>
             <text class="settings-menu-desc">设置 API 提供商、密鑰与模型名称</text>
           </view>
         </view>
-        <text class="chevron">›</text>
+        <text class="iconfont iconfont-right-line chevron"></text>
       </view>
     </view>
 
     <!-- 子页 1：成员管理 -->
     <view wx:if="{{ subpage === 'members' }}" class="animate-in">
       <view class="subpage-back" bindtap="onBackToHome">
-        <text class="iconfont iconfont-left-line" style="margin-right: 6rpx;"></text>
+        <text class="iconfont iconfont-left-line"></text>
         <text>返回设置菜单</text>
       </view>
 
@@ -112,7 +115,8 @@
             wx:if="{{ currentFamilyId }}"
             style="margin-top: 28rpx;"
           >
-            <text class="iconfont iconfont-wechat" style="margin-right: 4rpx;font-size: 48rpx;"></text>微信邀请新成员
+            <text class="iconfont iconfont-wechat" style="font-size: 48rpx;"></text>
+            <text>微信邀请新成员</text>
           </button>
         </view>
 
@@ -171,7 +175,7 @@
     <!-- 子页 2：大模型配置 -->
     <view wx:if="{{ subpage === 'llm' }}" class="animate-in">
       <view class="subpage-back" bindtap="onBackToHome">
-        <text class="iconfont iconfont-left-line" style="margin-right: 6rpx;"></text>
+        <text class="iconfont iconfont-left-line"></text>
         <text>返回设置菜单</text>
       </view>
 

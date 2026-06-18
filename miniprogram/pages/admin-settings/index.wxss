@@ -81,6 +81,13 @@
   font-size: 22rpx;
   color: var(--text-muted);
   line-height: 1.6;
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+}
+
+.openid-tip .iconfont {
+  margin-top: 6rpx;
 }
 
 /* 超管信息卡 */
@@ -129,7 +136,7 @@
 }
 
 .settings-menu-icon {
-  font-size: 40rpx;
+  font-size: 36rpx;
 }
 
 .settings-menu-title {
@@ -147,9 +154,8 @@
 }
 
 .chevron {
-  font-size: 40rpx;
+  font-size: 24rpx;
   color: var(--text-muted);
-  font-weight: 300;
 }
 
 /* 子页返回按钮 */
