@@ -163,7 +163,9 @@
       <view class="modal-sheet" catchtap="noop">
         <view class="modal-header">
           <text class="modal-title">我的菜品库</text>
-          <view class="modal-close" bindtap="onCloseRepository">×</view>
+          <view class="modal-close" bindtap="onCloseRepository">
+            <text class="iconfont iconfont-wrong"></text>
+          </view>
         </view>
 
         <!-- 搜索 -->
@@ -195,7 +197,9 @@
               <text class="repo-item-cat">{{ item.category }}</text>
               <text class="repo-item-name">{{ item.name }}</text>
             </view>
-            <view class="repo-add-btn" bindtap="onAddRepoDish" data-dish="{{ item }}">＋</view>
+            <view class="repo-add-btn" bindtap="onAddRepoDish" data-dish="{{ item }}">
+              <text class="iconfont iconfont-add"></text>
+            </view>
           </view>
           <view class="empty-state" wx:if="{{ filteredRepoDishes.length === 0 }}">
             <view class="empty-text">没有找到符合条件的菜品</view>

@@ -111,7 +111,9 @@
       <view class="modal-sheet" catchtap="noop">
         <view class="modal-header">
           <text class="modal-title">新增菜品</text>
-          <view class="modal-close" bindtap="onCloseAddModal">×</view>
+          <view class="modal-close" bindtap="onCloseAddModal">
+            <text class="iconfont iconfont-wrong"></text>
+          </view>
         </view>
 
         <view class="form-group">
@@ -163,7 +165,9 @@
             <text class="iconfont iconfont-ai"></text>
             <text>AI 批量解析导入</text>
           </view>
-          <view class="modal-close" bindtap="onCloseAiImport">×</view>
+          <view class="modal-close" bindtap="onCloseAiImport">
+            <text class="iconfont iconfont-wrong"></text>
+          </view>
         </view>
 
         <textarea
