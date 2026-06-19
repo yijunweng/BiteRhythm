@@ -1,4 +1,16 @@
 <!-- miniprogram/pages/index/index.wxml -->
+<wxs module="iconMap">
+  var getCategoryIcon = function(category) {
+    if (category === '热菜') return 'iconfont-hot-dishes';
+    if (category === '凉菜') return 'iconfont-cold-dishes';
+    if (category === '汤品') return 'iconfont-soup';
+    if (category === '主食') return 'iconfont-rice';
+    return 'iconfont-dish';
+  };
+  module.exports = {
+    getCategoryIcon: getCategoryIcon
+  };
+</wxs>
 <view class="page-container index-page">
 
   <!-- 骨架屏加载状态 -->
@@ -163,7 +175,7 @@
       <!-- 已规划菜品 -->
       <view class="dish-pills" wx:if="{{ selectedDateMenu && selectedDateMenu.dishes.length > 0 }}">
         <view class="dish-pill" wx:for="{{ selectedDateMenu.dishes }}" wx:key="index">
-          <text class="iconfont iconfont-dish"></text>
+          <text class="iconfont {{ iconMap.getCategoryIcon(item.category) }}"></text>
           <text>{{ item.name }}</text>
         </view>
       </view>
