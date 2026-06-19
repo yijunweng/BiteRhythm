@@ -18,7 +18,7 @@ const toast = {
     }
   },
 
-  showToast: function (page, title, icon = 'success', duration = 1500) {
+  showToast: function (page, title, icon = 'success', duration = null) {
     let type = 'success';
     if (icon === 'none') {
       type = 'none';
@@ -38,11 +38,13 @@ const toast = {
       clearTimeout(page.toastTimer);
     }
     
+    const finalDuration = duration !== null && duration !== undefined ? duration : (type === 'success' ? 1000 : 1500);
+    
     page.toastTimer = setTimeout(() => {
       page.setData({
         'toastData.show': false
       });
-    }, duration);
+    }, finalDuration);
   }
 };
 

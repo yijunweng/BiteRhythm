@@ -369,7 +369,7 @@
   <view class="custom-toast {{ toastData.show ? 'show' : '' }}">
     <view class="custom-toast-content">
       <view class="custom-toast-loading-spinner" wx:if="{{ toastData.type === 'loading' }}"></view>
-      <text class="iconfont iconfont-right custom-toast-icon success" wx:elif="{{ toastData.type === 'success' }}"></text>
+      <text class="iconfont iconfont-success custom-toast-icon success" wx:elif="{{ toastData.type === 'success' }}"></text>
       <text class="iconfont iconfont-info custom-toast-icon info" wx:elif="{{ toastData.type === 'info' }}"></text>
       <text class="custom-toast-title" wx:if="{{ toastData.title }}">{{ toastData.title }}</text>
     </view>

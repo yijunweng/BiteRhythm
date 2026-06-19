@@ -61,7 +61,7 @@
     <view class="family-bar">
       <view class="family-selector" bindtap="toggleFamilySelector">
         <text class="family-name">{{ activeFamily ? activeFamily.name : '创建家庭' }}</text>
-        <text class="iconfont iconfont-down family-arrow {{ showFamilySelector ? 'open' : '' }}"></text>
+        <text class="iconfont iconfont-down-line family-arrow {{ showFamilySelector ? 'open' : '' }}"></text>
       </view>
       <view class="role-chip" wx:if="{{ activeFamily }}">
         <text wx:if="{{ memberRole === 'admin' }}">管理员</text>
@@ -233,7 +233,7 @@
     <view class="custom-toast {{ toastData.show ? 'show' : '' }}">
       <view class="custom-toast-content">
         <view class="custom-toast-loading-spinner" wx:if="{{ toastData.type === 'loading' }}"></view>
-        <text class="iconfont iconfont-right custom-toast-icon success" wx:elif="{{ toastData.type === 'success' }}"></text>
+        <text class="iconfont iconfont-success custom-toast-icon success" wx:elif="{{ toastData.type === 'success' }}"></text>
         <text class="iconfont iconfont-info custom-toast-icon info" wx:elif="{{ toastData.type === 'info' }}"></text>
         <text class="custom-toast-title" wx:if="{{ toastData.title }}">{{ toastData.title }}</text>
       </view>
