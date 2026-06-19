@@ -490,3 +490,95 @@ view, text, scroll-view, input, button, textarea, label {
   z-index: 999;
   background: transparent;
 }
+
+/* ============================================================
+   自定义 Toast & Loading 全局样式
+   ============================================================ */
+.custom-toast-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99998;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.custom-toast {
+  position: fixed;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  z-index: 99999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.custom-toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.custom-toast-content {
+  background: rgba(33, 33, 33, 0.9);
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
+  border: 1rpx solid rgba(255, 255, 255, 0.08);
+  border-radius: 24rpx;
+  padding: 36rpx 44rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 240rpx;
+  max-width: 420rpx;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.24);
+}
+
+.custom-toast-title {
+  color: #FFFFFF;
+  font-size: 26rpx;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* 当有图标或加载圈时，添加 margin-top */
+.custom-toast-loading-spinner ~ .custom-toast-title,
+.custom-toast-icon ~ .custom-toast-title {
+  margin-top: 16rpx;
+}
+
+/* 成功/信息图标 */
+.custom-toast-icon {
+  font-size: 64rpx;
+  line-height: 1;
+  display: block;
+}
+
+.custom-toast-icon.success {
+  color: var(--theme-color);
+}
+
+.custom-toast-icon.info {
+  color: #FFB74D;
+}
+
+/* Loading 旋转指示器 */
+.custom-toast-loading-spinner {
+  width: 56rpx;
+  height: 56rpx;
+  border: 4rpx solid rgba(212, 178, 140, 0.2);
+  border-left-color: var(--theme-color);
+  border-radius: 50%;
+  animation: custom-toast-spin 0.8s linear infinite;
+  display: block;
+}
+
+@keyframes custom-toast-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

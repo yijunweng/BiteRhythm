@@ -1,5 +1,6 @@
 // miniprogram/pages/admin-settings/index.js
 const app = getApp();
+const { toast } = require('../../utils/toast.js');
 
 Page({
   data: {
@@ -40,7 +41,9 @@ Page({
     confirmContent: '',
     confirmActionType: '', // 'deleteFamily' | 'removeMember'
     confirmTargetId: '',
-    confirmTargetName: ''
+    confirmTargetName: '',
+
+    toastData: { show: false, type: 'none', title: '' }
   },
 
   onLoad: function () {
@@ -86,7 +89,7 @@ Page({
   onCopyOpenid: function () {
     wx.setClipboardData({
       data: this.data.myOpenid,
-      success: () => wx.showToast({ title: 'OpenID 已复制', icon: 'success' })
+      success: () => toast.showToast(this, 'OpenID 已复制', 'success')
     });
   },
 
@@ -140,34 +143,29 @@ Page({
   // 审批通过并设定角色
   onApprove: async function (e) {
     const { id, role } = e.currentTarget.dataset;
-    wx.showLoading({ title: '审批中' });
+    toast.showLoading(this, '审批中...');
     try {
       const db = wx.cloud.database();
       await db.collection('family_members').doc(id).update({ data: { status: 'approved', role } });
-      wx.showToast({ title: '审批通过', icon: 'success' });
+      toast.showToast(this, '审批通过', 'success');
       this.fetchMembers();
     } catch {
-      wx.showToast({ title: '审批失败', icon: 'error' });
+      toast.showToast(this, '审批失败', 'error');
     } finally {
-      wx.hideLoading();
+      toast.hideLoading(this);
     }
   },
 
   // 拒绝申请
   onReject: function (e) {
     const { id } = e.currentTarget.dataset;
-    wx.showModal({
-      title: '确认拒绝', content: '确定要拒绝该用户的加入申请吗？',
-      success: async res => {
-        if (!res.confirm) return;
-        wx.showLoading({ title: '处理中' });
-        try {
-          await wx.cloud.database().collection('family_members').doc(id).remove();
-          wx.showToast({ title: '已拒绝', icon: 'success' });
-          this.fetchMembers();
-        } catch { wx.showToast({ title: '操作失败', icon: 'error' }); }
-        finally { wx.hideLoading(); }
-      }
+    this.setData({
+      showConfirmModal: true,
+      confirmTitle: '确认拒绝',
+      confirmContent: '确定要拒绝该用户的加入申请吗？',
+      confirmActionType: 'rejectMember',
+      confirmTargetId: id,
+      confirmTargetName: ''
     });
   },
 
@@ -212,10 +210,10 @@ Page({
     const nickname = this.data.editMemberNickname.trim();
     const role = this.data.editMemberRole;
     if (!nickname) {
-      wx.showToast({ title: '请输入成员昵称', icon: 'none' });
+      toast.showToast(this, '请输入成员昵称', 'none');
       return;
     }
-    wx.showLoading({ title: '保存中...' });
+    toast.showLoading(this, '保存中...');
     try {
       const db = wx.cloud.database();
       if (role === 'admin') {
@@ -223,14 +221,14 @@ Page({
       } else {
         await db.collection('family_members').doc(id).update({ data: { nickname, role } });
       }
-      wx.showToast({ title: '修改成功', icon: 'success' });
+      toast.showToast(this, '修改成功', 'success');
       this.setData({ showEditMemberModal: false });
       this.fetchMembers();
     } catch (err) {
       console.error(err);
-      wx.showToast({ title: '修改失败', icon: 'none' });
+      toast.showToast(this, '修改失败', 'none');
     } finally {
-      wx.hideLoading();
+      toast.hideLoading(this);
     }
   },
 
@@ -289,12 +287,12 @@ Page({
     // 若 apiKey 是占位符（未修改），则不更新 key
     const isPlaceholder = apiKey.startsWith('•');
     if (!isPlaceholder && !apiKey.trim()) {
-      wx.showToast({ title: '请输入 API Key', icon: 'none' }); return;
+      toast.showToast(this, '请输入 API Key', 'none'); return;
     }
-    if (!baseUrl.trim()) { wx.showToast({ title: '请输入 Base URL', icon: 'none' }); return; }
-    if (!modelName.trim()) { wx.showToast({ title: '请输入模型名称', icon: 'none' }); return; }
+    if (!baseUrl.trim()) { toast.showToast(this, '请输入 Base URL', 'none'); return; }
+    if (!modelName.trim()) { toast.showToast(this, '请输入模型名称', 'none'); return; }
     this.setData({ saving: true });
-    wx.showLoading({ title: '保存中...' });
+    toast.showLoading(this, '保存中...');
     const configPayload = {
       llm_provider: providerValues[selectedProviderIndex],
       base_url: baseUrl.trim(),
@@ -308,11 +306,11 @@ Page({
       name: 'adminService',
       data: { action: 'saveLLMConfig', config: configPayload },
       success: res => {
-        if (res.result && res.result.success) wx.showToast({ title: '配置保存成功', icon: 'success' });
-        else wx.showToast({ title: res.result.message || '保存失败', icon: 'none' });
+        if (res.result && res.result.success) toast.showToast(this, '配置保存成功', 'success');
+        else toast.showToast(this, res.result.message || '保存失败', 'none');
       },
-      fail: () => wx.showToast({ title: '云端保存失败', icon: 'none' }),
-      complete: () => { this.setData({ saving: false }); wx.hideLoading(); }
+      fail: () => toast.showToast(this, '云端保存失败', 'none'),
+      complete: () => { this.setData({ saving: false }); toast.hideLoading(this); }
     });
   },
 
@@ -340,22 +338,22 @@ Page({
   onCommitRenameFamily: async function () {
     const name = this.data.renameFamilyName.trim();
     if (!name) {
-      wx.showToast({ title: '请输入家庭名称', icon: 'none' });
+      toast.showToast(this, '请输入家庭名称', 'none');
       return;
     }
     
     // 检查是否重名
-    wx.showLoading({ title: '检查重名中...' });
+    toast.showLoading(this, '检查重名中...');
     try {
       const db = wx.cloud.database();
       const checkRes = await db.collection('families').where({ name }).get();
       const duplicate = checkRes.data.find(f => f._id !== this.data.currentFamilyId);
       if (duplicate) {
-        wx.showToast({ title: '已存在同名家庭', icon: 'none' });
+        toast.showToast(this, '已存在同名家庭', 'none');
         return;
       }
 
-      wx.showLoading({ title: '修改中...' });
+      toast.showLoading(this, '修改中...');
       await db.collection('families').doc(this.data.currentFamilyId).update({
         data: { name }
       });
@@ -368,12 +366,12 @@ Page({
         currentFamilyName: name,
         showRenameFamilyModal: false
       });
-      wx.showToast({ title: '修改成功', icon: 'success' });
+      toast.showToast(this, '修改成功', 'success');
     } catch (err) {
       console.error(err);
-      wx.showToast({ title: '修改失败', icon: 'none' });
+      toast.showToast(this, '修改失败', 'none');
     } finally {
-      wx.hideLoading();
+      toast.hideLoading(this);
     }
   },
 
@@ -387,21 +385,33 @@ Page({
     const actionType = this.data.confirmActionType;
     const targetId = this.data.confirmTargetId;
     
-    if (actionType === 'removeMember') {
-      wx.showLoading({ title: '移除中...' });
+    if (actionType === 'rejectMember') {
+      toast.showLoading(this, '处理中...');
       try {
         await wx.cloud.database().collection('family_members').doc(targetId).remove();
-        wx.showToast({ title: '已移除', icon: 'success' });
+        toast.showToast(this, '已拒绝', 'success');
+        this.setData({ showConfirmModal: false });
+        this.fetchMembers();
+      } catch {
+        toast.showToast(this, '操作失败', 'error');
+      } finally {
+        toast.hideLoading(this);
+      }
+    } else if (actionType === 'removeMember') {
+      toast.showLoading(this, '移除中...');
+      try {
+        await wx.cloud.database().collection('family_members').doc(targetId).remove();
+        toast.showToast(this, '已移除', 'success');
         this.setData({ showConfirmModal: false });
         this.fetchMembers();
       } catch (err) {
         console.error(err);
-        wx.showToast({ title: '移除失败', icon: 'none' });
+        toast.showToast(this, '移除失败', 'none');
       } finally {
-        wx.hideLoading();
+        toast.hideLoading(this);
       }
     } else if (actionType === 'deleteFamily') {
-      wx.showLoading({ title: '正在删除...' });
+      toast.showLoading(this, '正在删除...');
       try {
         const callRes = await wx.cloud.callFunction({
           name: 'adminService',
@@ -412,7 +422,7 @@ Page({
         });
         
         if (callRes.result && callRes.result.success) {
-          wx.showToast({ title: '删除成功', icon: 'success' });
+          toast.showToast(this, '删除成功', 'success');
           app.globalData.activeFamily = null;
           app.globalData.memberRole = '';
           this.setData({ showConfirmModal: false });
@@ -422,14 +432,16 @@ Page({
             });
           }, 1500);
         } else {
-          wx.showToast({ title: callRes.result.message || '删除失败', icon: 'none' });
+          toast.showToast(this, callRes.result.message || '删除失败', 'none');
         }
       } catch (err) {
         console.error('删除家庭失败', err);
-        wx.showToast({ title: '删除失败', icon: 'none' });
+        toast.showToast(this, '删除失败', 'none');
       } finally {
-        wx.hideLoading();
+        toast.hideLoading(this);
       }
     }
-  }
+  },
+
+  noop: function () {}
 });

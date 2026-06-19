@@ -21,8 +21,8 @@
       {
         "pagePath": "pages/dishes/index",
         "text": "菜品库",
-        "iconPath": "images/dishes.png",
-        "selectedIconPath": "images/dishes-sel.png"
+        "iconPath": "images/menu.png",
+        "selectedIconPath": "images/menu-sel.png"
       },
       {
         "pagePath": "pages/admin-settings/index",

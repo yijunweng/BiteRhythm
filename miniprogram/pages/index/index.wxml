@@ -197,13 +197,6 @@
       </view>
     </view>
 
-    <!-- AI 排餐加载骨架屏 -->
-    <view class="card" wx:if="{{ aiPlanLoading }}">
-      <view class="shimmer-line" style="width: 40%;"></view>
-      <view class="shimmer-line" style="width: 100%; height: 60rpx; border-radius: 12rpx;"></view>
-      <view class="shimmer-line" style="width: 70%;"></view>
-      <view class="shimmer-line" style="width: 100%; height: 60rpx; border-radius: 12rpx;"></view>
-    </view>
     <!-- 创建家庭 Modal -->
     <view class="modal-mask" wx:if="{{ showCreateFamilyModal }}" bindtap="onCloseCreateFamilyModal">
       <view class="modal-sheet" catchtap="noop" style="padding-bottom: 80rpx;">
@@ -234,7 +227,39 @@
         </button>
       </view>
     </view>
+
+    <!-- 自定义 Toast & Loading -->
+    <view class="custom-toast-backdrop" wx:if="{{ toastData.show }}" catchtap="noop" catchtouchmove="noop"></view>
+    <view class="custom-toast {{ toastData.show ? 'show' : '' }}">
+      <view class="custom-toast-content">
+        <view class="custom-toast-loading-spinner" wx:if="{{ toastData.type === 'loading' }}"></view>
+        <text class="iconfont iconfont-right custom-toast-icon success" wx:elif="{{ toastData.type === 'success' }}"></text>
+        <text class="iconfont iconfont-info custom-toast-icon info" wx:elif="{{ toastData.type === 'info' }}"></text>
+        <text class="custom-toast-title" wx:if="{{ toastData.title }}">{{ toastData.title }}</text>
+      </view>
+    </view>
   </block>
+
+  <!-- 删除家庭确认 Modal（放页面最外层，不受 block 限制） -->
+  <view class="modal-mask" wx:if="{{ showDeleteFamilyConfirm }}" bindtap="onCloseDeleteFamilyConfirm">
+    <view class="modal-sheet" catchtap="noop" style="padding-bottom: 60rpx; text-align: center;">
+      <view class="modal-header" style="border: none; padding-bottom: 0;">
+        <view style="flex: 1;"></view>
+        <view class="modal-close" bindtap="onCloseDeleteFamilyConfirm">
+          <text class="iconfont iconfont-wrong"></text>
+        </view>
+      </view>
+      <view style="margin-bottom: 24rpx; display: inline-block;">
+        <text class="iconfont iconfont-info" style="font-size: 80rpx; color: #E53935;"></text>
+      </view>
+      <view style="font-size: 32rpx; font-weight: 700; color: var(--text-main); margin-bottom: 16rpx;">确认删除家庭</view>
+      <view style="font-size: 26rpx; color: var(--text-muted); line-height: 1.6; padding: 0 32rpx; margin-bottom: 40rpx;">确定要解散并删除家庭「{{ deleteFamilyName }}」吗？此操作将永久清除该家庭下所有成员、菜品及排餐记录，且无法恢复！</view>
+      <view style="display: flex; gap: 20rpx; padding: 0 32rpx;">
+        <button class="btn-secondary" style="flex: 1; border: 1rpx solid #E0E0E0; background: #FFF; color: #666; font-size: 28rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; font-weight: 600;" bindtap="onCloseDeleteFamilyConfirm">取消</button>
+        <button class="btn-primary" style="flex: 1; background: #E53935; font-size: 28rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; font-weight: 600; box-shadow: none;" bindtap="onCommitDeleteFamily">确认删除</button>
+      </view>
+    </view>
+  </view>
 
 </view>
 

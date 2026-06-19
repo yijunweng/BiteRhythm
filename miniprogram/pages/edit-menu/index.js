@@ -1,5 +1,6 @@
 // miniprogram/pages/edit-menu/index.js
 const app = getApp();
+const { toast } = require('../../utils/toast.js');
 
 Page({
   data: {
@@ -25,13 +26,15 @@ Page({
     aiLoading: false,
     aiRecommendations: [],
     showAiPanel: false,
-    saving: false
+    saving: false,
+    showClearConfirm: false,
+    toastData: { show: false, type: 'none', title: '' }
   },
 
   onLoad: async function (options) {
     const { date, familyId } = options;
     if (!date || !familyId) {
-      wx.showToast({ title: '参数错误', icon: 'none' });
+      toast.showToast(this, '参数错误', 'none');
       setTimeout(() => wx.navigateBack(), 1500);
       return;
     }
@@ -87,9 +90,9 @@ Page({
 
   onAddCustomDish: function () {
     const name = this.data.customDishName.trim();
-    if (!name) { wx.showToast({ title: '请输入菜名', icon: 'none' }); return; }
+    if (!name) { toast.showToast(this, '请输入菜名', 'none'); return; }
     if (this.data.dishesList.some(d => d.name === name)) {
-      wx.showToast({ title: '菜品已在今日计划中', icon: 'none' }); return;
+      toast.showToast(this, '菜品已在今日计划中', 'none'); return;
     }
     this.setData({
       dishesList: [...this.data.dishesList, { name, category: this.data.customDishCategory }],
@@ -153,12 +156,12 @@ Page({
   onAddRepoDish: function (e) {
     const { dish } = e.currentTarget.dataset;
     if (this.data.dishesList.some(d => d.name === dish.name)) {
-      wx.showToast({ title: '该菜已加入', icon: 'none' }); return;
+      toast.showToast(this, '该菜已加入', 'none'); return;
     }
     this.setData({
       dishesList: [...this.data.dishesList, { name: dish.name, category: dish.category, id: dish._id }]
     });
-    wx.showToast({ title: '添加成功', icon: 'success', duration: 800 });
+    toast.showToast(this, '添加成功', 'success', 800);
   },
 
   // 复制昨日菜单
@@ -169,7 +172,7 @@ Page({
     const m = String(yesterday.getMonth() + 1).padStart(2, '0');
     const d = String(yesterday.getDate()).padStart(2, '0');
     const yDateStr = `${y}-${m}-${d}`;
-    wx.showLoading({ title: '获取中...' });
+    toast.showLoading(this, '获取中...');
     try {
       const db = wx.cloud.database();
       const res = await db.collection('menus').where({
@@ -177,39 +180,40 @@ Page({
       }).get();
       if (res.data.length > 0 && res.data[0].dishes && res.data[0].dishes.length > 0) {
         this.setData({ dishesList: res.data[0].dishes });
-        wx.showToast({ title: '复制成功', icon: 'success' });
+        toast.showToast(this, '复制成功', 'success');
       } else {
-        wx.showToast({ title: '昨日无菜单可复制', icon: 'none' });
+        toast.showToast(this, '昨日无菜单可复制', 'none');
       }
     } catch (err) {
-      wx.showToast({ title: '获取失败', icon: 'none' });
+      toast.showToast(this, '获取失败', 'none');
     } finally {
-      wx.hideLoading();
+      toast.hideLoading(this);
     }
   },
 
   // 清空菜单
   onClearMenu: function () {
-    wx.showModal({
-      title: '确认清空',
-      content: '确定要清空今日菜单吗？',
-      confirmColor: '#E53935',
-      success: res => {
-        if (res.confirm) this.setData({ dishesList: [] });
-      }
-    });
+    this.setData({ showClearConfirm: true });
+  },
+
+  onCloseClearConfirm: function () {
+    this.setData({ showClearConfirm: false });
+  },
+
+  onCommitClearMenu: function () {
+    this.setData({ dishesList: [], showClearConfirm: false });
   },
 
   // AI 推荐
   onCallAIRecommend: function () {
     this.setData({ aiLoading: true });
-    wx.showLoading({ title: 'AI 智能配餐中...', mask: true });
+    toast.showLoading(this, 'AI 智能配餐中...');
     wx.cloud.callFunction({
       name: 'llmService',
       data: { action: 'recommendToday', familyId: this.data.familyId, date: this.data.dateStr },
       success: res => {
-        wx.hideLoading();
         this.setData({ aiLoading: false });
+        toast.hideLoading(this);
         if (res.result && res.result.success && res.result.recommendations) {
           const recs = res.result.recommendations;
           const merged = [...this.data.dishesList];
@@ -219,24 +223,24 @@ Page({
             }
           });
           this.setData({ dishesList: merged });
-          wx.showToast({ title: '已应用 AI 推荐', icon: 'success' });
+          toast.showToast(this, '已应用 AI 推荐', 'success');
         } else {
           console.error('AI 推荐失败:', res.result ? res.result.message : '无返回消息');
-          wx.showToast({ title: (res.result && res.result.message) || '推荐失败，请重试', icon: 'none' });
+          toast.showToast(this, (res.result && res.result.message) || '推荐失败，请重试', 'none');
         }
       },
       fail: err => {
-        wx.hideLoading();
         this.setData({ aiLoading: false });
+        toast.hideLoading(this);
         console.error('调用 AI 推荐失败', err);
-        wx.showToast({ title: 'AI 服务异常，请确认 API 配置', icon: 'none' });
+        toast.showToast(this, 'AI 服务异常，请确认 API 配置', 'none');
       }
     });
   },
 
   onSaveMenu: function () {
     this.setData({ saving: true });
-    wx.showLoading({ title: '保存中...' });
+    toast.showLoading(this, '保存中...');
     wx.cloud.callFunction({
       name: 'menuService',
       data: {
@@ -247,19 +251,19 @@ Page({
       },
       success: res => {
         if (res.result && res.result.success) {
-          wx.showToast({ title: '保存成功', icon: 'success' });
+          toast.showToast(this, '保存成功', 'success');
           setTimeout(() => wx.navigateBack(), 1000);
         } else {
-          wx.showToast({ title: res.result.message || '保存失败', icon: 'none' });
+          toast.showToast(this, res.result.message || '保存失败', 'none');
         }
       },
       fail: err => {
         console.error('保存菜单网络异常', err);
-        wx.showToast({ title: '网络异常，保存失败', icon: 'none' });
+        toast.showToast(this, '网络异常，保存失败', 'none');
       },
       complete: () => {
         this.setData({ saving: false });
-        wx.hideLoading();
+        toast.hideLoading(this);
       }
     });
   },

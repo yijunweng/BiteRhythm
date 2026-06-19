@@ -1,6 +1,7 @@
 // miniprogram/pages/members/index.js
 // 该页面为微信邀请分享落地页，新成员点击分享卡片后进入此页提交加入申请
 const app = getApp();
+const { toast } = require('../../utils/toast.js');
 
 Page({
   data: {
@@ -9,7 +10,8 @@ Page({
     nickname: '',
     submitting: false,
     joined: false,
-    loading: true
+    loading: true,
+    toastData: { show: false, type: 'none', title: '' }
   },
 
   onLoad: async function (options) {
@@ -51,18 +53,18 @@ Page({
   onSubmitJoin: async function () {
     const { familyId, nickname } = this.data;
     if (!nickname.trim()) {
-      wx.showToast({ title: '请输入您的属名', icon: 'none' });
+      toast.showToast(this, '请输入您的署名', 'none');
       return;
     }
 
     // 确保 openid 已就绪
     if (!app.globalData.openid) {
-      wx.showToast({ title: '登录状态异常，请重试', icon: 'none' });
+      toast.showToast(this, '登录状态异常，请重试', 'none');
       return;
     }
 
     this.setData({ submitting: true });
-    wx.showLoading({ title: '提交中...' });
+    toast.showLoading(this, '提交中...');
 
     try {
       const db = wx.cloud.database();
@@ -73,10 +75,10 @@ Page({
       if (existRes.data.length > 0) {
         if (existRes.data[0].status === 'approved') {
           this.setData({ joined: true });
-          wx.showToast({ title: '您已是家庭成员', icon: 'success' });
+          toast.showToast(this, '您已是家庭成员', 'success');
           return;
         }
-        wx.showToast({ title: '您的申请正在审批中', icon: 'none' });
+        toast.showToast(this, '您的申请正在审批中', 'none');
         return;
       }
 
@@ -92,13 +94,13 @@ Page({
         }
       });
       this.setData({ joined: true });
-      wx.showToast({ title: '申请已提交', icon: 'success' });
+      toast.showToast(this, '申请已提交', 'success');
     } catch (err) {
       console.error('提交申请失败', err);
-      wx.showToast({ title: '提交失败，请重试', icon: 'none' });
+      toast.showToast(this, '提交失败，请重试', 'none');
     } finally {
       this.setData({ submitting: false });
-      wx.hideLoading();
+      toast.hideLoading(this);
     }
   },
 

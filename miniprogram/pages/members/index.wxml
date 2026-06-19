@@ -81,4 +81,14 @@
     </view>
   </block>
 
+  <!-- 自定义 Toast & Loading -->
+  <view class="custom-toast-backdrop" wx:if="{{ toastData.show }}" catchtap="noop" catchtouchmove="noop"></view>
+  <view class="custom-toast {{ toastData.show ? 'show' : '' }}">
+    <view class="custom-toast-content">
+      <view class="custom-toast-loading-spinner" wx:if="{{ toastData.type === 'loading' }}"></view>
+      <text class="iconfont iconfont-right custom-toast-icon success" wx:elif="{{ toastData.type === 'success' }}"></text>
+      <text class="iconfont iconfont-info custom-toast-icon info" wx:elif="{{ toastData.type === 'info' }}"></text>
+      <text class="custom-toast-title" wx:if="{{ toastData.title }}">{{ toastData.title }}</text>
+    </view>
+  </view>
 </view>

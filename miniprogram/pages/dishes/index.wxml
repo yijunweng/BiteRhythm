@@ -269,6 +269,37 @@
         </button>
       </view>
     </view>
+    <!-- 自定义 Toast & Loading -->
+    <view class="custom-toast-backdrop" wx:if="{{ toastData.show }}" catchtap="noop" catchtouchmove="noop"></view>
+    <view class="custom-toast {{ toastData.show ? 'show' : '' }}">
+      <view class="custom-toast-content">
+        <view class="custom-toast-loading-spinner" wx:if="{{ toastData.type === 'loading' }}"></view>
+        <text class="iconfont iconfont-right custom-toast-icon success" wx:elif="{{ toastData.type === 'success' }}"></text>
+        <text class="iconfont iconfont-info custom-toast-icon info" wx:elif="{{ toastData.type === 'info' }}"></text>
+        <text class="custom-toast-title" wx:if="{{ toastData.title }}">{{ toastData.title }}</text>
+      </view>
+    </view>
   </block>
+
+  <!-- 删除菜品确认 Modal -->
+  <view class="modal-mask" wx:if="{{ showDeleteDishConfirm }}" bindtap="onCloseDeleteDishConfirm">
+    <view class="modal-sheet" catchtap="noop" style="padding-bottom: 60rpx; text-align: center;">
+      <view class="modal-header" style="border: none; padding-bottom: 0;">
+        <view style="flex: 1;"></view>
+        <view class="modal-close" bindtap="onCloseDeleteDishConfirm">
+          <text class="iconfont iconfont-wrong"></text>
+        </view>
+      </view>
+      <view style="margin-bottom: 24rpx; display: inline-block;">
+        <text class="iconfont iconfont-info" style="font-size: 80rpx; color: #E53935;"></text>
+      </view>
+      <view style="font-size: 32rpx; font-weight: 700; color: var(--text-main); margin-bottom: 16rpx;">确认删除</view>
+      <view style="font-size: 26rpx; color: var(--text-muted); line-height: 1.6; padding: 0 32rpx; margin-bottom: 40rpx;">确定要删除「{{ deleteDishName }}」吗？</view>
+      <view style="display: flex; gap: 20rpx; padding: 0 32rpx;">
+        <button class="btn-secondary" style="flex: 1; border: 1rpx solid #E0E0E0; background: #FFF; color: #666; font-size: 28rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; font-weight: 600;" bindtap="onCloseDeleteDishConfirm">取消</button>
+        <button class="btn-primary" style="flex: 1; background: #E53935; font-size: 28rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; font-weight: 600; box-shadow: none;" bindtap="onCommitDeleteDish">确认删除</button>
+      </view>
+    </view>
+  </view>
 
 </view>

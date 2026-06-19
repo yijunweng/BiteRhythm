@@ -1,5 +1,6 @@
 // miniprogram/pages/dishes/index.js
 const app = getApp();
+const { toast } = require('../../utils/toast.js');
 
 Page({
   data: {
@@ -27,13 +28,17 @@ Page({
     editDishCategory: '热菜',
     editCategoryIndex: 0,
     editDishRemark: '',
-    showEditCategoryPicker: false
+    showEditCategoryPicker: false,
+    showDeleteDishConfirm: false,
+    deleteDishId: '',
+    deleteDishName: '',
+    toastData: { show: false, type: 'none', title: '' }
   },
 
   onLoad: function (options) {
     const familyId = options.familyId || (app.globalData.activeFamily && app.globalData.activeFamily._id) || '';
     if (!familyId) {
-      wx.showToast({ title: '请先选择家庭', icon: 'none' });
+      toast.showToast(this, '请先选择家庭', 'none');
       setTimeout(() => wx.switchTab({ url: '/pages/index/index' }), 1500);
       return;
     }
@@ -59,7 +64,7 @@ Page({
       this.setData({ dishes: res.data }, () => this.filterDishes());
     } catch (err) {
       console.error('获取菜品库失败', err);
-      wx.showToast({ title: '加载失败', icon: 'error' });
+      toast.showToast(this, '加载失败', 'error');
     } finally {
       this.setData({ loading: false });
     }
@@ -89,7 +94,7 @@ Page({
   onNewDishRemarkInput: function (e) { this.setData({ newDishRemark: e.detail.value }); },
 
   onOpenAddModal: function () {
-    if (this.data.memberRole === 'read') { wx.showToast({ title: '只读权限，无法添加', icon: 'none' }); return; }
+    if (this.data.memberRole === 'read') { toast.showToast(this, '只读权限，无法添加', 'none'); return; }
     this.setData({ showAddModal: true, newDishName: '', newDishCategory: '热菜', categoryIndex: 0, newDishRemark: '', showCategoryPicker: false });
   },
 
@@ -114,9 +119,9 @@ Page({
 
   onAddDish: async function () {
     const name = this.data.newDishName.trim();
-    if (!name) { wx.showToast({ title: '请输入菜名', icon: 'none' }); return; }
-    if (this.data.dishes.some(d => d.name === name)) { wx.showToast({ title: '已存在同名菜品', icon: 'none' }); return; }
-    wx.showLoading({ title: '添加中' });
+    if (!name) { toast.showToast(this, '请输入菜名', 'none'); return; }
+    if (this.data.dishes.some(d => d.name === name)) { toast.showToast(this, '已存在同名菜品', 'none'); return; }
+    toast.showLoading(this, '添加中...');
     try {
       const db = wx.cloud.database();
       const addRes = await db.collection('dishes').add({
@@ -124,14 +129,14 @@ Page({
       });
       const newDish = { _id: addRes._id, family_id: this.data.familyId, name, category: this.data.newDishCategory, remark: this.data.newDishRemark };
       this.setData({ dishes: [newDish, ...this.data.dishes], showAddModal: false }, () => this.filterDishes());
-      wx.showToast({ title: '添加成功', icon: 'success' });
-    } catch { wx.showToast({ title: '添加失败', icon: 'error' }); }
-    finally { wx.hideLoading(); }
+      toast.showToast(this, '添加成功', 'success');
+    } catch { toast.showToast(this, '添加失败', 'error'); }
+    finally { toast.hideLoading(this); }
   },
 
   onOpenEditModal: function (e) {
     if (this.data.memberRole === 'read') {
-      wx.showToast({ title: '只读权限，无法修改', icon: 'none' });
+      toast.showToast(this, '只读权限，无法修改', 'none');
       return;
     }
     const dish = e.currentTarget.dataset.dish;
@@ -181,15 +186,15 @@ Page({
     const name = this.data.editDishName.trim();
     const id = this.data.editDishId;
     if (!name) {
-      wx.showToast({ title: '请输入菜名', icon: 'none' });
+      toast.showToast(this, '请输入菜名', 'none');
       return;
     }
     if (this.data.dishes.some(d => d.name === name && d._id !== id)) {
-      wx.showToast({ title: '已存在同名菜品', icon: 'none' });
+      toast.showToast(this, '已存在同名菜品', 'none');
       return;
     }
 
-    wx.showLoading({ title: '保存中' });
+    toast.showLoading(this, '保存中...');
     try {
       const db = wx.cloud.database();
       await db.collection('dishes').doc(id).update({
@@ -214,36 +219,44 @@ Page({
         dishes: updatedDishes,
         showEditModal: false
       }, () => this.filterDishes());
-      wx.showToast({ title: '修改成功', icon: 'success' });
+      toast.showToast(this, '修改成功', 'success');
     } catch (err) {
       console.error(err);
-      wx.showToast({ title: '修改失败', icon: 'error' });
+      toast.showToast(this, '修改失败', 'error');
     } finally {
-      wx.hideLoading();
+      toast.hideLoading(this);
     }
   },
 
   onDeleteDish: function (e) {
-    if (this.data.memberRole === 'read') { wx.showToast({ title: '只读权限', icon: 'none' }); return; }
+    if (this.data.memberRole === 'read') { toast.showToast(this, '只读权限', 'none'); return; }
     const { id, name } = e.currentTarget.dataset;
-    wx.showModal({
-      title: '确认删除', content: `确定要删除「${name}」吗？`, confirmColor: '#E53935',
-      success: async res => {
-        if (!res.confirm) return;
-        wx.showLoading({ title: '删除中' });
-        try {
-          await wx.cloud.database().collection('dishes').doc(id).remove();
-          const updated = this.data.dishes.filter(d => d._id !== id);
-          this.setData({ dishes: updated }, () => this.filterDishes());
-          wx.showToast({ title: '已删除', icon: 'success' });
-        } catch { wx.showToast({ title: '删除失败', icon: 'error' }); }
-        finally { wx.hideLoading(); }
-      }
+    this.setData({
+      showDeleteDishConfirm: true,
+      deleteDishId: id,
+      deleteDishName: name
     });
   },
 
+  onCloseDeleteDishConfirm: function () {
+    this.setData({ showDeleteDishConfirm: false, deleteDishId: '', deleteDishName: '' });
+  },
+
+  onCommitDeleteDish: async function () {
+    const id = this.data.deleteDishId;
+    this.setData({ showDeleteDishConfirm: false });
+    toast.showLoading(this, '删除中...');
+    try {
+      await wx.cloud.database().collection('dishes').doc(id).remove();
+      const updated = this.data.dishes.filter(d => d._id !== id);
+      this.setData({ dishes: updated }, () => this.filterDishes());
+      toast.showToast(this, '已删除', 'success');
+    } catch { toast.showToast(this, '删除失败', 'error'); }
+    finally { toast.hideLoading(this); }
+  },
+
   onOpenAiImport: function () {
-    if (this.data.memberRole === 'read') { wx.showToast({ title: '只读权限', icon: 'none' }); return; }
+    if (this.data.memberRole === 'read') { toast.showToast(this, '只读权限', 'none'); return; }
     this.setData({ showAiImportModal: true, bulkImportText: '' });
   },
 
@@ -252,16 +265,16 @@ Page({
 
   onCommitAiImport: function () {
     const text = this.data.bulkImportText.trim();
-    if (!text) { wx.showToast({ title: '请输入导入文本', icon: 'none' }); return; }
+    if (!text) { toast.showToast(this, '请输入导入文本', 'none'); return; }
     this.setData({ importLoading: true });
-    wx.showLoading({ title: 'AI 分析中...' });
+    toast.showLoading(this, 'AI 分析中...');
     wx.cloud.callFunction({
       name: 'llmService',
       data: { action: 'parseDishes', text },
       success: async res => {
         if (res.result && res.result.success) {
           const parsed = res.result.dishes || [];
-          if (!parsed.length) { wx.showToast({ title: '未解析到菜名', icon: 'none' }); return; }
+          if (!parsed.length) { toast.showToast(this, '未解析到菜名', 'none'); return; }
           const db = wx.cloud.database();
           let count = 0;
           for (const dish of parsed) {
@@ -269,16 +282,16 @@ Page({
               try { await db.collection('dishes').add({ data: { family_id: this.data.familyId, name: dish.name, category: dish.category || '热菜', remark: 'AI导入', creator_openid: app.globalData.openid, created_at: db.serverDate() } }); count++; } catch { }
             }
           }
-          wx.showToast({ title: `成功导入 ${count} 道菜`, icon: 'success' });
+          toast.showToast(this, `成功导入 ${count} 道菜`, 'success');
           this.setData({ showAiImportModal: false });
           this.fetchDishes();
-        } else { wx.showToast({ title: res.result.message || '分析失败', icon: 'none' }); }
+        } else { toast.showToast(this, res.result.message || '分析失败', 'none'); }
       },
       fail: err => {
         console.error('调用 AI 解析失败', err);
-        wx.showToast({ title: '调用失败，请检查 AI 设置', icon: 'none' });
+        toast.showToast(this, '调用失败，请检查 AI 设置', 'none');
       },
-      complete: () => { this.setData({ importLoading: false }); wx.hideLoading(); }
+      complete: () => { this.setData({ importLoading: false }); toast.hideLoading(this); }
     });
   },
 

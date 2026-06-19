@@ -1,5 +1,6 @@
 // miniprogram/pages/index/index.js
 const app = getApp();
+const { toast } = require('../../utils/toast.js');
 
 Page({
   data: {
@@ -18,7 +19,11 @@ Page({
     loading: false,
     aiPlanLoading: false,
     showCreateFamilyModal: false,
-    newFamilyName: ''
+    newFamilyName: '',
+    showDeleteFamilyConfirm: false,
+    deleteFamilyId: '',
+    deleteFamilyName: '',
+    toastData: { show: false, type: 'none', title: '' }
   },
 
   onLoad: function () {
@@ -110,13 +115,13 @@ Page({
   },
 
   onSelectFamily: async function (e) {
-    wx.showLoading({ title: '切换中...' });
+    toast.showLoading(this, '切换中...');
     try {
       await this.selectFamily(e.currentTarget.dataset.family);
     } catch (err) {
       console.error('选择家庭失败', err);
     } finally {
-      wx.hideLoading();
+      toast.hideLoading(this);
     }
   },
 
@@ -161,21 +166,21 @@ Page({
   onCommitCreateFamily: async function () {
     const name = this.data.newFamilyName.trim();
     if (!name) {
-      wx.showToast({ title: '请输入家庭名称', icon: 'none' });
+      toast.showToast(this, '请输入家庭名称', 'none');
       return;
     }
-    wx.showLoading({ title: '检查重名中...' });
+    toast.showLoading(this, '检查重名中...');
     try {
       const db = wx.cloud.database();
       
       // 检查是否重名
       const checkRes = await db.collection('families').where({ name }).get();
       if (checkRes.data.length > 0) {
-        wx.showToast({ title: '已存在同名家庭', icon: 'none' });
+        toast.showToast(this, '已存在同名家庭', 'none');
         return;
       }
 
-      wx.showLoading({ title: '创建中' });
+      toast.showLoading(this, '创建中...');
       const openid = app.globalData.openid;
       const addRes = await db.collection('families').add({
         data: { name, creator_openid: openid, preferences: '', members_count: 1, created_at: db.serverDate() }
@@ -183,13 +188,13 @@ Page({
       await db.collection('family_members').add({
         data: { family_id: addRes._id, openid, nickname: '管理员', role: 'admin', status: 'approved', created_at: db.serverDate() }
       });
-      wx.showToast({ title: '创建成功', icon: 'success' });
+      toast.showToast(this, '创建成功', 'success');
       this.setData({ showCreateFamilyModal: false });
       await this.fetchFamiliesList();
     } catch (err) {
-      wx.showToast({ title: '创建失败', icon: 'error' });
+      toast.showToast(this, '创建失败', 'error');
     } finally {
-      wx.hideLoading();
+      toast.hideLoading(this);
     }
   },
 
@@ -314,10 +319,10 @@ Page({
 
   onGoToEditMenu: function () {
     if (!this.data.activeFamily) {
-      wx.showToast({ title: '请先创建家庭', icon: 'none' }); return;
+      toast.showToast(this, '请先创建家庭', 'none'); return;
     }
     if (this.data.memberRole === 'read') {
-      wx.showToast({ title: '只读角色无法编辑菜单', icon: 'none' }); return;
+      toast.showToast(this, '只读角色无法编辑菜单', 'none'); return;
     }
     wx.navigateTo({
       url: `/pages/edit-menu/index?date=${this.data.selectedDateStr}&familyId=${this.data.activeFamily._id}`
@@ -343,7 +348,7 @@ Page({
     
     for (let i = 0; i < total; i++) {
       const date = dates[i];
-      wx.showLoading({ title: `AI排餐中 ${i + 1}/${total}` });
+      toast.showLoading(this, `AI排餐中 ${i + 1}/${total}`);
       
       try {
         const res = await wx.cloud.callFunction({
@@ -379,11 +384,11 @@ Page({
 
   finishWeekAIPlan: function (successCount, total) {
     this.setData({ aiPlanLoading: false });
-    wx.hideLoading();
+    toast.hideLoading(this);
     if (successCount > 0) {
-      wx.showToast({ title: `🤖 已排 ${successCount}/${total} 天菜谱`, icon: 'success' });
+      toast.showToast(this, `🤖 已排 ${successCount}/${total} 天菜谱`, 'success');
     } else {
-      wx.showToast({ title: 'AI 排餐失败，请检查配置', icon: 'none' });
+      toast.showToast(this, 'AI 排餐失败，请检查配置', 'none');
     }
     this.fetchMonthlyMenus();
   },
@@ -397,41 +402,43 @@ Page({
 
   onDeleteFamilyFromSwitcher: function (e) {
     const { familyId, familyName } = e.currentTarget.dataset;
-    
-    // 由于是主页组件，直接检测该用户是否是这个家庭的管理员
-    // 注意：这里的删除在云函数端也会做超级管理员权限或者该家庭管理员 role === 'admin' 权限的安全校验。
-    wx.showModal({
-      title: '确认删除家庭',
-      content: `确定要解散并删除家庭「${familyName}」吗？此操作将永久清除该家庭下的所有成员、菜品及排餐记录，且无法恢复！`,
-      confirmColor: '#E53935',
-      success: async (res) => {
-        if (res.confirm) {
-          wx.showLoading({ title: '正在删除...' });
-          try {
-            const callRes = await wx.cloud.callFunction({
-              name: 'adminService',
-              data: {
-                action: 'deleteFamily',
-                familyId: familyId
-              }
-            });
-            
-            if (callRes.result && callRes.result.success) {
-              wx.showToast({ title: '删除成功', icon: 'success' });
-              // 重新拉取家庭列表并自动隐藏选择器
-              this.setData({ showFamilySelector: false });
-              await this.fetchFamiliesList();
-            } else {
-              wx.showToast({ title: callRes.result.message || '删除失败', icon: 'none' });
-            }
-          } catch (err) {
-            console.error('删除家庭失败', err);
-            wx.showToast({ title: '删除失败', icon: 'none' });
-          } finally {
-            wx.hideLoading();
-          }
-        }
-      }
+    this.setData({
+      showDeleteFamilyConfirm: true,
+      deleteFamilyId: familyId,
+      deleteFamilyName: familyName
     });
+  },
+
+  onCloseDeleteFamilyConfirm: function () {
+    this.setData({ showDeleteFamilyConfirm: false, deleteFamilyId: '', deleteFamilyName: '' });
+  },
+
+  onCommitDeleteFamily: async function () {
+    const { deleteFamilyId } = this.data;
+    this.setData({ showDeleteFamilyConfirm: false });
+    toast.showLoading(this, '正在删除...');
+    try {
+      const callRes = await wx.cloud.callFunction({
+        name: 'adminService',
+        data: {
+          action: 'deleteFamily',
+          familyId: deleteFamilyId
+        }
+      });
+      
+      if (callRes.result && callRes.result.success) {
+        toast.showToast(this, '删除成功', 'success');
+        // 重新拉取家庭列表并自动隐藏选择器
+        this.setData({ showFamilySelector: false });
+        await this.fetchFamiliesList();
+      } else {
+        toast.showToast(this, callRes.result.message || '删除失败', 'none');
+      }
+    } catch (err) {
+      console.error('删除家庭失败', err);
+      toast.showToast(this, '删除失败', 'none');
+    } finally {
+      toast.hideLoading(this);
+    }
   }
 });
