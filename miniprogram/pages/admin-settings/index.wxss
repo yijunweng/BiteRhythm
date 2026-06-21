@@ -418,40 +418,169 @@
   margin-bottom: 0 !important;
 }
 
-/* 家庭操作图标样式 */
-.family-action-icons {
+/* 家庭管理列表 */
+.family-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.family-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 28rpx;
+  background: #FAF8F5; /* 极浅的奶油金背景 */
+  border: 2rpx solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+
+.family-item.active {
+  background: #FFFDFC;
+  border-color: var(--gold);
+  box-shadow: 0 4rpx 16rpx rgba(212, 178, 140, 0.08);
+}
+
+.family-item-left {
   display: flex;
   align-items: center;
   gap: 16rpx;
+  flex: 1;
 }
 
-.family-action-icons .iconfont {
-  font-size: 36rpx;
+.edit-family-icon {
+  font-size: 32rpx;
+  color: var(--theme-color);
   padding: 8rpx;
-  transition: opacity 0.2s ease;
+  transition: var(--transition);
 }
 
-.family-action-icons .iconfont:active {
+.edit-family-icon:active {
   opacity: 0.6;
 }
 
-.family-action-icons .iconfont-modify {
-  color: var(--theme-color);
+.family-info-name {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: var(--text-main);
+  transition: var(--transition);
 }
 
-.family-action-icons .iconfont-delete {
-  color: #E53935;
+.active-family-name {
+  font-weight: 700;
+  color: var(--primary);
 }
 
-/* 邀请按钮缩小样式 */
-.btn-invite {
-  width: auto !important;
-  max-width: 420rpx;
-  padding: 16rpx 40rpx !important;
-  font-size: 26rpx !important;
+.family-item-right {
+  flex-shrink: 0;
+  margin-left: 20rpx;
+}
+
+.btn-activate {
+  margin: 0 !important;
+  padding: 0 16rpx !important;
+  width: 130rpx !important;
+  min-height: 56rpx !important;
+  height: 56rpx !important;
+  line-height: 52rpx !important;
+  font-size: 22rpx !important;
+  font-weight: 600;
+  border-radius: 28rpx;
+  border: 2rpx solid var(--gold);
+  background: transparent;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.btn-activate:active {
+  background: var(--gold-light);
+}
+
+.btn-activate.active {
+  border-color: #E6E2D8;
+  background: #F4F2EB;
+  color: #B2AC9E;
+  font-weight: 500;
+}
+
+.empty-families-tip {
+  font-size: 26rpx;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 40rpx 0;
+}
+
+/* 微信共享与邀请 (独立区域) */
+.invite-card-standalone {
+  margin-top: 24rpx;
+  border-left: 6rpx solid var(--gold);
+}
+
+.invite-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.invite-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.invite-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.invite-desc {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.btn-invite-share {
+  width: 100% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  height: 88rpx;
+  font-size: 28rpx !important;
+  font-weight: 600 !important;
+}
+
+/* AI 配餐偏好配置 */
+.ai-preference-card {
+  margin-top: 24rpx;
+}
+
+.ai-config-desc {
+  font-size: 24rpx;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 8rpx;
+}
+
+.textarea-field {
+  width: 100%;
+  min-height: 160rpx;
+  padding: 20rpx 28rpx;
+  background: #FDFDFB;
+  border: 2rpx solid var(--border);
   border-radius: var(--radius-sm);
-  margin: 28rpx auto 0 !important;
-  gap: 8rpx !important;
-  box-shadow: 0 4rpx 12rpx rgba(212, 178, 140, 0.08);
+  font-size: 28rpx;
+  color: var(--text-main);
+  transition: var(--transition);
+}
+
+.textarea-field:focus {
+  border-color: var(--gold);
 }
 

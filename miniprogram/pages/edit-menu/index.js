@@ -28,6 +28,11 @@ Page({
     showAiPanel: false,
     saving: false,
     showClearConfirm: false,
+    syncShoppingList: false,
+    showConfigPromptModal: false,
+    showSufficientModal: false,
+    sufficientReason: '',
+    showEmptySaveConfirm: false,
     toastData: { show: false, type: 'none', title: '' }
   },
 
@@ -39,10 +44,12 @@ Page({
       return;
     }
     const memberRole = app.globalData.memberRole || '';
+    const syncShoppingList = wx.getStorageSync('sync_shopping_list') || false;
     this.setData({
       dateStr: date,
       familyId,
       isReadOnly: memberRole === 'read',
+      syncShoppingList,
       loading: true
     });
     try {
@@ -155,13 +162,16 @@ Page({
 
   onAddRepoDish: function (e) {
     const { dish } = e.currentTarget.dataset;
-    if (this.data.dishesList.some(d => d.name === dish.name)) {
-      toast.showToast(this, '该菜已加入', 'none'); return;
+    const index = this.data.dishesList.findIndex(d => d.name === dish.name);
+    if (index > -1) {
+      const list = [...this.data.dishesList];
+      list.splice(index, 1);
+      this.setData({ dishesList: list });
+    } else {
+      this.setData({
+        dishesList: [...this.data.dishesList, { name: dish.name, category: dish.category, id: dish._id }]
+      });
     }
-    this.setData({
-      dishesList: [...this.data.dishesList, { name: dish.name, category: dish.category, id: dish._id }]
-    });
-    toast.showToast(this, '添加成功', 'success', 800);
   },
 
   // 复制昨日菜单
@@ -205,25 +215,67 @@ Page({
   },
 
   // AI 推荐
-  onCallAIRecommend: function () {
+  onCallAIRecommend: function (opt) {
+    const forceReplan = opt === true;
+    const activeFamily = app.globalData.activeFamily;
+    const aiConfig = activeFamily ? activeFamily.ai_config : null;
+    if (!aiConfig || aiConfig.adults === undefined || aiConfig.adults === '') {
+      this.setData({ showConfigPromptModal: true });
+      return;
+    }
+
+    const existingDishes = this.data.dishesList || [];
+    const formattedExisting = existingDishes.map(d => ({ name: d.name, category: d.category || '热菜' }));
+
     this.setData({ aiLoading: true });
     toast.showLoading(this, 'AI 智能配餐中...');
     wx.cloud.callFunction({
       name: 'llmService',
-      data: { action: 'recommendToday', familyId: this.data.familyId, date: this.data.dateStr },
+      data: { 
+        action: 'recommendToday', 
+        familyId: this.data.familyId, 
+        date: this.data.dateStr,
+        existingDishes: formattedExisting,
+        forceReplan: forceReplan
+      },
       success: res => {
         this.setData({ aiLoading: false });
         toast.hideLoading(this);
-        if (res.result && res.result.success && res.result.recommendations) {
-          const recs = res.result.recommendations;
-          const merged = [...this.data.dishesList];
-          recs.forEach(d => {
-            if (!merged.some(x => x.name === d.name)) {
-              merged.push({ name: d.name, category: d.category || '热菜' });
+        if (res.result && res.result.success) {
+          const status = res.result.status || 'complementary';
+          const recs = res.result.recommendations || [];
+          
+          if (status === 'sufficient') {
+            this.setData({
+              showSufficientModal: true,
+              sufficientReason: res.result.reason || '当前所选菜品已足够，是否需要重新搭配？'
+            });
+            return;
+          }
+
+          if (forceReplan) {
+            this.setData({ dishesList: recs });
+            toast.showToast(this, '已为您重新搭配整餐', 'success');
+          } else {
+            if (recs.length === 0) {
+              toast.showToast(this, '当前已选分量合适，未发现需要补充的菜品', 'none');
+              return;
             }
-          });
-          this.setData({ dishesList: merged });
-          toast.showToast(this, '已应用 AI 推荐', 'success');
+            const merged = [...this.data.dishesList];
+            let addedCount = 0;
+            recs.forEach(d => {
+              if (!merged.some(x => x.name === d.name)) {
+                merged.push({ name: d.name, category: d.category || '热菜' });
+                addedCount++;
+              }
+            });
+            this.setData({ dishesList: merged });
+            if (addedCount > 0) {
+              toast.showToast(this, `已为您补充推荐 ${addedCount} 道搭配菜品`, 'success');
+            } else {
+              toast.showToast(this, 'AI 推荐菜品已存在于当前菜单中', 'none');
+            }
+          }
         } else {
           console.error('AI 推荐失败:', res.result ? res.result.message : '无返回消息');
           toast.showToast(this, (res.result && res.result.message) || '推荐失败，请重试', 'none');
@@ -238,7 +290,21 @@ Page({
     });
   },
 
+  onToggleSyncShoppingList: function (e) {
+    const value = e.detail.value;
+    this.setData({ syncShoppingList: value });
+    wx.setStorageSync('sync_shopping_list', value);
+  },
+
   onSaveMenu: function () {
+    if (!this.data.dishesList || this.data.dishesList.length === 0) {
+      this.setData({ showEmptySaveConfirm: true });
+      return;
+    }
+    this.executeSaveMenu();
+  },
+
+  executeSaveMenu: function () {
     this.setData({ saving: true });
     toast.showLoading(this, '保存中...');
     wx.cloud.callFunction({
@@ -249,9 +315,31 @@ Page({
         date: this.data.dateStr,
         dishes: this.data.dishesList
       },
-      success: res => {
+      success: async res => {
         if (res.result && res.result.success) {
-          toast.showToast(this, '保存成功', 'success');
+          if (this.data.syncShoppingList && this.data.dishesList.length > 0) {
+            toast.showLoading(this, '正在生成采购建议...');
+            try {
+              const shopRes = await wx.cloud.callFunction({
+                name: 'llmService',
+                data: {
+                  action: 'generateShoppingList',
+                  familyId: this.data.familyId,
+                  date: this.data.dateStr
+                }
+              });
+              if (shopRes.result && shopRes.result.success) {
+                toast.showToast(this, '保存并生成成功', 'success');
+              } else {
+                toast.showToast(this, '已保存菜单，但采购建议生成失败', 'none');
+              }
+            } catch (err) {
+              console.error('同步生成采购建议失败', err);
+              toast.showToast(this, '已保存菜单，但采购建议生成异常', 'none');
+            }
+          } else {
+            toast.showToast(this, '保存成功', 'success');
+          }
           setTimeout(() => wx.navigateBack(), 1000);
         } else {
           toast.showToast(this, res.result.message || '保存失败', 'none');
@@ -266,6 +354,36 @@ Page({
         toast.hideLoading(this);
       }
     });
+  },
+
+  onCloseConfigPrompt: function () {
+    this.setData({ showConfigPromptModal: false });
+  },
+
+  onGoToConfig: function () {
+    this.setData({ showConfigPromptModal: false });
+    app.globalData.settingsSubpage = 'members';
+    wx.switchTab({
+      url: '/pages/admin-settings/index'
+    });
+  },
+
+  onCloseSufficientModal: function () {
+    this.setData({ showSufficientModal: false });
+  },
+
+  onCommitSufficientReplan: function () {
+    this.setData({ showSufficientModal: false });
+    this.onCallAIRecommend(true);
+  },
+
+  onCloseEmptySaveConfirm: function () {
+    this.setData({ showEmptySaveConfirm: false });
+  },
+
+  onCommitEmptySave: function () {
+    this.setData({ showEmptySaveConfirm: false });
+    this.executeSaveMenu();
   },
 
   noop: function () {}

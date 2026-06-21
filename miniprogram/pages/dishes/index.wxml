@@ -1,4 +1,17 @@
 <!-- miniprogram/pages/dishes/index.wxml -->
+<wxs module="iconMap">
+  var getTabIcon = function(tab) {
+    if (tab === '全部') return 'iconfont-menu';
+    if (tab === '热菜') return 'iconfont-hot-dishes';
+    if (tab === '凉菜') return 'iconfont-cold-dishes';
+    if (tab === '汤品') return 'iconfont-soup';
+    if (tab === '主食') return 'iconfont-rice';
+    return 'iconfont-other';
+  };
+  module.exports = {
+    getTabIcon: getTabIcon
+  };
+</wxs>
 <view class="page-container dishes-page">
 
   <!-- 骨架屏加载状态 -->
@@ -38,10 +51,14 @@
   <block wx:else>
     <!-- 顶部操作栏 -->
     <view class="dishes-header">
-      <text class="dishes-title">菜品库</text>
+      <text class="dishes-title">菜品库 ({{ dishes.length }})</text>
       <view class="header-actions" wx:if="{{ memberRole !== 'read' }}">
-        <view class="icon-btn ai-btn" bindtap="onOpenAiImport"><text class="iconfont iconfont-ai"></text><text>AI导入</text></view>
-        <view class="icon-btn add-btn" bindtap="onOpenAddModal"><text class="iconfont iconfont-add"></text><text>新增</text></view>
+        <view class="icon-btn" style="background: var(--border); color: var(--text-main); border-color: var(--border);" bindtap="onToggleBatchMode" wx:if="{{ filteredDishes.length > 0 || isBatchMode }}">
+          <text class="iconfont {{ isBatchMode ? 'iconfont-wrong' : 'iconfont-option' }}"></text>
+          <text>{{ isBatchMode ? '取消' : '批量管理' }}</text>
+        </view>
+        <view class="icon-btn ai-btn" bindtap="onOpenAiImport" wx:if="{{ !isBatchMode }}"><text class="iconfont iconfont-ai"></text><text>AI导入</text></view>
+        <view class="icon-btn add-btn" bindtap="onOpenAddModal" wx:if="{{ !isBatchMode }}"><text class="iconfont iconfont-add"></text><text>新增</text></view>
       </view>
     </view>
 
@@ -77,21 +94,26 @@
     <!-- 菜品列表 -->
     <scroll-view class="dish-list-scroll animate-in" scroll-y="true" wx:if="{{ filteredDishes.length > 0 }}">
       <view class="dish-list">
-        <view class="dish-card {{ item.remark === 'AI导入' ? 'is-ai-imported' : '' }}" wx:for="{{ filteredDishes }}" wx:key="_id">
-          <text class="iconfont iconfont-ai ai-star-badge" wx:if="{{ item.remark === 'AI导入' }}"></text>
-          <view class="dish-info" bindtap="onOpenEditModal" data-dish="{{ item }}">
-            <view class="dish-name-row">
-              <text class="dish-card-cat">{{ item.category }}</text>
-              <text class="dish-card-name">{{ item.name }}</text>
+        <view class="dish-card {{ item.remark === 'AI导入' ? 'is-ai-imported' : '' }}" wx:for="{{ filteredDishes }}" wx:key="_id" bindtap="{{ isBatchMode ? 'onToggleSelectDish' : 'onOpenEditModal' }}" data-dish="{{ item }}" data-id="{{ item._id }}">
+          <view style="display: flex; align-items: center; gap: 20rpx; flex: 1; min-width: 0;">
+            <view class="dish-select-box" wx:if="{{ isBatchMode }}">
+              <checkbox class="dish-checkbox" checked="{{ selectedDishIds[item._id] }}" />
             </view>
-            <text class="dish-card-remark" wx:if="{{ item.remark && item.remark !== 'AI导入' }}">{{ item.remark }}</text>
+            <text class="iconfont iconfont-ai ai-star-badge" wx:if="{{ item.remark === 'AI导入' && !isBatchMode }}"></text>
+            <view class="dish-info" style="flex: 1; min-width: 0;">
+              <view class="dish-name-row">
+                <text class="dish-card-cat">{{ item.category }}</text>
+                <text class="dish-card-name">{{ item.name }}</text>
+              </view>
+              <text class="dish-card-remark" wx:if="{{ item.remark && item.remark !== 'AI导入' }}">{{ item.remark }}</text>
+            </view>
           </view>
           <view
             class="trash-btn"
-            bindtap="onDeleteDish"
+            catchtap="onDeleteDish"
             data-id="{{ item._id }}"
             data-name="{{ item.name }}"
-            wx:if="{{ memberRole !== 'read' }}"
+            wx:if="{{ memberRole !== 'read' && !isBatchMode }}"
           >
             <text class="iconfont iconfont-delete"></text>
           </view>
@@ -101,7 +123,7 @@
 
     <!-- 空状态 -->
     <view class="card empty-state animate-in" wx:if="{{ filteredDishes.length === 0 && !loading }}">
-      <view class="empty-icon iconfont iconfont-dish" style="font-size: 80rpx;"></view>
+      <view class="empty-icon iconfont {{ iconMap.getTabIcon(activeTab) }}" style="font-size: 80rpx;"></view>
       <view class="empty-text">菜品库空空如也
   点击右上角新增或 AI 导入吧</view>
     </view>
@@ -269,8 +291,20 @@
         </button>
       </view>
     </view>
+    <!-- 批量操作底部栏 -->
+    <view class="batch-bottom-bar" wx:if="{{ isBatchMode }}">
+      <view class="batch-select-all" bindtap="onToggleSelectAll">
+        <checkbox class="batch-checkbox" checked="{{ isAllSelected }}" disabled="{{ filteredDishes.length === 0 }}" />
+        <text>全选</text>
+      </view>
+      <view class="batch-actions-right">
+        <text class="batch-count">已选 {{ selectedCount }} 项</text>
+        <button class="batch-delete-btn {{ selectedCount > 0 ? 'active' : '' }}" disabled="{{ selectedCount === 0 }}" bindtap="onBatchDelete">删除</button>
+      </view>
+    </view>
+
     <!-- 自定义 Toast & Loading -->
-    <view class="custom-toast-backdrop" wx:if="{{ toastData.show }}" catchtap="noop" catchtouchmove="noop"></view>
+    <view class="custom-toast-backdrop" wx:if="{{ toastData.show && toastData.type === 'loading' }}" catchtap="noop" catchtouchmove="noop"></view>
     <view class="custom-toast {{ toastData.show ? 'show' : '' }}">
       <view class="custom-toast-content">
         <view class="custom-toast-loading-spinner" wx:if="{{ toastData.type === 'loading' }}"></view>
@@ -298,6 +332,21 @@
       <view style="display: flex; gap: 20rpx; padding: 0 32rpx;">
         <button class="btn-secondary" style="flex: 1; border: 1rpx solid #E0E0E0; background: #FFF; color: #666; font-size: 28rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; font-weight: 600;" bindtap="onCloseDeleteDishConfirm">取消</button>
         <button class="btn-primary" style="flex: 1; background: #E53935; font-size: 28rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; font-weight: 600; box-shadow: none;" bindtap="onCommitDeleteDish">确认删除</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 批量删除确认 Modal -->
+  <view class="custom-dialog-mask" wx:if="{{ showBatchDeleteConfirm }}" bindtap="onCloseBatchDeleteConfirm">
+    <view class="custom-dialog-box" catchtap="noop">
+      <view class="custom-dialog-icon-wrap" style="background: rgba(229, 57, 53, 0.08);">
+        <text class="iconfont iconfont-info" style="font-size: 64rpx; color: #E53935;"></text>
+      </view>
+      <view class="custom-dialog-title">确认删除</view>
+      <view class="custom-dialog-content">确定要删除已选的 {{ selectedCount }} 道菜吗？删除后将不可恢复！</view>
+      <view class="custom-dialog-footer">
+        <button class="custom-dialog-btn-cancel" bindtap="onCloseBatchDeleteConfirm">取消</button>
+        <button class="custom-dialog-btn-confirm" style="background: #E53935 !important; box-shadow: none !important;" bindtap="onCommitBatchDelete">确认删除</button>
       </view>
     </view>
   </view>

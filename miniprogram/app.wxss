@@ -1,12 +1,13 @@
 /** miniprogram/app.wxss **/
 @import "iconfont.wxss";
 
-/* 隐藏全局与所有元素的滚动条 */
-::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-  color: transparent;
+::-webkit-scrollbar,
+page::-webkit-scrollbar,
+scroll-view::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  color: transparent !important;
 }
 
 /* 全局设计变量 - 极简乳白/香槟金风格 */
@@ -581,4 +582,92 @@ view, text, scroll-view, input, button, textarea, label {
 @keyframes custom-toast-spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* 自定义主题色对话框 */
+.custom-dialog-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(47, 62, 70, 0.4);
+  backdrop-filter: blur(8rpx);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-dialog-box {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 48rpx 32rpx;
+  width: 85%;
+  max-width: 600rpx;
+  box-shadow: var(--shadow-md);
+  border: 1rpx solid var(--border);
+  animation: customScaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+}
+
+@keyframes customScaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.custom-dialog-icon-wrap {
+  margin-bottom: 24rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 120rpx;
+  height: 120rpx;
+  background: var(--gold-light);
+  border-radius: 50%;
+}
+
+.custom-dialog-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 16rpx;
+}
+
+.custom-dialog-content {
+  font-size: 26rpx;
+  color: var(--text-muted);
+  line-height: 1.6;
+  padding: 0 24rpx;
+  margin-bottom: 40rpx;
+  white-space: pre-wrap;
+}
+
+.custom-dialog-footer {
+  display: flex;
+  gap: 20rpx;
+  padding: 0 16rpx;
+}
+
+.custom-dialog-footer button {
+  flex: 1;
+  font-size: 28rpx;
+  height: 84rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  margin: 0;
+  padding: 0;
+}
+
+.custom-dialog-btn-cancel {
+  border: 1rpx solid var(--border) !important;
+  background: #FFFFFF !important;
+  color: var(--text-muted) !important;
+}
+
+.custom-dialog-btn-confirm {
+  background: var(--theme-color) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 6rpx 20rpx rgba(212, 178, 140, 0.12) !important;
+  border: none !important;
 }

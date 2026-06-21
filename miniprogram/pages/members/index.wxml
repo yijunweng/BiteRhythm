@@ -82,7 +82,7 @@
   </block>
 
   <!-- 自定义 Toast & Loading -->
-  <view class="custom-toast-backdrop" wx:if="{{ toastData.show }}" catchtap="noop" catchtouchmove="noop"></view>
+  <view class="custom-toast-backdrop" wx:if="{{ toastData.show && toastData.type === 'loading' }}" catchtap="noop" catchtouchmove="noop"></view>
   <view class="custom-toast {{ toastData.show ? 'show' : '' }}">
     <view class="custom-toast-content">
       <view class="custom-toast-loading-spinner" wx:if="{{ toastData.type === 'loading' }}"></view>

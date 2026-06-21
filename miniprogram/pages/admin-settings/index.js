@@ -13,6 +13,11 @@ Page({
     currentFamilyName: '',
     approvedMembers: [],
     pendingMembers: [],
+    families: [],
+    aiAdults: '',
+    aiKids: '',
+    aiRequirements: '',
+    renameFamilyId: '',
 
     // 大模型配置
     providers: ['DeepSeek (推荐)', 'OpenAI', '腾讯混元', '自定义 (兼容 OpenAI 格式)'],
@@ -46,28 +51,46 @@ Page({
     toastData: { show: false, type: 'none', title: '' }
   },
 
-  onLoad: function () {
+  onLoad: function (options) {
     const openid = app.globalData.openid;
     const isAdmin = app.globalData.isSystemAdmin;
-    this.setData({ isSystemAdmin: isAdmin, myOpenid: openid });
+    const subpage = options && options.subpage ? options.subpage : 'home';
+    this.setData({ isSystemAdmin: isAdmin, myOpenid: openid, subpage });
 
     if (isAdmin) {
       this.fetchSystemConfig();
-      // 加载当前家庭信息
       const family = app.globalData.activeFamily;
       if (family) {
         this.setData({ currentFamilyId: family._id, currentFamilyName: family.name });
+      }
+      this.fetchFamilies();
+      if (subpage === 'members') {
+        wx.setNavigationBarTitle({ title: '成员与协作管理' });
+        this.fetchMembers();
+        this.fetchAIConfig();
       }
     }
   },
 
   onShow: function () {
-    // 旰新家庭信息
+    if (app.globalData.settingsSubpage) {
+      const targetSubpage = app.globalData.settingsSubpage;
+      app.globalData.settingsSubpage = null;
+      this.setData({ subpage: targetSubpage });
+      if (targetSubpage === 'members') {
+        wx.setNavigationBarTitle({ title: '成员与协作管理' });
+      } else if (targetSubpage === 'llm') {
+        wx.setNavigationBarTitle({ title: '大模型参数配置' });
+      }
+    }
+
     const family = app.globalData.activeFamily;
     if (family && this.data.isSystemAdmin) {
       this.setData({ currentFamilyId: family._id, currentFamilyName: family.name });
+      this.fetchFamilies();
       if (this.data.subpage === 'members') {
         this.fetchMembers();
+        this.fetchAIConfig();
       }
     }
   },
@@ -77,7 +100,10 @@ Page({
     const page = e.currentTarget.dataset.page;
     this.setData({ subpage: page });
     wx.setNavigationBarTitle({ title: page === 'members' ? '成员与协作管理' : '大模型参数配置' });
-    if (page === 'members') this.fetchMembers();
+    if (page === 'members') {
+      this.fetchMembers();
+      this.fetchAIConfig();
+    }
   },
 
   onBackToHome: function () {
@@ -118,6 +144,129 @@ Page({
     });
   },
 
+
+  // 获取用户家庭列表
+  fetchFamilies: async function () {
+    const openid = this.data.myOpenid;
+    if (!openid) return;
+    try {
+      const db = wx.cloud.database();
+      const memberRes = await db.collection('family_members')
+        .where({ openid, status: 'approved' }).get();
+      const familyIds = memberRes.data.map(m => m.family_id);
+
+      let families = [];
+      if (familyIds.length > 0) {
+        const r = await db.collection('families')
+          .where({ _id: db.command.in(familyIds) }).get();
+        families = r.data;
+      }
+
+      const ownRes = await db.collection('families')
+        .where({ creator_openid: openid }).get();
+      ownRes.data.forEach(f => {
+        if (!families.find(x => x._id === f._id)) families.push(f);
+      });
+
+      this.setData({ families });
+    } catch (err) {
+      console.error('获取家庭列表失败', err);
+    }
+  },
+
+  // 激活家庭并切换全局状态
+  onActivateFamily: async function (e) {
+    const { id } = e.currentTarget.dataset;
+    const selected = this.data.families.find(f => f._id === id);
+    if (!selected) return;
+
+    app.globalData.activeFamily = selected;
+    wx.setStorageSync('last_family_id', selected._id);
+
+    this.setData({
+      currentFamilyId: selected._id,
+      currentFamilyName: selected.name
+    });
+
+    await this.fetchMembers();
+    await this.fetchAIConfig();
+
+    toast.showToast(this, `已激活「${selected.name}」`, 'success');
+  },
+
+  // 获取 AI 偏好配置
+  fetchAIConfig: async function () {
+    const familyId = this.data.currentFamilyId;
+    if (!familyId) return;
+    try {
+      const db = wx.cloud.database();
+      const res = await db.collection('families').doc(familyId).get();
+      if (res.data) {
+        const aiConfig = res.data.ai_config || {};
+        this.setData({
+          aiAdults: aiConfig.adults !== undefined ? aiConfig.adults : '',
+          aiKids: aiConfig.kids !== undefined ? aiConfig.kids : '',
+          aiRequirements: aiConfig.requirements || ''
+        });
+      }
+    } catch (err) {
+      console.error('获取AI配置失败', err);
+    }
+  },
+
+  // 保存 AI 偏好配置
+  onSaveAIConfig: async function () {
+    const familyId = this.data.currentFamilyId;
+    if (!familyId) {
+      toast.showToast(this, '请先选择激活一个家庭', 'none');
+      return;
+    }
+    const adults = parseInt(this.data.aiAdults, 10);
+    const kids = parseInt(this.data.aiKids, 10);
+    const requirements = this.data.aiRequirements ? this.data.aiRequirements.trim() : '';
+
+    if (isNaN(adults) || adults < 0) {
+      toast.showToast(this, '请输入合法的成人数量', 'none');
+      return;
+    }
+    if (isNaN(kids) || kids < 0) {
+      toast.showToast(this, '请输入合法的小孩数量', 'none');
+      return;
+    }
+
+    toast.showLoading(this, '保存中...');
+    try {
+      const db = wx.cloud.database();
+      await db.collection('families').doc(familyId).update({
+        data: {
+          ai_config: {
+            adults,
+            kids,
+            requirements
+          }
+        }
+      });
+      if (app.globalData.activeFamily && app.globalData.activeFamily._id === familyId) {
+        app.globalData.activeFamily.ai_config = { adults, kids, requirements };
+      }
+      toast.showToast(this, '保存配置成功', 'success');
+    } catch (err) {
+      console.error('保存AI配置失败', err);
+      toast.showToast(this, '保存配置失败', 'error');
+    } finally {
+      toast.hideLoading(this);
+    }
+  },
+
+  onAIAdultsInput: function (e) {
+    this.setData({ aiAdults: e.detail.value });
+  },
+  onAIKidsInput: function (e) {
+    this.setData({ aiKids: e.detail.value });
+  },
+  onAIRequirementsInput: function (e) {
+    this.setData({ aiRequirements: e.detail.value });
+  },
 
   // 获取家庭成员
   fetchMembers: async function () {
@@ -314,10 +463,12 @@ Page({
     });
   },
 
-  onOpenRenameFamilyModal: function () {
+  onOpenRenameFamilyModal: function (e) {
+    const { id, name } = e.currentTarget.dataset;
     this.setData({
       showRenameFamilyModal: true,
-      renameFamilyName: this.data.currentFamilyName
+      renameFamilyId: id || this.data.currentFamilyId,
+      renameFamilyName: name || this.data.currentFamilyName
     });
   },
 
@@ -337,6 +488,7 @@ Page({
 
   onCommitRenameFamily: async function () {
     const name = this.data.renameFamilyName.trim();
+    const familyId = this.data.renameFamilyId || this.data.currentFamilyId;
     if (!name) {
       toast.showToast(this, '请输入家庭名称', 'none');
       return;
@@ -347,26 +499,30 @@ Page({
     try {
       const db = wx.cloud.database();
       const checkRes = await db.collection('families').where({ name }).get();
-      const duplicate = checkRes.data.find(f => f._id !== this.data.currentFamilyId);
+      const duplicate = checkRes.data.find(f => f._id !== familyId);
       if (duplicate) {
         toast.showToast(this, '已存在同名家庭', 'none');
         return;
       }
 
       toast.showLoading(this, '修改中...');
-      await db.collection('families').doc(this.data.currentFamilyId).update({
+      await db.collection('families').doc(familyId).update({
         data: { name }
       });
 
-      if (app.globalData.activeFamily && app.globalData.activeFamily._id === this.data.currentFamilyId) {
+      if (app.globalData.activeFamily && app.globalData.activeFamily._id === familyId) {
         app.globalData.activeFamily.name = name;
       }
 
+      toast.showToast(this, '修改成功', 'success');
       this.setData({
-        currentFamilyName: name,
         showRenameFamilyModal: false
       });
-      toast.showToast(this, '修改成功', 'success');
+      
+      this.fetchFamilies();
+      if (familyId === this.data.currentFamilyId) {
+        this.setData({ currentFamilyName: name });
+      }
     } catch (err) {
       console.error(err);
       toast.showToast(this, '修改失败', 'none');

@@ -11,6 +11,7 @@
     getCategoryIcon: getCategoryIcon
   };
 </wxs>
+<page-meta page-style="{{ showShoppingDetailsModal || showCreateFamilyModal || showDeleteFamilyConfirm || showClearMenuConfirm || showConfigPromptModal ? 'overflow: hidden; height: 100vh;' : '' }}" />
 <view class="page-container index-page">
 
   <!-- 骨架屏加载状态 -->
@@ -75,10 +76,10 @@
         <text class="family-name">{{ activeFamily ? activeFamily.name : '创建家庭' }}</text>
         <text class="iconfont iconfont-down-line family-arrow {{ showFamilySelector ? 'open' : '' }}"></text>
       </view>
-      <view class="role-chip" wx:if="{{ activeFamily }}">
-        <text wx:if="{{ memberRole === 'admin' }}">管理员</text>
-        <text wx:elif="{{ memberRole === 'write' }}">家人</text>
-        <text wx:else>只读</text>
+      <view class="dining-people-chip" wx:if="{{ activeFamily && activeFamily.ai_config && (activeFamily.ai_config.adults > 0 || activeFamily.ai_config.kids > 0) }}">
+        <text wx:if="{{ activeFamily.ai_config.adults > 0 }}">{{ activeFamily.ai_config.adults }}成人</text>
+        <text wx:if="{{ activeFamily.ai_config.adults > 0 && activeFamily.ai_config.kids > 0 }}"> </text>
+        <text wx:if="{{ activeFamily.ai_config.kids > 0 }}">{{ activeFamily.ai_config.kids }}小孩</text>
       </view>
     </view>
 
@@ -162,13 +163,21 @@
     <view class="card today-card animate-in" wx:if="{{ activeFamily }}">
       <view class="today-card-header">
         <text class="today-title">{{ selectedDateStr ? selectedDateStr + ' 菜单' : '今日菜单' }}</text>
-        <view
-          class="edit-link"
-          bindtap="onGoToEditMenu"
-          wx:if="{{ memberRole !== 'read' }}"
-        >
-          <text>{{ selectedDateMenu && selectedDateMenu.dishes.length > 0 ? '编辑' : '规划' }}</text>
-          <text class="iconfont iconfont-right-line"></text>
+        <view class="header-actions" wx:if="{{ memberRole !== 'read' }}">
+          <view
+            class="clear-link"
+            bindtap="onClearTodayMenu"
+            wx:if="{{ selectedDateMenu && selectedDateMenu.dishes.length > 0 }}"
+          >
+            <text>清空</text>
+          </view>
+          <view
+            class="edit-link"
+            bindtap="onGoToEditMenu"
+          >
+            <text>{{ selectedDateMenu && selectedDateMenu.dishes.length > 0 ? '编辑' : '规划' }}</text>
+            <text class="iconfont iconfont-right-line"></text>
+          </view>
         </view>
       </view>
 
@@ -185,25 +194,87 @@
         <view class="empty-text">暂无已规划菜品{{ memberRole === 'read' ? '，请等待管理员安排' : '，点击右上方规划' }}</view>
       </view>
 
-      <!-- AI 智能周排餐（非只读可见） -->
-      <view wx:if="{{ memberRole !== 'read' }}" style="margin-top: 32rpx;">
-        <button
-          class="btn-primary"
-          hover-class="btn-primary-hover"
-          bindtap="onWeekAIPlan"
-          disabled="{{ aiPlanLoading }}"
-        >
-          <text class="iconfont iconfont-ai"></text>
-          <text>{{ aiPlanLoading ? '排餐中...' : '智能排餐（下周5天）' }}</text>
-        </button>
-        <view class="ai-btn-tip">
-          <text class="iconfont iconfont-info"></text>
-          <text>提示：排餐范围为从明天开始顺延的 5 个工作日（避开周末）</text>
+      <!-- 采购建议区域 (仅在有菜品时显示) -->
+      <view class="shopping-section" wx:if="{{ selectedDateMenu && selectedDateMenu.dishes.length > 0 }}">
+        <view class="shopping-section-header">
+          <text class="shopping-section-title">采购建议</text>
+          <view 
+            class="regenerate-link" 
+            bindtap="onGenerateShoppingList" 
+            wx:if="{{ selectedDateMenu.shopping_list && memberRole !== 'read' }}"
+          >
+            <text class="iconfont iconfont-refresh" style="font-size: 24rpx; margin-right: 6rpx;"></text>
+            <text>更新建议</text>
+          </view>
         </view>
+
+        <block wx:if="{{ selectedDateMenu.shopping_list }}">
+          <view class="shopping-content-wrapper">
+            <view class="shopping-content preview">
+              <view class="md-container" style="padding-top: 0; padding-bottom: 0;">
+                <block wx:for="{{ parsedSimpleShoppingList }}" wx:key="index">
+                  <view wx:if="{{ item.type === 'h1' }}" class="md-h1" style="margin-top: 10rpx;">{{ item.text }}</view>
+                  <view wx:elif="{{ item.type === 'h2' }}" class="md-h2" style="margin-top: 10rpx;">{{ item.text }}</view>
+                  <view wx:elif="{{ item.type === 'h3' }}" class="md-h3" style="margin-top: 10rpx;">{{ item.text }}</view>
+                  <view wx:elif="{{ item.type === 'bullet' }}" class="md-bullet">
+                    <text class="md-bullet-dot">•</text>
+                    <text class="md-bullet-text">{{ item.text }}</text>
+                  </view>
+                  <view wx:elif="{{ item.type === 'p' }}" class="md-p">{{ item.text }}</view>
+                  <view wx:elif="{{ item.type === 'table' }}" class="md-table">
+                    <view class="md-thead">
+                      <view class="md-tr">
+                        <view wx:for="{{ item.headers }}" wx:for-item="header" wx:key="index" class="md-th">{{ header }}</view>
+                      </view>
+                    </view>
+                    <view class="md-tbody">
+                      <view wx:for="{{ item.rows }}" wx:for-item="row" wx:key="index" class="md-tr">
+                        <view wx:for="{{ row }}" wx:for-item="cell" wx:key="index" class="md-td">{{ cell }}</view>
+                      </view>
+                    </view>
+                  </view>
+                </block>
+              </view>
+            </view>
+          </view>
+          
+          <view class="view-details-btn-container">
+            <button class="btn-secondary view-details-btn" bindtap="onOpenShoppingDetails">
+              <text>查看详情</text>
+              <text class="iconfont iconfont-right-line" style="font-size: 24rpx; margin-left: 8rpx;"></text>
+            </button>
+          </view>
+
+          <view class="shopping-notice">
+            <text class="iconfont iconfont-info" style="font-size: 24rpx; margin-right: 8rpx;"></text>
+            <text>提示：采购建议由 AI 自动估算，仅供参考，请根据建议适当调整。</text>
+          </view>
+        </block>
+        <block wx:else>
+          <view class="empty-shopping-section" wx:if="{{ memberRole !== 'read' }}">
+            <button
+              class="btn-primary btn-generate-shopping"
+              hover-class="btn-primary-hover"
+              bindtap="onGenerateShoppingList"
+              disabled="{{ shoppingLoading }}"
+            >
+              <text class="iconfont iconfont-ai"></text>
+              <text>{{ shoppingLoading ? '正在分析食材...' : '智能生成采购建议' }}</text>
+            </button>
+            <view class="shopping-notice center">
+              <text class="iconfont iconfont-info" style="font-size: 24rpx; margin-right: 8rpx;"></text>
+              <text>仅供参考，根据建议适当调整</text>
+            </view>
+          </view>
+          <view class="read-only-tip" wx:else>
+            <text class="iconfont iconfont-info"></text>
+            <text>暂无采购建议，请等待管理员生成</text>
+          </view>
+        </block>
       </view>
 
-      <!-- 只读提示 -->
-      <view class="read-only-tip" wx:else>
+      <!-- 只读提示 (无菜品时可见) -->
+      <view class="read-only-tip" wx:elif="{{ memberRole === 'read' }}">
         <text class="iconfont iconfont-info"></text>
         <text>只读模式：您可浏览菜单，无法修改</text>
       </view>
@@ -241,7 +312,7 @@
     </view>
 
     <!-- 自定义 Toast & Loading -->
-    <view class="custom-toast-backdrop" wx:if="{{ toastData.show }}" catchtap="noop" catchtouchmove="noop"></view>
+    <view class="custom-toast-backdrop" wx:if="{{ toastData.show && toastData.type === 'loading' }}" catchtap="noop" catchtouchmove="noop"></view>
     <view class="custom-toast {{ toastData.show ? 'show' : '' }}">
       <view class="custom-toast-content">
         <view class="custom-toast-loading-spinner" wx:if="{{ toastData.type === 'loading' }}"></view>
@@ -270,6 +341,81 @@
         <button class="btn-secondary" style="flex: 1; border: 1rpx solid #E0E0E0; background: #FFF; color: #666; font-size: 28rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; font-weight: 600;" bindtap="onCloseDeleteFamilyConfirm">取消</button>
         <button class="btn-primary" style="flex: 1; background: #E53935; font-size: 28rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; font-weight: 600; box-shadow: none;" bindtap="onCommitDeleteFamily">确认删除</button>
       </view>
+    </view>
+  </view>
+
+  <!-- 清空菜单确认 Modal -->
+  <view class="modal-mask" wx:if="{{ showClearMenuConfirm }}" bindtap="onCloseClearMenuConfirm">
+    <view class="modal-sheet" catchtap="noop" style="padding-bottom: 60rpx; text-align: center;">
+      <view class="modal-header" style="border: none; padding-bottom: 0;">
+        <view style="flex: 1;"></view>
+        <view class="modal-close" bindtap="onCloseClearMenuConfirm">
+          <text class="iconfont iconfont-wrong"></text>
+        </view>
+      </view>
+      <view style="margin-bottom: 24rpx; display: inline-block;">
+        <text class="iconfont iconfont-info" style="font-size: 80rpx; color: #E53935;"></text>
+      </view>
+      <view style="font-size: 32rpx; font-weight: 700; color: var(--text-main); margin-bottom: 16rpx;">确认清空菜单</view>
+      <view style="font-size: 26rpx; color: var(--text-muted); line-height: 1.6; padding: 0 32rpx; margin-bottom: 40rpx;">确定要清空 {{ selectedDateStr }} 的菜单吗？该操作将清除当天的所有排餐，且无法恢复！</view>
+      <view style="display: flex; gap: 20rpx; padding: 0 32rpx;">
+        <button class="btn-secondary" style="flex: 1; border: 1rpx solid #E0E0E0; background: #FFF; color: #666; font-size: 28rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; font-weight: 600;" bindtap="onCloseClearMenuConfirm">取消</button>
+        <button class="btn-primary" style="flex: 1; background: #E53935; font-size: 28rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; font-weight: 600; box-shadow: none;" bindtap="onCommitClearMenu">确认清空</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 首次使用 AI 配置提示 Modal -->
+  <view class="custom-dialog-mask" wx:if="{{ showConfigPromptModal }}" bindtap="onCloseConfigPrompt">
+    <view class="custom-dialog-box" catchtap="noop">
+      <view class="custom-dialog-icon-wrap">
+        <text class="iconfont iconfont-ai" style="font-size: 64rpx; color: var(--gold);"></text>
+      </view>
+      <view class="custom-dialog-title">提示</view>
+      <view class="custom-dialog-content">首次使用 AI 功能前，请先完成家庭用餐人数及偏好配置。</view>
+      <view class="custom-dialog-footer">
+        <button class="custom-dialog-btn-cancel" bindtap="onCloseConfigPrompt">取消</button>
+        <button class="custom-dialog-btn-confirm" bindtap="onGoToConfig">去配置</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 采购建议详情 Modal (支持 Markdown 渲染) -->
+  <view class="modal-mask" wx:if="{{ showShoppingDetailsModal }}" bindtap="onCloseShoppingDetails">
+    <view class="modal-sheet shopping-details-sheet" catchtap="noop">
+      <view class="modal-header">
+        <text class="modal-title">采购建议详情</text>
+        <view class="modal-close" bindtap="onCloseShoppingDetails">
+          <text class="iconfont iconfont-wrong"></text>
+        </view>
+      </view>
+      
+      <scroll-view class="shopping-details-scroll" scroll-y="true">
+        <view class="md-container">
+          <block wx:for="{{ parsedFullShoppingList }}" wx:key="index">
+            <view wx:if="{{ item.type === 'h1' }}" class="md-h1">{{ item.text }}</view>
+            <view wx:elif="{{ item.type === 'h2' }}" class="md-h2">{{ item.text }}</view>
+            <view wx:elif="{{ item.type === 'h3' }}" class="md-h3">{{ item.text }}</view>
+            <view wx:elif="{{ item.type === 'bullet' }}" class="md-bullet">
+              <text class="md-bullet-dot">•</text>
+              <text class="md-bullet-text">{{ item.text }}</text>
+            </view>
+            <view wx:elif="{{ item.type === 'p' }}" class="md-p">{{ item.text }}</view>
+            <view wx:elif="{{ item.type === 'table' }}" class="md-table">
+              <view class="md-thead">
+                <view class="md-tr">
+                  <view wx:for="{{ item.headers }}" wx:for-item="header" wx:key="index" class="md-th">{{ header }}</view>
+                </view>
+              </view>
+              <view class="md-tbody">
+                <view wx:for="{{ item.rows }}" wx:for-item="row" wx:key="index" class="md-tr">
+                  <view wx:for="{{ row }}" wx:for-item="cell" wx:key="index" class="md-td">{{ cell }}</view>
+                </view>
+              </view>
+            </view>
+          </block>
+        </view>
+      </scroll-view>
     </view>
   </view>
 

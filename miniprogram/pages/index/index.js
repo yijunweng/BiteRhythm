@@ -2,6 +2,143 @@
 const app = getApp();
 const { toast } = require('../../utils/toast.js');
 
+function parseMarkdown(md) {
+  if (!md) return [];
+  const lines = md.split('\n');
+  const blocks = [];
+  
+  let inTable = false;
+  let tableHeaders = [];
+  let tableRows = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    // Check if it's a table line
+    if (line.startsWith('|') && line.endsWith('|')) {
+      const cols = line.split('|').map(c => c.trim().replace(/\*\*/g, '')).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
+      
+      const isSeparator = cols.every(c => c.startsWith('-') || c === '');
+      if (isSeparator) {
+        continue;
+      }
+      
+      if (!inTable) {
+        inTable = true;
+        tableHeaders = cols;
+        tableRows = [];
+      } else {
+        tableRows.push(cols);
+      }
+      continue;
+    } else {
+      if (inTable) {
+        blocks.push({
+          type: 'table',
+          headers: tableHeaders,
+          rows: tableRows
+        });
+        inTable = false;
+        tableHeaders = [];
+        tableRows = [];
+      }
+    }
+    
+    if (line === '') {
+      continue;
+    }
+    
+    const cleanLine = line.replace(/\*\*/g, '');
+    
+    if (cleanLine.startsWith('# ')) {
+      blocks.push({ type: 'h1', text: cleanLine.substring(2).trim() });
+    } else if (cleanLine.startsWith('## ')) {
+      blocks.push({ type: 'h2', text: cleanLine.substring(3).trim() });
+    } else if (cleanLine.startsWith('### ')) {
+      blocks.push({ type: 'h3', text: cleanLine.substring(4).trim() });
+    } else if (cleanLine.startsWith('- ') || cleanLine.startsWith('* ')) {
+      blocks.push({ type: 'bullet', text: cleanLine.substring(2).trim() });
+    } else {
+      blocks.push({ type: 'p', text: cleanLine });
+    }
+  }
+  
+  if (inTable) {
+    blocks.push({
+      type: 'table',
+      headers: tableHeaders,
+      rows: tableRows
+    });
+  }
+  
+  return blocks;
+}
+
+function splitShoppingList(md) {
+  if (!md) return { simpleMd: '', fullMd: '' };
+  
+  const separator = '### 📋 详细采购建议';
+  const index = md.indexOf(separator);
+  
+  if (index !== -1) {
+    let simplePart = md.substring(0, index).trim();
+    let detailedPart = md.substring(index + separator.length).trim();
+    
+    simplePart = simplePart.replace('### 💡 简要提示', '').trim();
+    simplePart = simplePart.replace(/^---/, '').replace(/---$/, '').trim();
+    
+    return {
+      simpleMd: simplePart,
+      fullMd: detailedPart
+    };
+  }
+  
+  // Fallback for old formatting:
+  // Parse the markdown and collect the first column of the first few table rows
+  const parsed = parseMarkdown(md);
+  const tables = parsed.filter(b => b.type === 'table');
+  const ingredients = [];
+  
+  tables.forEach(table => {
+    table.rows.forEach(row => {
+      if (row[0] && row[0] !== '食材') {
+        const name = row[0].replace(/\*\*/g, '').trim();
+        if (name && !ingredients.includes(name)) {
+          ingredients.push(name);
+        }
+      }
+    });
+  });
+  
+  if (ingredients.length > 0) {
+    const summary = ingredients.slice(0, 8).join('、');
+    return {
+      simpleMd: `今日配餐建议采购：${summary} 等核心食材。`,
+      fullMd: md
+    };
+  }
+  
+  const lines = md.split('\n');
+  let simpleLines = [];
+  let lineCount = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line === '') continue;
+    if (line.startsWith('#') || line.startsWith('|') || line.startsWith('-')) {
+      continue;
+    }
+    simpleLines.push(line);
+    lineCount++;
+    if (lineCount >= 2) break;
+  }
+  
+  const simpleText = simpleLines.join('\n');
+  return {
+    simpleMd: simpleText || '已生成配餐采购建议，请点击详情查看完整清单。',
+    fullMd: md
+  };
+}
+
 Page({
   data: {
     initialLoading: true,
@@ -17,12 +154,17 @@ Page({
     selectedDateMenu: null,
     monthlyMenus: {},
     loading: false,
-    aiPlanLoading: false,
     showCreateFamilyModal: false,
     newFamilyName: '',
     showDeleteFamilyConfirm: false,
     deleteFamilyId: '',
     deleteFamilyName: '',
+    showClearMenuConfirm: false,
+    shoppingLoading: false,
+    showConfigPromptModal: false,
+    showShoppingDetailsModal: false,
+    parsedSimpleShoppingList: [],
+    parsedFullShoppingList: [],
     toastData: { show: false, type: 'none', title: '' }
   },
 
@@ -42,9 +184,17 @@ Page({
   },
 
   onShow: function () {
-    if (app.globalData.hasCheckedAuth && this.data.activeFamily) {
-      this.fetchMonthlyMenus();
-      this.fetchUserRoleInFamily();
+    if (app.globalData.hasCheckedAuth) {
+      const globalActive = app.globalData.activeFamily;
+      const pageActive = this.data.activeFamily;
+      if (globalActive && (!pageActive || pageActive._id !== globalActive._id || JSON.stringify(pageActive.ai_config) !== JSON.stringify(globalActive.ai_config))) {
+        this.setData({ activeFamily: globalActive });
+        this.fetchMonthlyMenus();
+        this.fetchUserRoleInFamily();
+      } else if (pageActive) {
+        this.fetchMonthlyMenus();
+        this.fetchUserRoleInFamily();
+      }
     }
   },
 
@@ -291,7 +441,27 @@ Page({
 
   updateSelectedDateMenu: function () {
     const { selectedDateStr, monthlyMenus } = this.data;
-    this.setData({ selectedDateMenu: monthlyMenus[selectedDateStr] || null });
+    const menu = monthlyMenus[selectedDateStr] || null;
+    let parsedSimple = [];
+    let parsedFull = [];
+    if (menu && menu.shopping_list) {
+      const parts = splitShoppingList(menu.shopping_list);
+      parsedSimple = parseMarkdown(parts.simpleMd);
+      parsedFull = parseMarkdown(parts.fullMd);
+    }
+    this.setData({ 
+      selectedDateMenu: menu,
+      parsedSimpleShoppingList: parsedSimple,
+      parsedFullShoppingList: parsedFull
+    });
+  },
+
+  onOpenShoppingDetails: function () {
+    this.setData({ showShoppingDetailsModal: true });
+  },
+
+  onCloseShoppingDetails: function () {
+    this.setData({ showShoppingDetailsModal: false });
   },
 
   onSelectDate: function (e) {
@@ -329,69 +499,69 @@ Page({
     });
   },
 
-  // AI 一键智能周排餐
-  onWeekAIPlan: async function () {
-    if (!this.data.activeFamily) return;
-    this.setData({ aiPlanLoading: true });
+  onGenerateShoppingList: function () {
+    if (!this.data.activeFamily || !this.data.selectedDateStr) return;
     
-    // 获取下周5个工作日
-    const today = new Date();
-    const dates = [];
-    for (let i = 1; i <= 7 && dates.length < 5; i++) {
-      const d = new Date(today.getTime() + i * 86400000);
-      const day = d.getDay();
-      if (day >= 1 && day <= 5) dates.push(this.formatDate(d));
+    const activeFamily = this.data.activeFamily;
+    const aiConfig = activeFamily ? activeFamily.ai_config : null;
+    if (!aiConfig || aiConfig.adults === undefined || aiConfig.adults === '') {
+      this.setData({ showConfigPromptModal: true });
+      return;
     }
     
-    let successCount = 0;
-    const total = dates.length;
-    
-    for (let i = 0; i < total; i++) {
-      const date = dates[i];
-      toast.showLoading(this, `AI排餐中 ${i + 1}/${total}`);
-      
-      try {
-        const res = await wx.cloud.callFunction({
-          name: 'llmService',
-          data: { action: 'recommendToday', familyId: this.data.activeFamily._id, date }
-        });
-        
-        console.log(`AI 推荐 ${date} 返回结果:`, res);
-        
-        if (res.result && res.result.success && res.result.recommendations) {
-          const dishes = res.result.recommendations;
-          const saveRes = await wx.cloud.callFunction({
-            name: 'menuService',
-            data: { action: 'saveMenu', familyId: this.data.activeFamily._id, date, dishes }
-          });
-          
-          if (saveRes.result && saveRes.result.success) {
-            successCount++;
-            console.log(`【数据库保存成功】${date} 菜单已成功保存`, saveRes);
+    this.setData({ shoppingLoading: true });
+    toast.showLoading(this, '正在智能分析食材...');
+    wx.cloud.callFunction({
+      name: 'llmService',
+      data: {
+        action: 'generateShoppingList',
+        familyId: this.data.activeFamily._id,
+        date: this.data.selectedDateStr
+      },
+      success: res => {
+        this.setData({ shoppingLoading: false });
+        toast.hideLoading(this);
+        if (res.result && res.result.success && res.result.shoppingList) {
+          const listText = res.result.shoppingList;
+          const { selectedDateStr, monthlyMenus } = this.data;
+          if (monthlyMenus[selectedDateStr]) {
+            monthlyMenus[selectedDateStr].shopping_list = listText;
           } else {
-            console.error(`保存 ${date} 菜单失败, 返回内容:`, saveRes);
+            monthlyMenus[selectedDateStr] = {
+              family_id: this.data.activeFamily._id,
+              date: selectedDateStr,
+              dishes: this.data.selectedDateMenu ? this.data.selectedDateMenu.dishes : [],
+              shopping_list: listText
+            };
           }
+          let parsedSimple = [];
+          let parsedFull = [];
+          if (listText) {
+            const parts = splitShoppingList(listText);
+            parsedSimple = parseMarkdown(parts.simpleMd);
+            parsedFull = parseMarkdown(parts.fullMd);
+          }
+          this.setData({ 
+            monthlyMenus, 
+            selectedDateMenu: monthlyMenus[selectedDateStr],
+            parsedSimpleShoppingList: parsedSimple,
+            parsedFullShoppingList: parsedFull
+          });
+          toast.showToast(this, '采购建议已生成', 'success');
         } else {
-          console.error(`AI 推荐 ${date} 菜谱失败, 返回内容:`, res);
+          toast.showToast(this, res.result?.message || '生成采购建议失败', 'none');
         }
-      } catch (err) {
-        console.error(`排餐 ${date} 发生异常:`, err);
+      },
+      fail: err => {
+        this.setData({ shoppingLoading: false });
+        toast.hideLoading(this);
+        console.error('调用生成采购建议失败', err);
+        toast.showToast(this, '生成失败，请重试', 'none');
       }
-    }
-
-    this.finishWeekAIPlan(successCount, total);
+    });
   },
 
-  finishWeekAIPlan: function (successCount, total) {
-    this.setData({ aiPlanLoading: false });
-    toast.hideLoading(this);
-    if (successCount > 0) {
-      toast.showToast(this, `🤖 已排 ${successCount}/${total} 天菜谱`, 'success');
-    } else {
-      toast.showToast(this, 'AI 排餐失败，请检查配置', 'none');
-    }
-    this.fetchMonthlyMenus();
-  },
+
 
   formatDate: function (date) {
     const y = date.getFullYear();
@@ -440,5 +610,54 @@ Page({
     } finally {
       toast.hideLoading(this);
     }
+  },
+
+  onClearTodayMenu: function () {
+    this.setData({ showClearMenuConfirm: true });
+  },
+
+  onCloseClearMenuConfirm: function () {
+    this.setData({ showClearMenuConfirm: false });
+  },
+
+  onCommitClearMenu: async function () {
+    const { activeFamily, selectedDateStr } = this.data;
+    this.setData({ showClearMenuConfirm: false });
+    toast.showLoading(this, '正在清空...');
+    try {
+      const callRes = await wx.cloud.callFunction({
+        name: 'menuService',
+        data: {
+          action: 'clearMenu',
+          familyId: activeFamily._id,
+          date: selectedDateStr
+        }
+      });
+      
+      if (callRes.result && callRes.result.success) {
+        toast.showToast(this, '清空成功', 'success');
+        // 重新拉取当月菜单以及今日菜单详情
+        await this.fetchMonthlyMenus();
+      } else {
+        toast.showToast(this, callRes.result.message || '清空失败', 'none');
+      }
+    } catch (err) {
+      console.error('清空菜单失败', err);
+      toast.showToast(this, '清空失败', 'none');
+    } finally {
+      toast.hideLoading(this);
+    }
+  },
+
+  onCloseConfigPrompt: function () {
+    this.setData({ showConfigPromptModal: false });
+  },
+
+  onGoToConfig: function () {
+    this.setData({ showConfigPromptModal: false });
+    app.globalData.settingsSubpage = 'members';
+    wx.switchTab({
+      url: '/pages/admin-settings/index'
+    });
   }
 });

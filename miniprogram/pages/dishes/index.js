@@ -32,6 +32,11 @@ Page({
     showDeleteDishConfirm: false,
     deleteDishId: '',
     deleteDishName: '',
+    isBatchMode: false,
+    selectedDishIds: {},
+    selectedCount: 0,
+    isAllSelected: false,
+    showBatchDeleteConfirm: false,
     toastData: { show: false, type: 'none', title: '' }
   },
 
@@ -79,7 +84,12 @@ Page({
       const q = this.data.searchQuery.toLowerCase();
       filtered = filtered.filter(d => d.name.toLowerCase().includes(q) || (d.remark && d.remark.toLowerCase().includes(q)));
     }
-    this.setData({ filteredDishes: filtered });
+    this.setData({ 
+      filteredDishes: filtered,
+      selectedDishIds: {},
+      selectedCount: 0,
+      isAllSelected: false
+    });
   },
 
   onTabChange: function (e) {
@@ -293,6 +303,96 @@ Page({
       },
       complete: () => { this.setData({ importLoading: false }); toast.hideLoading(this); }
     });
+  },
+
+  onToggleBatchMode: function () {
+    this.setData({
+      isBatchMode: !this.data.isBatchMode,
+      selectedDishIds: {},
+      selectedCount: 0,
+      isAllSelected: false
+    });
+  },
+
+  onToggleSelectDish: function (e) {
+    const id = e.currentTarget.dataset.id;
+    const selectedDishIds = { ...this.data.selectedDishIds };
+    if (selectedDishIds[id]) {
+      delete selectedDishIds[id];
+    } else {
+      selectedDishIds[id] = true;
+    }
+    const selectedCount = Object.keys(selectedDishIds).length;
+    
+    let isAllSelected = this.data.filteredDishes.length > 0;
+    for (const d of this.data.filteredDishes) {
+      if (!selectedDishIds[d._id]) {
+        isAllSelected = false;
+        break;
+      }
+    }
+
+    this.setData({
+      selectedDishIds,
+      selectedCount,
+      isAllSelected
+    });
+  },
+
+  onToggleSelectAll: function () {
+    const isAllSelected = !this.data.isAllSelected;
+    const selectedDishIds = { ...this.data.selectedDishIds };
+    
+    this.data.filteredDishes.forEach(d => {
+      if (isAllSelected) {
+        selectedDishIds[d._id] = true;
+      } else {
+        delete selectedDishIds[d._id];
+      }
+    });
+    
+    this.setData({
+      selectedDishIds,
+      selectedCount: Object.keys(selectedDishIds).length,
+      isAllSelected
+    });
+  },
+
+  onBatchDelete: function () {
+    if (this.data.selectedCount === 0) return;
+    this.setData({ showBatchDeleteConfirm: true });
+  },
+
+  onCloseBatchDeleteConfirm: function () {
+    this.setData({ showBatchDeleteConfirm: false });
+  },
+
+  onCommitBatchDelete: async function () {
+    const ids = Object.keys(this.data.selectedDishIds);
+    this.setData({ showBatchDeleteConfirm: false });
+    toast.showLoading(this, '删除中...');
+    
+    const db = wx.cloud.database();
+    try {
+      const deletePromises = ids.map(id => db.collection('dishes').doc(id).remove());
+      await Promise.all(deletePromises);
+      
+      const updated = this.data.dishes.filter(d => !this.data.selectedDishIds[d._id]);
+      this.setData({ 
+        dishes: updated,
+        isBatchMode: false,
+        selectedDishIds: {},
+        selectedCount: 0,
+        isAllSelected: false
+      }, () => this.filterDishes());
+      
+      toast.showToast(this, '删除成功', 'success');
+    } catch (err) {
+      console.error('删除失败', err);
+      toast.showToast(this, '删除失败，请重试', 'none');
+    } finally {
+      toast.hideLoading(this);
+    }
   },
 
   noop: function () {}

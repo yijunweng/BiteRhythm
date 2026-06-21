@@ -371,6 +371,11 @@
   font-size: 28rpx;
 }
 
+.repo-add-btn.added {
+  background: #E8F5E9 !important;
+  color: #2E7D32 !important;
+}
+
 /* 骨架屏组件样式 */
 .skeleton-date-header {
   pointer-events: none;
@@ -531,5 +536,25 @@
 
 .action-text-btn.btn-clear-text {
   color: #E53935;
+}
+
+/* 同步生成采购建议开关 */
+.sync-shopping-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.sync-shopping-label {
+  font-size: 26rpx;
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.sync-shopping-switch {
+  transform: scale(0.85);
+  transform-origin: right center;
 }
 

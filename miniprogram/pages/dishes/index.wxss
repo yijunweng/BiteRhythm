@@ -287,3 +287,114 @@
   margin-bottom: 0 !important;
 }
 
+/* 批量管理底部栏 */
+.batch-bottom-bar {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1rpx solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 20rpx 24rpx;
+  margin-top: 16rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.batch-select-all {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 26rpx;
+  color: var(--text-main);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.batch-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex-shrink: 0;
+}
+
+.batch-count {
+  font-size: 24rpx;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.batch-delete-btn {
+  background: var(--border);
+  color: var(--text-muted);
+  border: none;
+  font-size: 24rpx;
+  font-weight: 700;
+  padding: 14rpx 28rpx;
+  border-radius: var(--radius-sm);
+  line-height: 1.2;
+  transition: var(--transition);
+  margin: 0;
+  width: auto !important;
+  min-height: 0 !important;
+}
+
+.batch-delete-btn.active {
+  background: #E53935;
+  color: #FFFFFF;
+  box-shadow: 0 4rpx 12rpx rgba(229, 57, 53, 0.12);
+}
+
+.dish-select-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: 8rpx;
+}
+
+/* 自定义 Checkbox 控件样式 */
+.dish-checkbox, .batch-checkbox {
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 微信原生 checkbox 样式重置 */
+.dish-checkbox .wx-checkbox-input,
+.batch-checkbox .wx-checkbox-input {
+  width: 36rpx !important;
+  height: 36rpx !important;
+  border-radius: 8rpx !important;
+  border: 2rpx solid var(--text-light) !important;
+  background-color: #FFFFFF !important;
+  transition: var(--transition) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
+/* 选中后的样式 */
+.dish-checkbox .wx-checkbox-input.wx-checkbox-input-checked,
+.batch-checkbox .wx-checkbox-input.wx-checkbox-input-checked {
+  background-color: var(--theme-color) !important;
+  border-color: var(--theme-color) !important;
+}
+
+/* 选中后的对勾样式 */
+.dish-checkbox .wx-checkbox-input.wx-checkbox-input-checked::before,
+.batch-checkbox .wx-checkbox-input.wx-checkbox-input-checked::before {
+  width: 36rpx !important;
+  height: 36rpx !important;
+  line-height: 36rpx !important;
+  text-align: center !important;
+  font-size: 26rpx !important;
+  color: #FFFFFF !important;
+  background: transparent !important;
+  transform: translate(-50%, -50%) scale(1) !important;
+  -webkit-transform: translate(-50%, -50%) scale(1) !important;
+}
+

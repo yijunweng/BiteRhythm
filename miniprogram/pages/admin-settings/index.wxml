@@ -99,28 +99,95 @@
       </block>
 
       <block wx:else>
-        <!-- 当前家庭 -->
+        <!-- 家庭管理与列表 -->
         <view class="card">
-          <view class="section-title">当前家庭</view>
-          <view class="family-info-row">
-            <view style="display: flex; align-items: center; gap: 16rpx;">
-              <text class="family-info-name">{{ currentFamilyName || '未加入任何家庭' }}</text>
-              <view class="badge badge-gold" wx:if="{{ currentFamilyId }}">{{ approvedMembers.length }}人</view>
+          <view class="section-title">家庭列表</view>
+          <view class="family-list" wx:if="{{ families && families.length > 0 }}">
+            <view class="family-item {{ item._id === currentFamilyId ? 'active' : '' }}" wx:for="{{ families }}" wx:key="_id">
+              <view class="family-item-left">
+                <text class="iconfont iconfont-modify edit-family-icon" bindtap="onOpenRenameFamilyModal" data-id="{{ item._id }}" data-name="{{ item.name }}"></text>
+                <text class="family-info-name {{ item._id === currentFamilyId ? 'active-family-name' : '' }}">{{ item.name }}</text>
+                <view class="badge badge-gold" wx:if="{{ item._id === currentFamilyId }}">{{ approvedMembers.length }}人</view>
+              </view>
+              <view class="family-item-right">
+                <button
+                  class="btn-activate {{ item._id === currentFamilyId ? 'active' : '' }}"
+                  bindtap="onActivateFamily"
+                  data-id="{{ item._id }}"
+                  disabled="{{ item._id === currentFamilyId }}"
+                >
+                  {{ item._id === currentFamilyId ? '已激活' : '激活' }}
+                </button>
+              </view>
             </view>
-            <view class="family-action-icons" wx:if="{{ currentFamilyId }}">
-              <text class="iconfont iconfont-modify" bindtap="onOpenRenameFamilyModal"></text>
+          </view>
+          <view class="empty-families-tip" wx:else>暂无任何家庭</view>
+        </view>
+
+        <!-- 微信共享与邀请 (独立区域) -->
+        <view class="card invite-card-standalone" wx:if="{{ currentFamilyId }}">
+          <view class="invite-card-content">
+            <view class="invite-info">
+              <text class="invite-title">微信共享与邀请</text>
+              <text class="invite-desc">被邀请的用户将自动加入当前已激活的家庭「{{ currentFamilyName }}」</text>
+            </view>
+            <button
+              class="btn-primary btn-invite-share"
+              hover-class="btn-primary-hover"
+              open-type="share"
+            >
+              <text class="iconfont iconfont-wechat" style="font-size: 36rpx;"></text>
+              <text>微信邀请新成员</text>
+            </button>
+          </view>
+        </view>
+
+        <!-- AI 配餐偏好配置 (独立区域) -->
+        <view class="card ai-preference-card" wx:if="{{ currentFamilyId }}">
+          <view class="section-title">AI 配餐偏好配置</view>
+          <view class="ai-config-desc">配置将直接与当前激活的家庭「{{ currentFamilyName }}」关联。AI一键排餐与推荐时将以此项为基础进行生成。</view>
+          
+          <view class="ai-config-inputs-row" style="display: flex; gap: 20rpx; margin-top: 24rpx;">
+            <view class="form-group" style="flex: 1; margin-bottom: 24rpx;">
+              <text class="form-label">成人数量</text>
+              <input
+                class="input-field"
+                type="number"
+                placeholder="例如: 2"
+                value="{{ aiAdults }}"
+                bindinput="onAIAdultsInput"
+              />
+            </view>
+            <view class="form-group" style="flex: 1; margin-bottom: 24rpx;">
+              <text class="form-label">小孩数量</text>
+              <input
+                class="input-field"
+                type="number"
+                placeholder="例如: 1"
+                value="{{ aiKids }}"
+                bindinput="onAIKidsInput"
+              />
             </view>
           </view>
 
-          <!-- 邀请按钮 -->
+          <view class="form-group" style="margin-bottom: 32rpx;">
+            <text class="form-label">其他偏好与特殊要求</text>
+            <textarea
+              class="textarea-field"
+              placeholder="例如：少油低盐、不吃辣、对海鲜过敏、偏爱粤菜家常菜等..."
+              value="{{ aiRequirements }}"
+              bindinput="onAIRequirementsInput"
+              maxlength="200"
+              auto-height
+            />
+          </view>
+
           <button
-            class="btn-primary btn-invite"
+            class="btn-primary"
             hover-class="btn-primary-hover"
-            open-type="share"
-            wx:if="{{ currentFamilyId }}"
+            bindtap="onSaveAIConfig"
           >
-            <text class="iconfont iconfont-wechat" style="font-size: 36rpx;"></text>
-            <text>微信邀请新成员</text>
+            保存 AI 偏好配置
           </button>
         </view>
 
@@ -365,7 +432,7 @@
   </block>
 
   <!-- 自定义 Toast & Loading -->
-  <view class="custom-toast-backdrop" wx:if="{{ toastData.show }}" catchtap="noop" catchtouchmove="noop"></view>
+  <view class="custom-toast-backdrop" wx:if="{{ toastData.show && toastData.type === 'loading' }}" catchtap="noop" catchtouchmove="noop"></view>
   <view class="custom-toast {{ toastData.show ? 'show' : '' }}">
     <view class="custom-toast-content">
       <view class="custom-toast-loading-spinner" wx:if="{{ toastData.type === 'loading' }}"></view>

@@ -1,4 +1,18 @@
 <!-- miniprogram/pages/edit-menu/index.wxml -->
+<wxs module="utils">
+  var isAdded = function(dishesList, name) {
+    if (!dishesList || !dishesList.length) return false;
+    for (var i = 0; i < dishesList.length; i++) {
+      if (dishesList[i].name === name) {
+        return true;
+      }
+    }
+    return false;
+  };
+  module.exports = {
+    isAdded: isAdded
+  };
+</wxs>
 <view class="page-container edit-page">
 
   <!-- 骨架屏加载状态 -->
@@ -163,6 +177,15 @@
 
     <!-- 下方固定区域 -->
     <view class="edit-bottom-bar" wx:if="{{ !isReadOnly }}">
+      <view class="sync-shopping-row">
+        <text class="sync-shopping-label">同步生成采购建议</text>
+        <switch 
+          class="sync-shopping-switch" 
+          checked="{{ syncShoppingList }}" 
+          bindchange="onToggleSyncShoppingList"
+          color="#D4B28C"
+        />
+      </view>
       <button
         class="btn-primary save-btn"
         hover-class="btn-primary-hover"
@@ -212,8 +235,8 @@
               <text class="repo-item-cat">{{ item.category }}</text>
               <text class="repo-item-name">{{ item.name }}</text>
             </view>
-            <view class="repo-add-btn" bindtap="onAddRepoDish" data-dish="{{ item }}">
-              <text class="iconfont iconfont-add"></text>
+            <view class="repo-add-btn {{ utils.isAdded(dishesList, item.name) ? 'added' : '' }}" bindtap="onAddRepoDish" data-dish="{{ item }}">
+              <text class="iconfont {{ utils.isAdded(dishesList, item.name) ? 'iconfont-correct' : 'iconfont-add' }}"></text>
             </view>
           </view>
           <view class="empty-state" wx:if="{{ filteredRepoDishes.length === 0 }}">
@@ -246,7 +269,7 @@
   </view>
 
   <!-- 自定义 Toast & Loading -->
-  <view class="custom-toast-backdrop" wx:if="{{ toastData.show }}" catchtap="noop" catchtouchmove="noop"></view>
+  <view class="custom-toast-backdrop" wx:if="{{ toastData.show && toastData.type === 'loading' }}" catchtap="noop" catchtouchmove="noop"></view>
   <view class="custom-toast {{ toastData.show ? 'show' : '' }}">
     <view class="custom-toast-content">
       <view class="custom-toast-loading-spinner" wx:if="{{ toastData.type === 'loading' }}"></view>
@@ -255,4 +278,50 @@
       <text class="custom-toast-title" wx:if="{{ toastData.title }}">{{ toastData.title }}</text>
     </view>
   </view>
+
+  <!-- 首次使用 AI 配置提示 Modal -->
+  <view class="custom-dialog-mask" wx:if="{{ showConfigPromptModal }}" bindtap="onCloseConfigPrompt">
+    <view class="custom-dialog-box" catchtap="noop">
+      <view class="custom-dialog-icon-wrap">
+        <text class="iconfont iconfont-ai" style="font-size: 64rpx; color: var(--gold);"></text>
+      </view>
+      <view class="custom-dialog-title">提示</view>
+      <view class="custom-dialog-content">首次使用 AI 功能前，请先完成家庭用餐人数及偏好配置。</view>
+      <view class="custom-dialog-footer">
+        <button class="custom-dialog-btn-cancel" bindtap="onCloseConfigPrompt">取消</button>
+        <button class="custom-dialog-btn-confirm" bindtap="onGoToConfig">去配置</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 菜品量足够提示 Modal -->
+  <view class="custom-dialog-mask" wx:if="{{ showSufficientModal }}" bindtap="onCloseSufficientModal">
+    <view class="custom-dialog-box" catchtap="noop">
+      <view class="custom-dialog-icon-wrap" style="background: rgba(229, 57, 53, 0.08);">
+        <text class="iconfont iconfont-info" style="font-size: 64rpx; color: #E53935;"></text>
+      </view>
+      <view class="custom-dialog-title">菜品已足够</view>
+      <view class="custom-dialog-content">{{ sufficientReason }}\n\n是否需要清空当前已选菜品，为您重新搭配整餐？</view>
+      <view class="custom-dialog-footer">
+        <button class="custom-dialog-btn-cancel" bindtap="onCloseSufficientModal">保留当前</button>
+        <button class="custom-dialog-btn-confirm" style="background: #E53935 !important; box-shadow: none !important;" bindtap="onCommitSufficientReplan">换一批</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空菜单保存确认 Modal -->
+  <view class="custom-dialog-mask" wx:if="{{ showEmptySaveConfirm }}" bindtap="onCloseEmptySaveConfirm">
+    <view class="custom-dialog-box" catchtap="noop">
+      <view class="custom-dialog-icon-wrap" style="background: rgba(212, 178, 140, 0.08);">
+        <text class="iconfont iconfont-info" style="font-size: 64rpx; color: var(--gold);"></text>
+      </view>
+      <view class="custom-dialog-title">提示</view>
+      <view class="custom-dialog-content">当前菜单为空，保存将清空今日已排菜谱，是否确认保存？</view>
+      <view class="custom-dialog-footer">
+        <button class="custom-dialog-btn-cancel" bindtap="onCloseEmptySaveConfirm">取消</button>
+        <button class="custom-dialog-btn-confirm" bindtap="onCommitEmptySave">确认保存</button>
+      </view>
+    </view>
+  </view>
+
 </view>
