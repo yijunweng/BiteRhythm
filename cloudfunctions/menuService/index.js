@@ -67,6 +67,11 @@ exports.main = async (event, context) => {
           updated_at: db.serverDate()
         };
 
+        if (dishes.length === 0) {
+          await db.collection('menus').doc(menuId).remove().catch(() => null);
+          return { success: true, message: '菜单已成功清空' };
+        }
+
         const existMenu = await db.collection('menus').doc(menuId).get().catch(() => null);
 
         if (existMenu) {

@@ -2,6 +2,15 @@
 const cloud = require('wx-server-sdk');
 const axios = require('axios');
 
+// 导入外部提示词模板
+const recommendNewMenuPrompt = require('./prompts/recommendNewMenu');
+const recommendComplementaryMenuPrompt = require('./prompts/recommendComplementaryMenu');
+const parseDishesPrompt = require('./prompts/parseDishes');
+const generateShoppingListPrompt = require('./prompts/generateShoppingList');
+
+// 导入大模型请求配置
+const llmConfig = require('./config');
+
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 });
@@ -38,7 +47,7 @@ exports.main = async (event, context) => {
         const requirements = aiConfig.requirements || '无特殊要求';
 
         // 1.2 获取家庭收藏菜品库
-        const dishesRes = await db.collection('dishes').where({ family_id: familyId }).limit(100).get();
+        const dishesRes = await db.collection('dishes').where({ family_id: familyId }).limit(40).get();
         const dishesRepo = dishesRes.data.map(d => `${d.name}(${d.category || '热菜'})`).join(', ');
 
         // 1.3 获取最近 5 天的菜单（避免吃重复菜）
@@ -67,51 +76,26 @@ exports.main = async (event, context) => {
 
         let prompt = '';
         if (currentDishesList.length === 0) {
-          prompt = `你是一个家庭智能食谱搭配助手。请为家庭推荐今日(${date})的午餐/晚餐搭配。
-用餐成员构成: 大人 ${adults} 人，小孩 ${kids} 人
-特定配餐要求: ${requirements}
-家庭口味偏好与忌口: ${preferences}
-已收藏的家常菜候选库: [${dishesRepo}]
-最近5天内吃过的菜(请尽量避开，保证多样性): [${recentDishesStr}]
-
-推荐规则:
-1. 优先从"已收藏的家常菜候选库"中进行挑选和组合。如果候选库较少，你可以适当推荐1-2道库外常见家常菜，但需符合偏好。
-2. 推荐数量：由于用餐人数为大人 ${adults} 人，小孩 ${kids} 人，请提供合理的分量搭配和推荐数量：刚好3道菜（建议荤素搭配，如一荤一素一汤，或两荤一素，总共3个）。并请充分考虑大人 and 小孩的饮食喜好与忌口要求。
-3. 必须输出合法的 JSON 格式对象，不要包含任何 markdown 标记(例如 \`\`\`json)，不要写任何前后置解释文案，直接输出以下 JSON 对象：
-{
-  "status": "complementary",
-  "reason": "新搭配整餐",
-  "recommendations": [
-    {"name": "西红柿炒鸡蛋", "category": "热菜", "reason": "清淡美味，营养均衡"},
-    {"name": "红烧排骨", "category": "热菜", "reason": "经典家常荤菜"},
-    {"name": "紫菜蛋花汤", "category": "汤品", "reason": "简单快捷，润口去油腻"}
-  ]
-}
-
-请生成今日搭配推荐:`;
+          prompt = recommendNewMenuPrompt({
+            date,
+            adults,
+            kids,
+            requirements,
+            preferences,
+            dishesRepo,
+            recentDishesStr
+          });
         } else {
-          prompt = `你是一个家庭智能食谱搭配助手。请为家庭推荐今日(${date})的午餐/晚餐搭配。
-用餐成员构成: 大人 ${adults} 人，小孩 ${kids} 人
-特定配餐要求: ${requirements}
-家庭口味偏好与忌口: ${preferences}
-已收藏的家常菜候选库: [${dishesRepo}]
-最近5天内吃过的菜(请尽量避开，保证多样性): [${recentDishesStr}]
-今日已选择的菜品: [${existingDishesStr}]
-
-推荐规则:
-1. 评估已选择的菜品 [${existingDishesStr}] 对当前家庭成员（大人 ${adults} 人，小孩 ${kids} 人）来说，分量与品类搭配是否已经足够（通常一餐需要 3-4 道菜，建议荤素搭配，有荤有素有汤）。
-2. 如果你判断【已选择的菜品已经足够】，请设置 status 为 "sufficient"，并在 reason 中详细说明原因，同时 recommendations 数组留空。
-3. 如果你判断【还需要补充/不搭配】，请设置 status 为 "complementary"，并在 recommendations 数组中推荐 1-2 道补充菜品（例如：如果目前只有肉菜，建议补充 1 道素菜或 1 道汤品，请不要推荐与已选菜品重复的菜，优先从候选库中挑选），同时在 reason 中说明需要补充哪些品类 and 原因。
-4. 必须输出合法的 JSON 格式对象，不要包含任何 markdown 标记(例如 \`\`\`json)，不要写任何前后置解释文案，直接输出以下 JSON 对象：
-{
-  "status": "sufficient" 或 "complementary",
-  "reason": "你的评估理由",
-  "recommendations": [
-    {"name": "菜品名称", "category": "分类", "reason": "推荐或补充该菜的理由"}
-  ]
-}
-
-请进行评估并生成推荐:`;
+          prompt = recommendComplementaryMenuPrompt({
+            date,
+            adults,
+            kids,
+            requirements,
+            preferences,
+            dishesRepo,
+            recentDishesStr,
+            existingDishesStr
+          });
         }
 
         // 1.5 请求 LLM
@@ -144,16 +128,7 @@ exports.main = async (event, context) => {
           return { success: false, message: '参数错误：未提供待解析的文本内容' };
         }
 
-        const prompt = `你是一个食谱数据解析助手。请从下面这段用户输入的文本中，提取出菜名，并识别它们属于哪个品类（分类仅限以下几个值之一：热菜, 凉菜, 汤品, 主食, 其它）。
-        
-用户文本: "${text}"
-
-输出要求:
-1. 必须输出合法的 JSON 数组，不要有 Markdown 格式包装，不要任何额外话语。
-格式规范:
-[
-  {"name": "菜品名称", "category": "品类"}
-]`;
+        const prompt = parseDishesPrompt({ text });
 
         const response = await callLLM(base_url, api_key, model_name, prompt);
         rawResponse = response;
@@ -187,27 +162,13 @@ exports.main = async (event, context) => {
         const dishesList = menuRes.data.dishes.map(d => `${d.name}(${d.category || '热菜'})`).join(', ');
 
         // 2.3 构建 Prompt
-        const prompt = `你是一个专业的家庭膳食采购助手。请为以下家庭生成今日的食材采购清单与建议。
-用餐人口: 大人 ${adults} 人，小孩 ${kids} 人
-今日菜谱包含的菜品: [${dishesList}]
-特定配餐要求: ${requirements}
-家庭口味偏好与忌口: ${preferences}
-
-请根据以上信息，预测并列出烹饪这些菜品所需的全部食材，并给出建议购买的分量。
-输出格式必须严格遵循以下结构（使用分隔线，必须包含"### 📋 详细采购建议"这一标题，且不要有任何 Markdown 代码块包裹）：
-
-### 💡 简要提示
-[这里用 1-2 句话极简概括今天需要采购的核心食材与建议采购要点，字数控制在 45 字以内]
-
----
-### 📋 详细采购建议
-# 今日食材采购清单 & 建议
-
-## 📝 采购清单
-[这里详细列出分类采购表格清单，如蔬菜类、肉蛋类等及其购买分量建议]
-
-## 💡 温馨提示
-[这里提供 1-2 条关于保鲜、烹饪顺序或食材替换的温馨建议]`;
+        const prompt = generateShoppingListPrompt({
+          adults,
+          kids,
+          dishesList,
+          requirements,
+          preferences
+        });
 
         // 2.4 请求 LLM
         const response = await callLLM(base_url, api_key, model_name, prompt);
@@ -244,29 +205,43 @@ exports.main = async (event, context) => {
 
 // 封装大模型接口调用
 async function callLLM(baseUrl, apiKey, model, prompt) {
-  const url = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
-  const response = await axios({
-    method: 'post',
-    url: url,
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    },
-    data: {
-      model: model,
-      messages: [
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.7,
-      max_tokens: 1000
-    },
-    timeout: 15000 // 15秒超时
-  });
-
-  if (response.data && response.data.choices && response.data.choices.length > 0) {
-    return response.data.choices[0].message.content;
+  let url = baseUrl.replace(/\/$/, '');
+  if (!url.endsWith('/chat/completions')) {
+    url = `${url}/chat/completions`;
   }
-  throw new Error('LLM 接口返回空数据');
+  try {
+    const response = await axios({
+      method: 'post',
+      url: url,
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        model: model,
+        messages: [
+          { role: 'user', content: prompt }
+        ],
+        temperature: llmConfig.temperature,
+        max_tokens: llmConfig.max_tokens
+      },
+      timeout: llmConfig.timeout
+    });
+
+    if (response.data && response.data.choices && response.data.choices.length > 0) {
+      const content = response.data.choices[0].message.content;
+      if (content === undefined || content === null || content === '') {
+        throw new Error(`LLM 接口返回内容为空，完整响应: ${JSON.stringify(response.data)}`);
+      }
+      return content;
+    }
+    throw new Error(`LLM 接口返回格式不符合预期，完整响应: ${JSON.stringify(response.data)}`);
+  } catch (error) {
+    if (error.response) {
+      throw new Error(`请求大模型 API 失败 (状态码 ${error.response.status}): ${JSON.stringify(error.response.data)}`);
+    }
+    throw error;
+  }
 }
 
 // 清理 markdown 包裹并转化为 JSON
@@ -286,11 +261,71 @@ function cleanAndParseJson(str) {
     return JSON.parse(cleaned);
   } catch(e) {
     console.error('JSON 转换为对象失败, 原字符串: ', str, e);
-    // 简易容错机制：尝试正则表达式匹配 JSON 数组
-    const arrayMatch = cleaned.match(/\[\s*\{[\s\S]*\}\s*\]/);
-    if (arrayMatch) {
-      return JSON.parse(arrayMatch[0]);
+    
+    // 容错机制 1：尝试提取第一个 { 和最后一个 } 之间的 JSON 对象
+    const objectMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (objectMatch) {
+      try {
+        return JSON.parse(objectMatch[0]);
+      } catch (errObj) {
+        console.error('容错提取 JSON 对象解析失败，尝试进行截断修复', errObj);
+        const repaired = tryRepairTruncatedJson(objectMatch[0]);
+        if (repaired) {
+          console.log('截断 JSON 修复成功:', repaired);
+          return repaired;
+        }
+      }
     }
+
+    // 容错机制 2：尝试提取第一个 [ 和最后一个 ] 之间的 JSON 数组
+    const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
+    if (arrayMatch) {
+      try {
+        return JSON.parse(arrayMatch[0]);
+      } catch (errArr) {
+        console.error('容错提取 JSON 数组解析失败', errArr);
+      }
+    }
+    
     throw e;
   }
+}
+
+// 尝试修复被截断的 JSON 对象并恢复部分数据
+function tryRepairTruncatedJson(jsonStr) {
+  try {
+    // 1. 提取 status 和 reason
+    let status = "complementary";
+    let reason = "AI 推荐 (部分生成)";
+    const statusMatch = jsonStr.match(/"status"\s*:\s*"([^"]+)"/);
+    if (statusMatch) status = statusMatch[1];
+    const reasonMatch = jsonStr.match(/"reason"\s*:\s*"([^"]+)"/);
+    if (reasonMatch) reason = reasonMatch[1];
+
+    // 2. 提取 recommendations 数组中所有完整的叶子对象
+    const recommendations = [];
+    const leafObjRegex = /\{[^{}]*\}/g;
+    let match;
+    while ((match = leafObjRegex.exec(jsonStr)) !== null) {
+      try {
+        const obj = JSON.parse(match[0]);
+        if (obj && obj.name) {
+          recommendations.push(obj);
+        }
+      } catch (err) {
+        // 忽略解析失败的片段
+      }
+    }
+
+    if (recommendations.length > 0) {
+      return {
+        status,
+        reason,
+        recommendations
+      };
+    }
+  } catch (err) {
+    console.error('修复截断 JSON 失败', err);
+  }
+  return null;
 }

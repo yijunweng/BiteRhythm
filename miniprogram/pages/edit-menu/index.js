@@ -328,30 +328,34 @@ Page({
                   date: this.data.dateStr
                 }
               });
+              this.setData({ saving: false });
               if (shopRes.result && shopRes.result.success) {
-                toast.showToast(this, '保存并生成成功', 'success');
+                toast.showToast(this, '保存并生成成功', 'success', 1500);
+                setTimeout(() => wx.navigateBack(), 1500);
               } else {
-                toast.showToast(this, '已保存菜单，但采购建议生成失败', 'none');
+                toast.showToast(this, '已保存菜单，但采购建议生成失败，请在首页重新生成', 'none', 3000);
+                setTimeout(() => wx.navigateBack(), 3000);
               }
             } catch (err) {
               console.error('同步生成采购建议失败', err);
-              toast.showToast(this, '已保存菜单，但采购建议生成异常', 'none');
+              this.setData({ saving: false });
+              toast.showToast(this, '已保存菜单，但采购建议生成异常，请在首页重新生成', 'none', 3000);
+              setTimeout(() => wx.navigateBack(), 3000);
             }
           } else {
-            toast.showToast(this, '保存成功', 'success');
+            this.setData({ saving: false });
+            toast.showToast(this, '保存成功', 'success', 1000);
+            setTimeout(() => wx.navigateBack(), 1000);
           }
-          setTimeout(() => wx.navigateBack(), 1000);
         } else {
+          this.setData({ saving: false });
           toast.showToast(this, res.result.message || '保存失败', 'none');
         }
       },
       fail: err => {
         console.error('保存菜单网络异常', err);
-        toast.showToast(this, '网络异常，保存失败', 'none');
-      },
-      complete: () => {
         this.setData({ saving: false });
-        toast.hideLoading(this);
+        toast.showToast(this, '网络异常，保存失败', 'none');
       }
     });
   },
