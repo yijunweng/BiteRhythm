@@ -358,42 +358,50 @@ Page({
     try {
       const db = wx.cloud.database();
       
-      const monthQuery = db.collection('menus').where({
-        family_id: activeFamily._id,
-        date: db.command.gte(startStr).and(db.command.lte(endStr))
-      }).get();
+      // 分批获取当前月的所有菜单记录（小程序端单次获取上限 20 条，一个月最多 31 天需要获取）
+      const MAX_LIMIT = 20;
+      let monthMenusData = [];
+      let skip = 0;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const res = await db.collection('menus').where({
+          family_id: activeFamily._id,
+          date: db.command.gte(startStr).and(db.command.lte(endStr))
+        })
+        .skip(skip)
+        .limit(MAX_LIMIT)
+        .get();
+        
+        monthMenusData = monthMenusData.concat(res.data);
+        if (res.data.length < MAX_LIMIT) {
+          hasMore = false;
+        } else {
+          skip += MAX_LIMIT;
+        }
+      }
 
-      let selectedDateQuery = null;
+      let selectedDateMenuData = [];
       if (selectedDateStr) {
         const parts = selectedDateStr.split('-');
         if (parts.length === 3) {
           const selYear = parseInt(parts[0], 10);
           const selMonth = parseInt(parts[1], 10);
           if (selYear !== currentYear || selMonth !== currentMonth) {
-            selectedDateQuery = db.collection('menus').where({
+            const resSel = await db.collection('menus').where({
               family_id: activeFamily._id,
               date: selectedDateStr
             }).get();
+            selectedDateMenuData = resSel.data;
           }
         }
       }
 
-      const queries = [monthQuery, selectedDateQuery].filter(Boolean);
-      const results = await Promise.all(queries);
-      
-      const resMonth = results[0];
-      const resSel = results[1];
-
-      console.log('【数据库读取成功】月度菜单数据 resMonth.data:', resMonth.data);
-      if (resSel) {
-        console.log('【数据库读取成功】选中日期菜单数据 resSel.data:', resSel.data);
-      }
+      console.log('【数据库读取成功】月度菜单数据 monthMenusData:', monthMenusData);
 
       const menusMap = {};
-      resMonth.data.forEach(m => { menusMap[m.date] = m; });
-      if (resSel && resSel.data) {
-        resSel.data.forEach(m => { menusMap[m.date] = m; });
-      }
+      monthMenusData.forEach(m => { menusMap[m.date] = m; });
+      selectedDateMenuData.forEach(m => { menusMap[m.date] = m; });
 
       this.setData({ monthlyMenus: menusMap });
       this.renderCalendarMenus();

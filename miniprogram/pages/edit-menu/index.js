@@ -82,10 +82,27 @@ Page({
   fetchRepositoryDishes: async function () {
     try {
       const db = wx.cloud.database();
-      const res = await db.collection('dishes').where({
-        family_id: this.data.familyId
-      }).limit(100).get();
-      this.setData({ repoDishes: res.data, filteredRepoDishes: res.data });
+      const MAX_LIMIT = 20;
+      let allDishes = [];
+      let skip = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const res = await db.collection('dishes')
+          .where({ family_id: this.data.familyId })
+          .skip(skip)
+          .limit(MAX_LIMIT)
+          .get();
+        
+        allDishes = allDishes.concat(res.data);
+        if (res.data.length < MAX_LIMIT) {
+          hasMore = false;
+        } else {
+          skip += MAX_LIMIT;
+        }
+      }
+
+      this.setData({ repoDishes: allDishes, filteredRepoDishes: allDishes });
     } catch (err) {
       console.error('获取收藏菜品失败', err);
     }

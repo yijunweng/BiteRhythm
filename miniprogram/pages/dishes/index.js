@@ -65,8 +65,27 @@ Page({
     this.setData({ loading: true });
     try {
       const db = wx.cloud.database();
-      const res = await db.collection('dishes').where({ family_id: this.data.familyId }).limit(200).get();
-      this.setData({ dishes: res.data }, () => this.filterDishes());
+      const MAX_LIMIT = 20;
+      let allDishes = [];
+      let skip = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const res = await db.collection('dishes')
+          .where({ family_id: this.data.familyId })
+          .skip(skip)
+          .limit(MAX_LIMIT)
+          .get();
+        
+        allDishes = allDishes.concat(res.data);
+        if (res.data.length < MAX_LIMIT) {
+          hasMore = false;
+        } else {
+          skip += MAX_LIMIT;
+        }
+      }
+
+      this.setData({ dishes: allDishes }, () => this.filterDishes());
     } catch (err) {
       console.error('获取菜品库失败', err);
       toast.showToast(this, '加载失败', 'error');
