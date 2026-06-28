@@ -187,13 +187,13 @@ Page({
     if (app.globalData.hasCheckedAuth) {
       const globalActive = app.globalData.activeFamily;
       const pageActive = this.data.activeFamily;
-      if (globalActive && (!pageActive || pageActive._id !== globalActive._id || JSON.stringify(pageActive.ai_config) !== JSON.stringify(globalActive.ai_config))) {
+      if (globalActive && (!pageActive || JSON.stringify(pageActive) !== JSON.stringify(globalActive))) {
         this.setData({ activeFamily: globalActive });
         this.fetchMonthlyMenus();
         this.fetchUserRoleInFamily();
-      } else if (pageActive) {
+      } else if (pageActive && app.globalData.menuChanged) {
+        app.globalData.menuChanged = false;
         this.fetchMonthlyMenus();
-        this.fetchUserRoleInFamily();
       }
     }
   },
@@ -223,8 +223,12 @@ Page({
       const db = wx.cloud.database();
       const openid = app.globalData.openid;
 
-      const memberRes = await db.collection('family_members')
-        .where({ openid, status: 'approved' }).get();
+      // 并发查询用户加入的家庭成员记录和自己创建的家庭
+      const [memberRes, ownRes] = await Promise.all([
+        db.collection('family_members').where({ openid, status: 'approved' }).get(),
+        db.collection('families').where({ creator_openid: openid }).get()
+      ]);
+
       const familyIds = memberRes.data.map(m => m.family_id);
 
       let families = [];
@@ -234,8 +238,6 @@ Page({
         families = r.data;
       }
 
-      const ownRes = await db.collection('families')
-        .where({ creator_openid: openid }).get();
       ownRes.data.forEach(f => {
         if (!families.find(x => x._id === f._id)) families.push(f);
       });

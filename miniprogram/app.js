@@ -7,7 +7,8 @@ App({
     isSystemAdmin: false,
     memberRole: '',
     activeFamily: null,
-    hasCheckedAuth: false
+    hasCheckedAuth: false,
+    menuChanged: false
   },
 
   // 页面注册的初始化完成回调

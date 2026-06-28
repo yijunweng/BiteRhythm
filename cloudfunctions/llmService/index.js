@@ -15,20 +15,33 @@ cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 });
 
+// 全局缓存大模型配置以减少暖启动开销，设置一个简单的 TTL 防止管理员在设置修改后无法及时更新 (如 1 分钟 TTL)
+let cachedLLMConfig = null;
+let llmConfigCacheTime = 0;
+const CACHE_TTL_MS = 60000; // 1分钟
+
 exports.main = async (event, context) => {
   const db = cloud.database();
   const { action, familyId, date, text, existingDishes, forceReplan } = event;
 
   // 1. 获取全局大模型配置
-  const configRes = await db.collection('system_config').doc('global_config').get().catch(() => null);
-  if (!configRes || !configRes.data || !configRes.data.api_key) {
+  const now = Date.now();
+  if (!cachedLLMConfig || (now - llmConfigCacheTime > CACHE_TTL_MS)) {
+    const configRes = await db.collection('system_config').doc('global_config').get().catch(() => null);
+    if (configRes && configRes.data && configRes.data.api_key) {
+      cachedLLMConfig = configRes.data;
+      llmConfigCacheTime = now;
+    }
+  }
+
+  if (!cachedLLMConfig) {
     return {
       success: false,
       message: '系统配置缺失：请联系超级管理员在“系统设置”页面配置大模型 API Key。'
     };
   }
 
-  const { api_key, base_url, model_name } = configRes.data;
+  const { api_key, base_url, model_name } = cachedLLMConfig;
 
   let rawResponse = '';
   try {
@@ -38,27 +51,27 @@ exports.main = async (event, context) => {
           return { success: false, message: '参数错误：缺失 familyId 或 date' };
         }
 
-        // 1.1 获取家庭口味偏好与忌口
-        const familyRes = await db.collection('families').doc(familyId).get().catch(() => null);
+        // 1.1 并发获取推荐所需的所有数据库数据 (家庭资料、菜品库、最近 5 天菜单)
+        const pastDate = new Date(new Date(date).getTime() - 5 * 24 * 60 * 60 * 1000);
+        const pastDateStr = pastDate.toISOString().split('T')[0];
+
+        const [familyRes, dishesRes, recentMenusRes] = await Promise.all([
+          db.collection('families').doc(familyId).get().catch(() => null),
+          db.collection('dishes').where({ family_id: familyId }).limit(40).get().catch(() => ({ data: [] })),
+          db.collection('menus')
+            .where({
+              family_id: familyId,
+              date: db.command.gte(pastDateStr).and(db.command.lt(date))
+            }).get().catch(() => ({ data: [] }))
+        ]);
+
         const preferences = familyRes?.data?.preferences || '无特殊忌口，健康营养搭配';
         const aiConfig = familyRes?.data?.ai_config || {};
         const adults = aiConfig.adults !== undefined ? aiConfig.adults : 0;
         const kids = aiConfig.kids !== undefined ? aiConfig.kids : 0;
         const requirements = aiConfig.requirements || '无特殊要求';
 
-        // 1.2 获取家庭收藏菜品库
-        const dishesRes = await db.collection('dishes').where({ family_id: familyId }).limit(40).get();
         const dishesRepo = dishesRes.data.map(d => `${d.name}(${d.category || '热菜'})`).join(', ');
-
-        // 1.3 获取最近 5 天的菜单（避免吃重复菜）
-        const pastDate = new Date(new Date(date).getTime() - 5 * 24 * 60 * 60 * 1000);
-        const pastDateStr = pastDate.toISOString().split('T')[0];
-        
-        const recentMenusRes = await db.collection('menus')
-          .where({
-            family_id: familyId,
-            date: db.command.gte(pastDateStr).and(db.command.lt(date))
-          }).get();
 
         const recentDishes = [];
         recentMenusRes.data.forEach(m => {
@@ -145,17 +158,19 @@ exports.main = async (event, context) => {
           return { success: false, message: '参数错误：缺失 familyId 或 date' };
         }
 
-        // 2.1 获取家庭口味偏好与忌口
-        const familyRes = await db.collection('families').doc(familyId).get().catch(() => null);
+        // 2.1 并发获取家庭配置与该日期的菜单
+        const menuId = `${familyId}_${date}`;
+        const [familyRes, menuRes] = await Promise.all([
+          db.collection('families').doc(familyId).get().catch(() => null),
+          db.collection('menus').doc(menuId).get().catch(() => null)
+        ]);
+
         const preferences = familyRes?.data?.preferences || '无特殊忌口，健康营养搭配';
         const aiConfig = familyRes?.data?.ai_config || {};
         const adults = aiConfig.adults !== undefined ? aiConfig.adults : 0;
         const kids = aiConfig.kids !== undefined ? aiConfig.kids : 0;
         const requirements = aiConfig.requirements || '无特殊要求';
 
-        // 2.2 获取该日期的菜单
-        const menuId = `${familyId}_${date}`;
-        const menuRes = await db.collection('menus').doc(menuId).get().catch(() => null);
         if (!menuRes || !menuRes.data || !menuRes.data.dishes || menuRes.data.dishes.length === 0) {
           return { success: false, message: '生成失败：该日期暂无已规划的菜品' };
         }

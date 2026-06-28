@@ -63,11 +63,8 @@ Page({
       if (family) {
         this.setData({ currentFamilyId: family._id, currentFamilyName: family.name });
       }
-      this.fetchFamilies();
       if (subpage === 'members') {
         wx.setNavigationBarTitle({ title: '成员与协作管理' });
-        this.fetchMembers();
-        this.fetchAIConfig();
       }
     }
   },
@@ -151,8 +148,13 @@ Page({
     if (!openid) return;
     try {
       const db = wx.cloud.database();
-      const memberRes = await db.collection('family_members')
-        .where({ openid, status: 'approved' }).get();
+      
+      // 并发查询用户加入的家庭成员记录和自己创建的家庭
+      const [memberRes, ownRes] = await Promise.all([
+        db.collection('family_members').where({ openid, status: 'approved' }).get(),
+        db.collection('families').where({ creator_openid: openid }).get()
+      ]);
+
       const familyIds = memberRes.data.map(m => m.family_id);
 
       let families = [];
@@ -162,8 +164,6 @@ Page({
         families = r.data;
       }
 
-      const ownRes = await db.collection('families')
-        .where({ creator_openid: openid }).get();
       ownRes.data.forEach(f => {
         if (!families.find(x => x._id === f._id)) families.push(f);
       });
@@ -188,8 +188,10 @@ Page({
       currentFamilyName: selected.name
     });
 
-    await this.fetchMembers();
-    await this.fetchAIConfig();
+    await Promise.all([
+      this.fetchMembers(),
+      this.fetchAIConfig()
+    ]);
 
     toast.showToast(this, `已激活「${selected.name}」`, 'success');
   },

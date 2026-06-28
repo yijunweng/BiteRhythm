@@ -5,6 +5,9 @@ cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 });
 
+// 全局缓存超级管理员 OpenID，减少暖启动时的数据库查询开销
+let cachedSuperAdminOpenid = null;
+
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext();
   const openid = wxContext.OPENID;
@@ -19,10 +22,14 @@ exports.main = async (event, context) => {
   // 避免硬编码在云函数代码中（部署更新时无需重新上传）
   // ============================================================
   const getSuperAdminOpenid = async () => {
+    if (cachedSuperAdminOpenid) {
+      return cachedSuperAdminOpenid;
+    }
     try {
       const res = await db.collection('system_config').doc('global_config').get().catch(() => null);
       if (res && res.data && res.data.super_admin_openid) {
-        return res.data.super_admin_openid;
+        cachedSuperAdminOpenid = res.data.super_admin_openid;
+        return cachedSuperAdminOpenid;
       }
     } catch (e) { /* ignore */ }
     return null;
@@ -66,6 +73,7 @@ exports.main = async (event, context) => {
         } else {
           await db.collection('system_config').add({ data: { _id: 'global_config', ...configData } });
         }
+        cachedSuperAdminOpenid = openid;
         return { success: true, message: '超管 OpenID 初始化成功', openid };
       }
 
@@ -132,11 +140,13 @@ exports.main = async (event, context) => {
           return { success: false, message: '权限不足：只有家庭管理员可以删除该家庭' };
         }
         
-        // 2. 依次删除关联的所有数据
-        await db.collection('dishes').where({ family_id: familyId }).remove();
-        await db.collection('menus').where({ family_id: familyId }).remove();
-        await db.collection('family_members').where({ family_id: familyId }).remove();
-        await db.collection('families').doc(familyId).remove();
+        // 2. 并行删除关联的所有数据
+        await Promise.all([
+          db.collection('dishes').where({ family_id: familyId }).remove(),
+          db.collection('menus').where({ family_id: familyId }).remove(),
+          db.collection('family_members').where({ family_id: familyId }).remove(),
+          db.collection('families').doc(familyId).remove()
+        ]);
         
         return { success: true, message: '家庭及关联数据已成功删除' };
       }

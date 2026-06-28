@@ -334,6 +334,7 @@ Page({
       },
       success: async res => {
         if (res.result && res.result.success) {
+          app.globalData.menuChanged = true;
           if (this.data.syncShoppingList && this.data.dishesList.length > 0) {
             toast.showLoading(this, '正在生成采购建议...');
             try {

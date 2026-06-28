@@ -20,26 +20,27 @@ exports.main = async (event, context) => {
     // ================= 1. 安全控制：校验用户在家庭中的写权限 =================
     let hasWriteAccess = false;
 
-    // 1.1 检查是否是家庭的创建者
-    const familyRes = await db.collection('families').doc(familyId).get().catch(() => null);
-    if (familyRes && familyRes.data.creator_openid === openid) {
-      hasWriteAccess = true;
-    }
-
-    // 1.2 检查是否是授权的写权限成员 (role = 'admin' 或 'write')
-    if (!hasWriteAccess) {
-      const memberRes = await db.collection('family_members')
+    // 并发查询家庭信息和成员身份
+    const [familyRes, memberRes] = await Promise.all([
+      db.collection('families').doc(familyId).get().catch(() => null),
+      db.collection('family_members')
         .where({
           family_id: familyId,
           openid: openid,
           status: 'approved'
-        }).get();
+        }).get().catch(() => ({ data: [] }))
+    ]);
 
-      if (memberRes.data.length > 0) {
-        const role = memberRes.data[0].role;
-        if (role === 'admin' || role === 'write') {
-          hasWriteAccess = true;
-        }
+    // 1.1 检查是否是家庭的创建者
+    if (familyRes && familyRes.data && familyRes.data.creator_openid === openid) {
+      hasWriteAccess = true;
+    }
+
+    // 1.2 检查是否是授权的写权限成员 (role = 'admin' 或 'write')
+    if (!hasWriteAccess && memberRes && memberRes.data && memberRes.data.length > 0) {
+      const role = memberRes.data[0].role;
+      if (role === 'admin' || role === 'write') {
+        hasWriteAccess = true;
       }
     }
 
@@ -72,20 +73,10 @@ exports.main = async (event, context) => {
           return { success: true, message: '菜单已成功清空' };
         }
 
-        const existMenu = await db.collection('menus').doc(menuId).get().catch(() => null);
-
-        if (existMenu) {
-          await db.collection('menus').doc(menuId).update({
-            data: menuData
-          });
-        } else {
-          await db.collection('menus').add({
-            data: {
-              _id: menuId,
-              ...menuData
-            }
-          });
-        }
+        // 使用 set() 直接覆盖或创建文档，省去一次 get() 检查
+        await db.collection('menus').doc(menuId).set({
+          data: menuData
+        });
 
         return { success: true, message: '菜单保存成功' };
       }
