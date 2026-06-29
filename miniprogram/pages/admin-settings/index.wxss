@@ -584,3 +584,34 @@
   border-color: var(--gold);
 }
 
+
+/* 开关行 */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+}
+
+.form-label-desc {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* 思考强度 Radio */
+.reasoning-radio-group {
+  display: flex;
+  gap: 36rpx;
+}
+
+.reasoning-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.reasoning-radio-text {
+  font-size: 26rpx;
+  color: var(--text-main);
+}

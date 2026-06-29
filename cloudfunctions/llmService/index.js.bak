@@ -21,13 +21,10 @@ let llmConfigCacheTime = 0;
 const CACHE_TTL_MS = 60000; // 1分钟
 
 exports.main = async (event, context) => {
-  const tTotal = Date.now();
   const db = cloud.database();
   const { action, familyId, date, text, existingDishes, forceReplan } = event;
-  console.log(`[timing] action=${action}, 云函数入口->db就绪: ${Date.now() - tTotal}ms`);
 
   // 1. 获取全局大模型配置
-  const tCfg = Date.now();
   const now = Date.now();
   if (!cachedLLMConfig || (now - llmConfigCacheTime > CACHE_TTL_MS)) {
     const configRes = await db.collection('system_config').doc('global_config').get().catch(() => null);
@@ -35,7 +32,6 @@ exports.main = async (event, context) => {
       cachedLLMConfig = configRes.data;
       llmConfigCacheTime = now;
     }
-    console.log(`[timing] 读取DB配置耗时: ${Date.now() - tCfg}ms (hit=${!!cachedLLMConfig})`);
   }
 
   if (!cachedLLMConfig) {
@@ -46,15 +42,6 @@ exports.main = async (event, context) => {
   }
 
   const { api_key, base_url, model_name } = cachedLLMConfig;
-  const disable_reasoning = cachedLLMConfig.disable_reasoning || cachedLLMConfig.disale_reasoning;
-  const reasoning_effort = cachedLLMConfig.reasoning_effort || null;
-  let thinking = null;
-  if (disable_reasoning) {
-    thinking = { type: 'disabled' };
-  } else if (reasoning_effort) {
-    thinking = { type: 'enabled' };
-  }
-  console.log(`[timing] disable_reasoning=${!!disable_reasoning}, reasoning_effort=${reasoning_effort}, thinking=${JSON.stringify(thinking)}`);
 
   let rawResponse = '';
   try {
@@ -125,9 +112,7 @@ exports.main = async (event, context) => {
         }
 
         // 1.5 请求 LLM
-        const tLLM1 = Date.now();
-        const response = await callLLM(base_url, api_key, model_name, prompt, thinking, reasoning_effort);
-        console.log(`[timing] recommendToday LLM API耗时: ${Date.now() - tLLM1}ms`);
+        const response = await callLLM(base_url, api_key, model_name, prompt);
         rawResponse = response;
         const resultObj = cleanAndParseJson(response);
 
@@ -143,7 +128,6 @@ exports.main = async (event, context) => {
           finalRecommendations = resultObj;
         }
 
-        console.log(`[timing] recommendToday 总耗时: ${Date.now() - tTotal}ms`);
         return {
           success: true,
           status: status,
@@ -159,13 +143,10 @@ exports.main = async (event, context) => {
 
         const prompt = parseDishesPrompt({ text });
 
-        const tLLM2 = Date.now();
-        const response = await callLLM(base_url, api_key, model_name, prompt, thinking, reasoning_effort);
-        console.log(`[timing] parseDishes LLM API耗时: ${Date.now() - tLLM2}ms`);
+        const response = await callLLM(base_url, api_key, model_name, prompt);
         rawResponse = response;
         const parsedDishes = cleanAndParseJson(response);
 
-        console.log(`[timing] parseDishes 总耗时: ${Date.now() - tTotal}ms`);
         return {
           success: true,
           dishes: parsedDishes
@@ -205,9 +186,7 @@ exports.main = async (event, context) => {
         });
 
         // 2.4 请求 LLM
-        const tLLM3 = Date.now();
-        const response = await callLLM(base_url, api_key, model_name, prompt, thinking, reasoning_effort);
-        console.log(`[timing] generateShoppingList LLM API耗时: ${Date.now() - tLLM3}ms`);
+        const response = await callLLM(base_url, api_key, model_name, prompt);
         rawResponse = response;
 
         // 2.5 保存采购建议到 menus 文档中
@@ -218,7 +197,6 @@ exports.main = async (event, context) => {
           }
         });
 
-        console.log(`[timing] generateShoppingList 总耗时: ${Date.now() - tTotal}ms`);
         return {
           success: true,
           shoppingList: response
@@ -241,8 +219,7 @@ exports.main = async (event, context) => {
 };
 
 // 封装大模型接口调用
-async function callLLM(baseUrl, apiKey, model, prompt, thinking = null, reasoningEffort = null) {
-  console.log(`[timing] callLLM 开始, prompt=${prompt.length}字符, max_tokens=${llmConfig.max_tokens}`);
+async function callLLM(baseUrl, apiKey, model, prompt) {
   let url = baseUrl.replace(/\/$/, '');
   if (!url.endsWith('/chat/completions')) {
     url = `${url}/chat/completions`;
@@ -261,9 +238,7 @@ async function callLLM(baseUrl, apiKey, model, prompt, thinking = null, reasonin
           { role: 'user', content: prompt }
         ],
         temperature: llmConfig.temperature,
-        max_tokens: llmConfig.max_tokens,
-        ...(thinking ? { thinking } : {}),
-        ...(reasoningEffort ? { reasoning_effort: reasoningEffort } : {})
+        max_tokens: llmConfig.max_tokens
       },
       timeout: llmConfig.timeout
     });

@@ -27,6 +27,10 @@ Page({
     apiKey: '',
     baseUrl: '',
     modelName: '',
+    disableReasoning: false,
+    reasoningEffort: 'high',
+    reasoningEfforts: ['high', 'max'],
+    reasoningEffortValues: ['high', 'max'],
     saving: false,
     loading: false,
     membersLoading: false,
@@ -132,7 +136,9 @@ Page({
             apiKey: cfg.api_key_set ? '••••••••••••' : '',
             apiKeyIsSet: !!cfg.api_key_set,
             baseUrl: cfg.base_url || '',
-            modelName: cfg.model_name || ''
+            modelName: cfg.model_name || '',
+            disableReasoning: cfg.disable_reasoning || false,
+            reasoningEffort: cfg.reasoning_effort || 'high'
           });
         }
       },
@@ -433,8 +439,17 @@ Page({
   onBaseUrlInput: function (e) { this.setData({ baseUrl: e.detail.value }); },
   onModelNameInput: function (e) { this.setData({ modelName: e.detail.value }); },
 
+  onToggleReasoning: function (e) {
+    // switch checked = 打开思考模式 → disableReasoning = false
+    this.setData({ disableReasoning: !e.detail.value });
+  },
+
+  onReasoningEffortChange: function (e) {
+    this.setData({ reasoningEffort: e.detail.value });
+  },
+
   onSaveConfig: function () {
-    const { selectedProviderIndex, providerValues, apiKey, baseUrl, modelName, apiKeyIsSet } = this.data;
+    const { selectedProviderIndex, providerValues, apiKey, baseUrl, modelName, disableReasoning, reasoningEffort } = this.data;
     // 若 apiKey 是占位符（未修改），则不更新 key
     const isPlaceholder = apiKey.startsWith('•');
     if (!isPlaceholder && !apiKey.trim()) {
@@ -447,7 +462,9 @@ Page({
     const configPayload = {
       llm_provider: providerValues[selectedProviderIndex],
       base_url: baseUrl.trim(),
-      model_name: modelName.trim()
+      model_name: modelName.trim(),
+      disable_reasoning: disableReasoning,
+      reasoning_effort: reasoningEffort || ''
     };
     // 只有用户主动修改了 key 才更新
     if (!isPlaceholder) {

@@ -307,6 +307,31 @@
           />
         </view>
 
+        <view class="form-group">
+          <view class="switch-row">
+            <view>
+              <text class="form-label" style="margin-bottom: 4rpx;">打开思考模式</text>
+              <text class="form-label-desc">开启后模型先推理再输出，响应较慢但更准确</text>
+            </view>
+            <switch
+              checked="{{ !disableReasoning }}"
+              bindchange="onToggleReasoning"
+              color="#D4B28C"
+            />
+          </view>
+        </view>
+
+        <view class="form-group" wx:if="{{ !disableReasoning }}">
+          <text class="form-label">思考强度控制</text>
+          <text class="form-label-desc" style="margin-bottom: 16rpx; display: block;">控制模型推理深度，仅在打开思考模式时生效</text>
+          <radio-group class="reasoning-radio-group" bindchange="onReasoningEffortChange">
+            <label class="reasoning-radio-label" wx:for="{{ reasoningEffortValues }}" wx:for-index="idx" wx:for-item="value" wx:key="idx">
+              <radio value="{{ value }}" checked="{{ reasoningEffort === value }}" color="#D4B28C" />
+              <text class="reasoning-radio-text">{{ reasoningEfforts[idx] }}</text>
+            </label>
+          </radio-group>
+        </view>
+
         <button
           class="btn-primary"
           hover-class="btn-primary-hover"

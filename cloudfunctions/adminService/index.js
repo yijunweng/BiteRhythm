@@ -99,6 +99,12 @@ exports.main = async (event, context) => {
         if (config.api_key) {
           configData.api_key = config.api_key;
         }
+        if (config.disable_reasoning !== undefined) {
+          configData.disable_reasoning = config.disable_reasoning;
+        }
+        if (config.reasoning_effort !== undefined) {
+          configData.reasoning_effort = config.reasoning_effort;
+        }
         const existRes = await db.collection('system_config').doc(configId).get().catch(() => null);
         if (existRes) {
           await db.collection('system_config').doc(configId).update({ data: configData });
