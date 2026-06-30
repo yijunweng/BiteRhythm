@@ -172,14 +172,17 @@
 
           <view class="form-group" style="margin-bottom: 32rpx;">
             <text class="form-label">其他偏好与特殊要求</text>
-            <textarea
-              class="textarea-field"
-              placeholder="例如：少油低盐、不吃辣、对海鲜过敏、偏爱粤菜家常菜等..."
-              value="{{ aiRequirements }}"
-              bindinput="onAIRequirementsInput"
-              maxlength="200"
-              auto-height
-            />
+            <view class="textarea-container">
+              <textarea
+                class="textarea-field"
+                placeholder="例如：少油低盐、不吃辣、对海鲜过敏、偏爱粤菜家常菜等..."
+                value="{{ aiRequirements }}"
+                bindinput="onAIRequirementsInput"
+                maxlength="2000"
+                auto-height
+              />
+              <text class="word-counter">{{ aiRequirements.length || 0 }}/2000</text>
+            </view>
           </view>
 
           <button

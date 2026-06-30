@@ -671,3 +671,19 @@ view, text, scroll-view, input, button, textarea, label {
   box-shadow: 0 6rpx 20rpx rgba(212, 178, 140, 0.12) !important;
   border: none !important;
 }
+
+/* 字数计数器 */
+.textarea-container {
+  position: relative;
+  width: 100%;
+}
+
+.word-counter {
+  position: absolute;
+  right: 24rpx;
+  bottom: 12rpx;
+  font-size: 22rpx;
+  color: var(--text-muted);
+  pointer-events: none;
+  z-index: 10;
+}

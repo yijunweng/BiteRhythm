@@ -188,7 +188,7 @@
 .ai-textarea {
   width: 100%;
   min-height: 200rpx;
-  padding: 20rpx 24rpx;
+  padding: 20rpx 24rpx 48rpx 24rpx;
   background: #FDFDFB;
   border: 2rpx solid var(--border);
   border-radius: var(--radius-sm);

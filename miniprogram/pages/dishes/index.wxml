@@ -204,13 +204,16 @@
           </view>
         </view>
 
-        <textarea
-          class="ai-textarea"
-          placeholder="输入或粘贴想要导入的菜品文本。例如：「帮我加一下红烧排骨、清茑鲈鱼，还有一道紫菜蛋汤」"
-          value="{{ bulkImportText }}"
-          bindinput="onBulkImportInput"
-          style="margin-bottom: 24rpx;"
-        />
+        <view class="textarea-container" style="margin-bottom: 24rpx;">
+          <textarea
+            class="ai-textarea"
+            placeholder="输入或粘贴想要导入的菜品文本。例如：「帮我加一下红烧排骨、清茑鲈鱼，还有一道紫菜蛋汤」"
+            value="{{ bulkImportText }}"
+            bindinput="onBulkImportInput"
+            maxlength="2000"
+          />
+          <text class="word-counter">{{ bulkImportText.length || 0 }}/2000</text>
+        </view>
 
         <view class="ai-tip">
           <text class="iconfont iconfont-info"></text>

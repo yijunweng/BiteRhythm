@@ -571,7 +571,7 @@
 .textarea-field {
   width: 100%;
   min-height: 160rpx;
-  padding: 20rpx 28rpx;
+  padding: 20rpx 28rpx 48rpx 28rpx;
   background: #FDFDFB;
   border: 2rpx solid var(--border);
   border-radius: var(--radius-sm);
