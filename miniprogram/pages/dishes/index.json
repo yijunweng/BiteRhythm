@@ -1,4 +1,4 @@
 {
   "navigationBarTitleText": "菜品库",
-  "enablePullDownRefresh": false
+  "enablePullDownRefresh": true
 }

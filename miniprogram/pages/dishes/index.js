@@ -19,6 +19,7 @@ Page({
     showCategoryPicker: false,
     categories: ['热菜', '凉菜', '汤品', '主食', '其它'],
     newDishRemark: '',
+    newDishPractice: '',
     showAiImportModal: false,
     bulkImportText: '',
     importLoading: false,
@@ -28,6 +29,7 @@ Page({
     editDishCategory: '热菜',
     editCategoryIndex: 0,
     editDishRemark: '',
+    editDishPractice: '',
     showEditCategoryPicker: false,
     showDeleteDishConfirm: false,
     deleteDishId: '',
@@ -61,8 +63,20 @@ Page({
     }
   },
 
-  fetchDishes: async function () {
-    this.setData({ loading: true });
+  onPullDownRefresh: async function () {
+    try {
+      await this.fetchDishes(true);
+    } catch (err) {
+      console.error('下拉刷新失败', err);
+    } finally {
+      wx.stopPullDownRefresh();
+    }
+  },
+
+  fetchDishes: async function (silent = false) {
+    if (!silent) {
+      this.setData({ loading: true });
+    }
     try {
       const db = wx.cloud.database();
       const MAX_LIMIT = 20;
@@ -90,12 +104,29 @@ Page({
       console.error('获取菜品库失败', err);
       toast.showToast(this, '加载失败', 'error');
     } finally {
-      this.setData({ loading: false });
+      if (!silent) {
+        this.setData({ loading: false });
+      }
     }
   },
 
   filterDishes: function () {
-    let filtered = this.data.dishes;
+    let filtered = [...this.data.dishes];
+    
+    // 按编辑时间/创建时间倒序排序
+    const getTime = (val) => {
+      if (!val) return 0;
+      if (val instanceof Date) return val.getTime();
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? 0 : d.getTime();
+    };
+    
+    filtered.sort((a, b) => {
+      const timeA = getTime(a.updated_at || a.created_at);
+      const timeB = getTime(b.updated_at || b.created_at);
+      return timeB - timeA;
+    });
+
     if (this.data.activeTab !== '全部') {
       filtered = filtered.filter(d => d.category === this.data.activeTab);
     }
@@ -121,10 +152,11 @@ Page({
 
   onNewDishNameInput: function (e) { this.setData({ newDishName: e.detail.value }); },
   onNewDishRemarkInput: function (e) { this.setData({ newDishRemark: e.detail.value }); },
+  onNewDishPracticeInput: function (e) { this.setData({ newDishPractice: e.detail.value }); },
 
   onOpenAddModal: function () {
     if (this.data.memberRole === 'read') { toast.showToast(this, '只读权限，无法添加', 'none'); return; }
-    this.setData({ showAddModal: true, newDishName: '', newDishCategory: '热菜', categoryIndex: 0, newDishRemark: '', showCategoryPicker: false });
+    this.setData({ showAddModal: true, newDishName: '', newDishCategory: '热菜', categoryIndex: 0, newDishRemark: '', newDishPractice: '', showCategoryPicker: false });
   },
 
   onCloseAddModal: function () { this.setData({ showAddModal: false }); },
@@ -154,9 +186,9 @@ Page({
     try {
       const db = wx.cloud.database();
       const addRes = await db.collection('dishes').add({
-        data: { family_id: this.data.familyId, name, category: this.data.newDishCategory, remark: this.data.newDishRemark, creator_openid: app.globalData.openid, created_at: db.serverDate() }
+        data: { family_id: this.data.familyId, name, category: this.data.newDishCategory, remark: this.data.newDishRemark, practice: this.data.newDishPractice || '', creator_openid: app.globalData.openid, created_at: db.serverDate(), updated_at: db.serverDate() }
       });
-      const newDish = { _id: addRes._id, family_id: this.data.familyId, name, category: this.data.newDishCategory, remark: this.data.newDishRemark };
+      const newDish = { _id: addRes._id, family_id: this.data.familyId, name, category: this.data.newDishCategory, remark: this.data.newDishRemark, practice: this.data.newDishPractice || '', created_at: new Date(), updated_at: new Date() };
       this.setData({ dishes: [newDish, ...this.data.dishes], showAddModal: false }, () => this.filterDishes());
       toast.showToast(this, '添加成功', 'success');
     } catch { toast.showToast(this, '添加失败', 'error'); }
@@ -178,6 +210,7 @@ Page({
       editDishCategory: dish.category,
       editCategoryIndex: catIdx >= 0 ? catIdx : 0,
       editDishRemark: dish.remark || '',
+      editDishPractice: dish.practice || '',
       showEditCategoryPicker: false
     });
   },
@@ -192,6 +225,10 @@ Page({
 
   onEditDishRemarkInput: function (e) {
     this.setData({ editDishRemark: e.detail.value });
+  },
+
+  onEditDishPracticeInput: function (e) {
+    this.setData({ editDishPractice: e.detail.value });
   },
 
   onToggleEditCategoryPicker: function () {
@@ -230,7 +267,9 @@ Page({
         data: {
           name,
           category: this.data.editDishCategory,
-          remark: this.data.editDishRemark
+          remark: this.data.editDishRemark,
+          practice: this.data.editDishPractice || '',
+          updated_at: db.serverDate()
         }
       });
       const updatedDishes = this.data.dishes.map(d => {
@@ -239,7 +278,9 @@ Page({
             ...d,
             name,
             category: this.data.editDishCategory,
-            remark: this.data.editDishRemark
+            remark: this.data.editDishRemark,
+            practice: this.data.editDishPractice || '',
+            updated_at: new Date()
           };
         }
         return d;
@@ -292,36 +333,80 @@ Page({
   onCloseAiImport: function () { this.setData({ showAiImportModal: false }); },
   onBulkImportInput: function (e) { this.setData({ bulkImportText: e.detail.value }); },
 
-  onCommitAiImport: function () {
+  onCommitAiImport: async function () {
     const text = this.data.bulkImportText.trim();
     if (!text) { toast.showToast(this, '请输入导入文本', 'none'); return; }
+    
     this.setData({ importLoading: true });
     toast.showLoading(this, 'AI 分析中...');
-    wx.cloud.callFunction({
-      name: 'llmService',
-      data: { action: 'parseDishes', text },
-      success: async res => {
-        if (res.result && res.result.success) {
-          const parsed = res.result.dishes || [];
-          if (!parsed.length) { toast.showToast(this, '未解析到菜名', 'none'); return; }
-          const db = wx.cloud.database();
-          let count = 0;
-          for (const dish of parsed) {
-            if (!this.data.dishes.some(d => d.name === dish.name)) {
-              try { await db.collection('dishes').add({ data: { family_id: this.data.familyId, name: dish.name, category: dish.category || '热菜', remark: 'AI导入', creator_openid: app.globalData.openid, created_at: db.serverDate() } }); count++; } catch { }
-            }
+    
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'llmService',
+        data: { action: 'parseDishes', text }
+      });
+      
+      if (res.result && res.result.success) {
+        const parsed = res.result.dishes || [];
+        if (!parsed.length) {
+          toast.showToast(this, '未解析到菜名', 'none');
+          this.setData({ importLoading: false });
+          return;
+        }
+        
+        // 过滤出真正需要导入的新菜品
+        const newDishes = parsed.filter(dish => !this.data.dishes.some(d => d.name === dish.name));
+        
+        if (newDishes.length === 0) {
+          toast.showToast(this, '所解析菜品已全部存在', 'none');
+          this.setData({ importLoading: false });
+          return;
+        }
+        
+        // 提示正在导入哪些菜
+        const dishNames = newDishes.map(d => d.name).join('、');
+        const displayNames = dishNames.length > 20 ? dishNames.slice(0, 20) + '...' : dishNames;
+        toast.showLoading(this, `解析出新菜: ${displayNames}\n正在导入中...`);
+        
+        const db = wx.cloud.database();
+        let count = 0;
+        for (const dish of newDishes) {
+          try {
+            await db.collection('dishes').add({
+              data: {
+                family_id: this.data.familyId,
+                name: dish.name,
+                category: dish.category || '热菜',
+                remark: 'AI导入',
+                practice: dish.practice || '',
+                creator_openid: app.globalData.openid,
+                created_at: db.serverDate(),
+                updated_at: db.serverDate()
+              }
+            });
+            count++;
+          } catch (err) {
+            console.error('导入单道菜失败', dish.name, err);
           }
-          toast.showToast(this, `成功导入 ${count} 道菜`, 'success');
-          this.setData({ showAiImportModal: false });
-          this.fetchDishes();
-        } else { toast.showToast(this, res.result.message || '分析失败', 'none'); }
-      },
-      fail: err => {
-        console.error('调用 AI 解析失败', err);
-        toast.showToast(this, '调用失败，请检查 AI 设置', 'none');
-      },
-      complete: () => { this.setData({ importLoading: false }); toast.hideLoading(this); }
-    });
+        }
+        
+        // 导入成功，关闭弹窗并提示
+        this.setData({ showAiImportModal: false });
+        toast.showToast(this, `成功导入 ${count} 道菜`, 'success');
+        // 后台静默/并行刷新列表，避免因进入骨架屏状态而销毁 Toast 容器
+        this.fetchDishes(true);
+      } else {
+        toast.showToast(this, res.result.message || '分析失败', 'none');
+      }
+    } catch (err) {
+      console.error('调用 AI 解析失败', err);
+      toast.showToast(this, '调用失败，请检查 AI 设置', 'none');
+    } finally {
+      this.setData({ importLoading: false });
+      if (this.data.toastData.show && this.data.toastData.type === 'loading') {
+        toast.hideLoading(this);
+      }
+    }
   },
 
   onToggleBatchMode: function () {

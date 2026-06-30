@@ -22,6 +22,7 @@
       <view class="skeleton-header-actions" wx:if="{{ memberRole !== 'read' }}">
         <view class="shimmer-line skeleton-icon-btn"></view>
         <view class="shimmer-line skeleton-icon-btn"></view>
+        <view class="shimmer-line skeleton-icon-btn"></view>
       </view>
     </view>
 
@@ -105,8 +106,14 @@
                 <text class="dish-card-cat">{{ item.category }}</text>
                 <text class="dish-card-name">{{ item.name }}</text>
               </view>
-              <text class="dish-card-remark" wx:if="{{ item.remark && item.remark !== 'AI导入' }}">{{ item.remark }}</text>
+              <view class="dish-card-body" wx:if="{{ (item.remark && item.remark !== 'AI导入') || item.practice }}">
+            <text class="dish-card-remark" wx:if="{{ item.remark && item.remark !== 'AI导入' }}">{{ item.remark }}</text>
+            <view class="dish-card-practice" wx:if="{{ item.practice }}" style="font-size: 22rpx; color: var(--gold); margin-top: 4rpx; display: flex; align-items: center; gap: 4rpx;">
+              <text class="iconfont iconfont-ai" style="font-size: 20rpx;"></text>
+              <text>做法: {{ item.practice }}</text>
             </view>
+          </view>
+          </view>
           </view>
           <view
             class="trash-btn"
@@ -167,6 +174,21 @@
               </view>
             </view>
             <view class="custom-select-backdrop" wx:if="{{ showCategoryPicker }}" bindtap="onCloseCategoryPicker"></view>
+          </view>
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">做法偏好（可选）</text>
+          <view class="textarea-container">
+            <textarea
+              class="textarea-field"
+              placeholder="请输入做法偏好，如「少盐少油、排骨炖烂点」"
+              value="{{ newDishPractice }}"
+              bindinput="onNewDishPracticeInput"
+              maxlength="2000"
+              style="min-height: 120rpx; padding-bottom: 40rpx;"
+            />
+            <text class="word-counter">{{ newDishPractice.length || 0 }}/2000</text>
           </view>
         </view>
 
@@ -271,6 +293,21 @@
               </view>
             </view>
             <view class="custom-select-backdrop" wx:if="{{ showEditCategoryPicker }}" bindtap="onCloseEditCategoryPicker"></view>
+          </view>
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">做法偏好（可选）</text>
+          <view class="textarea-container">
+            <textarea
+              class="textarea-field"
+              placeholder="请输入做法偏好，如「少盐少油、排骨炖烂点」"
+              value="{{ editDishPractice }}"
+              bindinput="onEditDishPracticeInput"
+              maxlength="2000"
+              style="min-height: 120rpx; padding-bottom: 40rpx;"
+            />
+            <text class="word-counter">{{ editDishPractice.length || 0 }}/2000</text>
           </view>
         </view>
 

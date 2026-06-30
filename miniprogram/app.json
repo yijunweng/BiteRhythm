@@ -34,7 +34,7 @@
   },
   "window": {
     "backgroundColor": "#FDFDFB",
-    "backgroundTextStyle": "light",
+    "backgroundTextStyle": "dark",
     "navigationBarBackgroundColor": "#FDFDFB",
     "navigationBarTitleText": "BiteRhythm (食之律动)",
     "navigationBarTextStyle": "black"

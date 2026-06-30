@@ -166,7 +166,22 @@ Page({
   },
 
   filterRepoDishes: function () {
-    let filtered = this.data.repoDishes;
+    let filtered = [...this.data.repoDishes];
+    
+    // 按编辑时间/创建时间倒序排序
+    const getTime = (val) => {
+      if (!val) return 0;
+      if (val instanceof Date) return val.getTime();
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? 0 : d.getTime();
+    };
+    
+    filtered.sort((a, b) => {
+      const timeA = getTime(a.updated_at || a.created_at);
+      const timeB = getTime(b.updated_at || b.created_at);
+      return timeB - timeA;
+    });
+
     if (this.data.selectedRepoCategory !== '全部') {
       filtered = filtered.filter(d => d.category === this.data.selectedRepoCategory);
     }

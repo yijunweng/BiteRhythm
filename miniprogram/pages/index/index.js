@@ -199,10 +199,13 @@ Page({
   },
 
   onPullDownRefresh: async function () {
-    if (this.data.activeFamily) {
-      await this.fetchMonthlyMenus();
+    try {
+      await this.fetchFamiliesList();
+    } catch (err) {
+      console.error('下拉刷新失败', err);
+    } finally {
+      wx.stopPullDownRefresh();
     }
-    wx.stopPullDownRefresh();
   },
 
   initUserAndData: async function () {
