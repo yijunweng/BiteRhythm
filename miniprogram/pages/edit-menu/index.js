@@ -201,7 +201,13 @@ Page({
       this.setData({ dishesList: list });
     } else {
       this.setData({
-        dishesList: [...this.data.dishesList, { name: dish.name, category: dish.category, id: dish._id }]
+        dishesList: [...this.data.dishesList, { 
+          name: dish.name, 
+          category: dish.category, 
+          id: dish._id,
+          remark: dish.remark || '',
+          practice: dish.practice || ''
+        }]
       });
     }
   },
@@ -363,26 +369,47 @@ Page({
               });
               this.setData({ saving: false });
               if (shopRes.result && shopRes.result.success) {
+                app.globalData.lastSavedMenu = {
+                  date: this.data.dateStr,
+                  dishes: this.data.dishesList,
+                  family_id: this.data.familyId,
+                  shopping_list: shopRes.result.shoppingList
+                };
                 toast.showToast(this, '保存并生成成功', 'success', 1500);
                 setTimeout(() => wx.navigateBack(), 1500);
               } else {
+                app.globalData.lastSavedMenu = {
+                  date: this.data.dateStr,
+                  dishes: this.data.dishesList,
+                  family_id: this.data.familyId
+                };
                 toast.showToast(this, '已保存菜单，但采购建议生成失败，请在首页重新生成', 'none', 3000);
                 setTimeout(() => wx.navigateBack(), 3000);
               }
             } catch (err) {
               console.error('同步生成采购建议失败', err);
               this.setData({ saving: false });
+              app.globalData.lastSavedMenu = {
+                date: this.data.dateStr,
+                dishes: this.data.dishesList,
+                family_id: this.data.familyId
+              };
               toast.showToast(this, '已保存菜单，但采购建议生成异常，请在首页重新生成', 'none', 3000);
               setTimeout(() => wx.navigateBack(), 3000);
             }
           } else {
             this.setData({ saving: false });
+            app.globalData.lastSavedMenu = {
+              date: this.data.dateStr,
+              dishes: this.data.dishesList,
+              family_id: this.data.familyId
+            };
             toast.showToast(this, '保存成功', 'success', 1000);
             setTimeout(() => wx.navigateBack(), 1000);
           }
         } else {
           this.setData({ saving: false });
-          toast.showToast(this, res.result.message || '保存失败', 'none');
+          toast.showToast(this, res.result ? res.result.message : '保存失败', 'error');
         }
       },
       fail: err => {

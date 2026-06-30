@@ -8,7 +8,8 @@ App({
     memberRole: '',
     activeFamily: null,
     hasCheckedAuth: false,
-    menuChanged: false
+    menuChanged: false,
+    lastSavedMenu: null
   },
 
   // 页面注册的初始化完成回调

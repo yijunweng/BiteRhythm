@@ -139,32 +139,65 @@ function splitShoppingList(md) {
   };
 }
 
+function drawTextWithWrap(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split('');
+  let line = '';
+  let currentY = y;
+  
+  for (let n = 0; n < words.length; n++) {
+    let testLine = line + words[n];
+    let metrics = ctx.measureText(testLine);
+    let testWidth = metrics.width;
+    
+    if (testWidth > maxWidth && n > 0) {
+      ctx.fillText(line, x, currentY);
+      line = words[n];
+      currentY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, x, currentY);
+  return currentY + lineHeight;
+}
+
 Page({
   data: {
-    initialLoading: true,
     isSystemAdmin: false,
-    memberRole: '',
-    families: [],
     activeFamily: null,
+    families: [],
     showFamilySelector: false,
-    currentYear: 0,
-    currentMonth: 0,
+    currentYear: new Date().getFullYear(),
+    currentMonth: new Date().getMonth() + 1,
     days: [],
     selectedDateStr: '',
     selectedDateMenu: null,
-    monthlyMenus: {},
-    loading: false,
+    loading: true,
+    initialLoading: true,
+    memberRole: '',
     showCreateFamilyModal: false,
     newFamilyName: '',
     showDeleteFamilyConfirm: false,
-    deleteFamilyId: '',
-    deleteFamilyName: '',
     showClearMenuConfirm: false,
-    shoppingLoading: false,
-    showConfigPromptModal: false,
+    
+    // 采购清单相关
     showShoppingDetailsModal: false,
     parsedSimpleShoppingList: [],
     parsedFullShoppingList: [],
+    shoppingListMode: 'simple', // 'simple' or 'full'
+    
+    // 海报生成相关
+    showPosterDateModal: false,
+    showPosterPreviewModal: false,
+    posterSelectedDates: {}, // { '2026-06-30': true }
+    posterDateData: [],
+    posterYear: new Date().getFullYear(),
+    posterMonth: new Date().getMonth() + 1,
+    posterDays: [],
+    canvasWidth: 375,
+    canvasHeight: 600,
+    repoDishesMap: {},
+    
     toastData: { show: false, type: 'none', title: '' }
   },
 
@@ -187,6 +220,30 @@ Page({
     if (app.globalData.hasCheckedAuth) {
       const globalActive = app.globalData.activeFamily;
       const pageActive = this.data.activeFamily;
+
+      if (app.globalData.lastSavedMenu) {
+        const saved = app.globalData.lastSavedMenu;
+        app.globalData.lastSavedMenu = null; // consume it
+        
+        if (pageActive && saved.family_id === pageActive._id) {
+          const menusMap = { ...this.data.monthlyMenus };
+          if (saved.dishes && saved.dishes.length > 0) {
+            menusMap[saved.date] = {
+              family_id: saved.family_id,
+              date: saved.date,
+              dishes: saved.dishes,
+              shopping_list: saved.shopping_list || (menusMap[saved.date] ? menusMap[saved.date].shopping_list : '')
+            };
+          } else {
+            delete menusMap[saved.date];
+          }
+          this.setData({ monthlyMenus: menusMap }, () => {
+            this.renderCalendarMenus();
+            this.updateSelectedDateMenu();
+          });
+        }
+      }
+
       if (globalActive && (!pageActive || JSON.stringify(pageActive) !== JSON.stringify(globalActive))) {
         this.setData({ activeFamily: globalActive });
         this.fetchMonthlyMenus();
@@ -440,6 +497,426 @@ Page({
       });
     }
     this.setData({ days }, () => this.renderCalendarMenus());
+  },
+
+  initPosterCalendar: function () {
+    const { posterYear, posterMonth, posterSelectedDates, monthlyMenus } = this.data;
+    const daysInMonth = new Date(posterYear, posterMonth, 0).getDate();
+    const firstDay = new Date(posterYear, posterMonth - 1, 1).getDay();
+    const todayStr = this.formatDate(new Date());
+    let posterDays = [];
+    const prevMonthDays = new Date(posterYear, posterMonth - 1, 0).getDate();
+    
+    for (let i = firstDay - 1; i >= 0; i--) {
+      posterDays.push({ day: prevMonthDays - i, isCurrentMonth: false, dateStr: '', hasMenu: false });
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const pad = n => String(n).padStart(2, '0');
+      const dateStr = `${posterYear}-${pad(posterMonth)}-${pad(d)}`;
+      const menu = monthlyMenus[dateStr];
+      posterDays.push({
+        day: d,
+        isCurrentMonth: true,
+        dateStr,
+        isToday: dateStr === todayStr,
+        isSelected: !!posterSelectedDates[dateStr],
+        hasMenu: !!(menu && menu.dishes && menu.dishes.length > 0)
+      });
+    }
+    this.setData({ posterDays });
+  },
+
+  onChangePosterMonth: async function (e) {
+    const dir = e.currentTarget.dataset.direction;
+    let { posterYear, posterMonth } = this.data;
+    if (dir === 'prev') {
+      posterMonth--;
+      if (posterMonth < 1) {
+        posterMonth = 12;
+        posterYear--;
+      }
+    } else {
+      posterMonth++;
+      if (posterMonth > 12) {
+        posterMonth = 1;
+        posterYear++;
+      }
+    }
+    this.setData({ posterYear, posterMonth });
+    await this.fetchPosterMonthlyMenus(posterYear, posterMonth);
+    this.initPosterCalendar();
+  },
+
+  fetchPosterMonthlyMenus: async function (year, month) {
+    if (!this.data.activeFamily) return;
+    const { activeFamily } = this.data;
+    const pad = n => String(n).padStart(2, '0');
+    const startStr = `${year}-${pad(month)}-01`;
+    const endStr = `${year}-${pad(month)}-31`;
+    toast.showLoading(this, '加载菜单中...');
+    try {
+      const db = wx.cloud.database();
+      const MAX_LIMIT = 20;
+      let monthMenusData = [];
+      let skip = 0;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const res = await db.collection('menus').where({
+          family_id: activeFamily._id,
+          date: db.command.gte(startStr).and(db.command.lte(endStr))
+        })
+        .skip(skip)
+        .limit(MAX_LIMIT)
+        .get();
+        
+        monthMenusData = monthMenusData.concat(res.data);
+        if (res.data.length < MAX_LIMIT) {
+          hasMore = false;
+        } else {
+          skip += MAX_LIMIT;
+        }
+      }
+
+      const menusMap = { ...this.data.monthlyMenus };
+      monthMenusData.forEach(m => { menusMap[m.date] = m; });
+      this.setData({ monthlyMenus: menusMap });
+    } catch (err) {
+      console.error('获取月菜单失败', err);
+    } finally {
+      toast.hideLoading(this);
+    }
+  },
+
+  onTogglePosterDate: function (e) {
+    const { datestr } = e.currentTarget.dataset;
+    if (!datestr) return;
+    
+    const posterSelectedDates = { ...this.data.posterSelectedDates };
+    if (posterSelectedDates[datestr]) {
+      delete posterSelectedDates[datestr];
+    } else {
+      posterSelectedDates[datestr] = true;
+    }
+    
+    this.setData({ posterSelectedDates });
+    
+    const updatedDays = this.data.posterDays.map(day => {
+      if (day.dateStr === datestr) {
+        return { ...day, isSelected: !day.isSelected };
+      }
+      return day;
+    });
+    this.setData({ posterDays: updatedDays });
+  },
+
+  onOpenPosterSelector: async function () {
+    if (!this.data.activeFamily) return;
+    
+    const todayStr = this.formatDate(new Date());
+    const initialSelectedStr = this.data.selectedDateStr || todayStr;
+    const posterSelectedDates = {};
+    posterSelectedDates[initialSelectedStr] = true;
+    
+    this.setData({
+      showPosterDateModal: true,
+      posterSelectedDates,
+      posterYear: this.data.currentYear,
+      posterMonth: this.data.currentMonth
+    });
+    
+    this.initPosterCalendar();
+    
+    try {
+      const db = wx.cloud.database();
+      const MAX_LIMIT = 20;
+      let allDishes = [];
+      let skip = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const res = await db.collection('dishes')
+          .where({ family_id: this.data.activeFamily._id })
+          .skip(skip)
+          .limit(MAX_LIMIT)
+          .get();
+        
+        allDishes = allDishes.concat(res.data);
+        if (res.data.length < MAX_LIMIT) {
+          hasMore = false;
+        } else {
+          skip += MAX_LIMIT;
+        }
+      }
+      
+      const repoMap = {};
+      allDishes.forEach(d => {
+        repoMap[d.name] = { remark: d.remark || '', practice: d.practice || '' };
+      });
+      this.setData({ repoDishesMap: repoMap });
+    } catch (err) {
+      console.error('获取菜品库映射失败', err);
+    }
+  },
+
+  onClosePosterSelector: function () {
+    this.setData({ showPosterDateModal: false });
+  },
+
+  onGeneratePosterPreview: function () {
+    const { posterSelectedDates, monthlyMenus, repoDishesMap } = this.data;
+    const dateKeys = Object.keys(posterSelectedDates).sort();
+    
+    if (dateKeys.length === 0) {
+      toast.showToast(this, '请选择至少一个日期', 'none');
+      return;
+    }
+    
+    const posterDateData = dateKeys.map(dateStr => {
+      const menu = monthlyMenus[dateStr];
+      let dishes = [];
+      if (menu && menu.dishes && menu.dishes.length > 0) {
+        dishes = menu.dishes.map(d => {
+          const repoInfo = repoDishesMap[d.name] || {};
+          return {
+            name: d.name,
+            category: d.category || '热菜',
+            practice: d.practice || repoInfo.practice || '',
+            remark: d.remark || repoInfo.remark || ''
+          };
+        });
+      }
+      return {
+        date: dateStr,
+        dishes
+      };
+    });
+    
+    this.setData({
+      posterDateData,
+      showPosterDateModal: false,
+      showPosterPreviewModal: true
+    });
+  },
+  
+  onClosePosterPreview: function () {
+    this.setData({ showPosterPreviewModal: false });
+  },
+
+  onSavePosterToLocal: function () {
+    const { posterDateData } = this.data;
+    if (posterDateData.length === 0) return;
+    
+    toast.showLoading(this, '正在生成图片...');
+    
+    const canvasWidth = 375;
+    let currentY = 120; 
+    
+    posterDateData.forEach((item, index) => {
+      currentY += 24; // date header height
+      if (item.dishes && item.dishes.length > 0) {
+        item.dishes.forEach(dish => {
+          currentY += 20; // dish tag & name line height
+          if (dish.practice) {
+            const lines = Math.ceil((dish.practice.length * 11) / 275) || 1;
+            currentY += lines * 16 + 6;
+          }
+          if (dish.remark) {
+            const lines = Math.ceil((dish.remark.length * 11) / 275) || 1;
+            currentY += lines * 16 + 6;
+          }
+          currentY += 10; // margin bottom for each dish
+        });
+      } else {
+        currentY += 30 + 10; // no menu placeholder height and spacing
+      }
+      currentY += 10; // spacing below the day content
+      if (index < posterDateData.length - 1) {
+        currentY += 20; // divider line spacing
+      }
+    });
+    
+    currentY += 80; 
+    const canvasHeight = currentY;
+    
+    this.setData({ canvasWidth, canvasHeight }, () => {
+      const query = wx.createSelectorQuery();
+      query.select('#posterCanvas')
+        .fields({ node: true, size: true })
+        .exec((res) => {
+          if (!res[0] || !res[0].node) {
+            toast.hideLoading(this);
+            toast.showToast(this, '生成失败，请重试', 'none');
+            return;
+          }
+          const canvas = res[0].node;
+          const ctx = canvas.getContext('2d');
+          
+          const dpr = wx.getSystemInfoSync().pixelRatio;
+          canvas.width = canvasWidth * dpr;
+          canvas.height = canvasHeight * dpr;
+          ctx.scale(dpr, dpr);
+          
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+          
+          ctx.strokeStyle = '#F3EFE9';
+          ctx.lineWidth = 12;
+          ctx.strokeRect(6, 6, canvasWidth - 12, canvasHeight - 12);
+          
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#222222';
+          ctx.font = 'bold 22px sans-serif';
+          ctx.fillText('BiteRhythm', canvasWidth / 2, 50);
+          
+          ctx.fillStyle = '#D4B28C';
+          ctx.font = '600 12px sans-serif';
+          ctx.fillText('FAMILY MENU POSTER', canvasWidth / 2, 72);
+          
+          ctx.strokeStyle = '#D4B28C';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(canvasWidth / 2 - 20, 88);
+          ctx.lineTo(canvasWidth / 2 + 20, 88);
+          ctx.stroke();
+          
+          let y = 120;
+          ctx.textAlign = 'left';
+          
+          posterDateData.forEach((item, index) => {
+            // Draw gold accent bar next to date text
+            ctx.fillStyle = '#D4B28C';
+            ctx.fillRect(32, y - 13, 4, 15);
+            
+            ctx.fillStyle = '#222222';
+            ctx.font = 'bold 15px sans-serif';
+            ctx.fillText(item.date, 44, y);
+            y += 24;
+            
+            if (item.dishes && item.dishes.length > 0) {
+              item.dishes.forEach(dish => {
+                ctx.fillStyle = '#F7F3EA'; 
+                ctx.beginPath();
+                const tagText = dish.category || '热菜';
+                const tagWidth = tagText.length * 10 + 12;
+                const tagX = 32;
+                const tagY = y - 12;
+                const tagH = 16;
+                const tagR = 4;
+                ctx.moveTo(tagX + tagR, tagY);
+                ctx.lineTo(tagX + tagWidth - tagR, tagY);
+                ctx.arcTo(tagX + tagWidth, tagY, tagX + tagWidth, tagY + tagR, tagR);
+                ctx.lineTo(tagX + tagWidth, tagY + tagH - tagR);
+                ctx.arcTo(tagX + tagWidth, tagY + tagH, tagX + tagWidth - tagR, tagY + tagH, tagR);
+                ctx.lineTo(tagX + tagR, tagY + tagH);
+                ctx.arcTo(tagX, tagY + tagH, tagX, tagY + tagH - tagR, tagR);
+                ctx.lineTo(tagX, tagY + tagR);
+                ctx.arcTo(tagX, tagY, tagX + tagR, tagY, tagR);
+                ctx.fill();
+                
+                ctx.fillStyle = '#D4B28C';
+                ctx.font = 'bold 9px sans-serif';
+                ctx.fillText(tagText, tagX + 6, tagY + 11);
+                
+                ctx.fillStyle = '#222222';
+                ctx.font = 'bold 14px sans-serif';
+                ctx.fillText(dish.name, tagX + tagWidth + 8, y);
+                y += 20;
+                
+                if (dish.practice) {
+                  ctx.fillStyle = '#9E9E9E';
+                  ctx.font = 'bold 11px sans-serif';
+                  ctx.fillText('做法: ', 32, y);
+                  
+                  ctx.fillStyle = '#222222';
+                  ctx.font = '11px sans-serif';
+                  const startX = 32 + ctx.measureText('做法: ').width;
+                  y = drawTextWithWrap(ctx, dish.practice, startX, y, 275, 16);
+                  y += 6;
+                }
+                
+                if (dish.remark) {
+                  ctx.fillStyle = '#9E9E9E';
+                  ctx.font = 'bold 11px sans-serif';
+                  ctx.fillText('备注: ', 32, y);
+                  
+                  ctx.fillStyle = '#222222';
+                  ctx.font = '11px sans-serif';
+                  const startX = 32 + ctx.measureText('备注: ').width;
+                  y = drawTextWithWrap(ctx, dish.remark, startX, y, 275, 16);
+                  y += 6;
+                }
+                y += 10;
+              });
+            } else {
+              ctx.fillStyle = '#FAFAFA';
+              ctx.fillRect(32, y - 10, canvasWidth - 64, 30);
+              ctx.fillStyle = '#C5C5C5';
+              ctx.font = 'italic 12px sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText('当日无菜单', canvasWidth / 2, y + 9);
+              ctx.textAlign = 'left';
+              y += 30;
+            }
+            
+            y += 10;
+            if (index < posterDateData.length - 1) {
+              ctx.strokeStyle = '#F3EFE9';
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(32, y);
+              ctx.lineTo(canvasWidth - 32, y);
+              ctx.stroke();
+              y += 20;
+            }
+          });
+          
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#C5C5C5';
+          ctx.font = '9px sans-serif';
+          ctx.fillText('BiteRhythm 食之律动 | 记录家庭饮食习惯', canvasWidth / 2, canvasHeight - 36);
+          
+          setTimeout(() => {
+            wx.canvasToTempFilePath({
+              canvas: canvas,
+              success: (resTemp) => {
+                const tempFilePath = resTemp.tempFilePath;
+                wx.saveImageToPhotosAlbum({
+                  filePath: tempFilePath,
+                  success: () => {
+                    toast.hideLoading(this);
+                    toast.showToast(this, '保存成功，请在相册查看', 'success', 2000);
+                    this.setData({ showPosterPreviewModal: false });
+                  },
+                  fail: (errSave) => {
+                    toast.hideLoading(this);
+                    console.error('保存图片失败', errSave);
+                    if (errSave.errMsg.includes('auth deny')) {
+                      wx.showModal({
+                        title: '授权提示',
+                        content: '保存图片需要相册写入权限，请在设置中开启',
+                        confirmText: '去设置',
+                        success: (resModal) => {
+                          if (resModal.confirm) {
+                            wx.openSetting();
+                          }
+                        }
+                      });
+                    } else {
+                      toast.showToast(this, '保存图片失败，请重试', 'none');
+                    }
+                  }
+                });
+              },
+              fail: (errTemp) => {
+                toast.hideLoading(this);
+                console.error('导出画布失败', errTemp);
+                toast.showToast(this, '生成图片失败，请重试', 'none');
+              }
+            }, this);
+          }, 300);
+        });
+    });
   },
 
   renderCalendarMenus: function () {

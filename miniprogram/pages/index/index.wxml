@@ -76,10 +76,16 @@
         <text class="family-name">{{ activeFamily ? activeFamily.name : '创建家庭' }}</text>
         <text class="iconfont iconfont-down-line family-arrow {{ showFamilySelector ? 'open' : '' }}"></text>
       </view>
-      <view class="dining-people-chip" wx:if="{{ activeFamily && activeFamily.ai_config && (activeFamily.ai_config.adults > 0 || activeFamily.ai_config.kids > 0) }}">
-        <text wx:if="{{ activeFamily.ai_config.adults > 0 }}">{{ activeFamily.ai_config.adults }}成人</text>
-        <text wx:if="{{ activeFamily.ai_config.adults > 0 && activeFamily.ai_config.kids > 0 }}"> </text>
-        <text wx:if="{{ activeFamily.ai_config.kids > 0 }}">{{ activeFamily.ai_config.kids }}小孩</text>
+      <view class="family-header-right" wx:if="{{ activeFamily }}">
+        <view class="dining-people-chip" wx:if="{{ activeFamily.ai_config && (activeFamily.ai_config.adults > 0 || activeFamily.ai_config.kids > 0) }}">
+          <text wx:if="{{ activeFamily.ai_config.adults > 0 }}">{{ activeFamily.ai_config.adults }}成人</text>
+          <text wx:if="{{ activeFamily.ai_config.adults > 0 && activeFamily.ai_config.kids > 0 }}"> </text>
+          <text wx:if="{{ activeFamily.ai_config.kids > 0 }}">{{ activeFamily.ai_config.kids }}小孩</text>
+        </view>
+        <view class="header-action-btn" bindtap="onOpenPosterSelector">
+          <text class="iconfont iconfont-ai" style="font-size: 26rpx; margin-right: 6rpx;"></text>
+          <text style="font-size: 22rpx; font-weight: 600;">生成海报</text>
+        </view>
       </view>
     </view>
 
@@ -418,6 +424,124 @@
       </scroll-view>
     </view>
   </view>
+
+  <!-- 生成海报的日期选择 Modal -->
+  <view class="modal-mask" wx:if="{{ showPosterDateModal }}" bindtap="onClosePosterSelector">
+    <view class="modal-sheet" catchtap="noop">
+      <view class="modal-header">
+        <view class="modal-title">
+          <text class="iconfont iconfont-calendar"></text>
+          <text>选择分享日期 (可多选)</text>
+        </view>
+        <view class="modal-close" bindtap="onClosePosterSelector">
+          <text class="iconfont iconfont-wrong"></text>
+        </view>
+      </view>
+
+      <!-- 日历日期多选网格 -->
+      <view class="poster-calendar-box">
+        <view class="cal-header">
+          <text class="cal-month">{{ posterYear }}年 {{ posterMonth }}月</text>
+          <view class="cal-nav">
+            <view class="cal-nav-btn" bindtap="onChangePosterMonth" data-direction="prev"><text class="iconfont iconfont-left-line"></text></view>
+            <view class="cal-nav-btn" bindtap="onChangePosterMonth" data-direction="next"><text class="iconfont iconfont-right-line"></text></view>
+          </view>
+        </view>
+
+        <view class="week-row" style="margin-bottom: 12rpx;">
+          <view class="week-cell">日</view>
+          <view class="week-cell">一</view>
+          <view class="week-cell">二</view>
+          <view class="week-cell">三</view>
+          <view class="week-cell">四</view>
+          <view class="week-cell">五</view>
+          <view class="week-cell">六</view>
+        </view>
+
+        <view class="cal-grid">
+          <view
+            class="cal-day {{ !item.isCurrentMonth ? 'other-month' : '' }} {{ item.isToday ? 'today' : '' }} {{ item.isSelected ? 'selected' : '' }} {{ item.hasMenu ? 'has-menu' : '' }}"
+            wx:for="{{ posterDays }}"
+            wx:key="index"
+            bindtap="onTogglePosterDate"
+            data-datestr="{{ item.dateStr }}"
+          >
+            <text class="cal-day-num">{{ item.day }}</text>
+            <view class="menu-dot" wx:if="{{ item.hasMenu }}"></view>
+          </view>
+        </view>
+      </view>
+
+      <view class="modal-footer" style="margin-top: 32rpx;">
+        <button class="btn-primary" bindtap="onGeneratePosterPreview" style="background: var(--gold) !important; color: #FFFFFF !important; box-shadow: none !important; font-size: 28rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; font-weight: 600;">生成海报</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 海报预览 Modal -->
+  <view class="modal-mask" wx:if="{{ showPosterPreviewModal }}" bindtap="onClosePosterPreview">
+    <view class="modal-sheet" catchtap="noop" style="padding-bottom: 48rpx;">
+      <view class="modal-header">
+        <view class="modal-title">
+          <text class="iconfont iconfont-dish"></text>
+          <text>海报预览</text>
+        </view>
+        <view class="modal-close" bindtap="onClosePosterPreview">
+          <text class="iconfont iconfont-wrong"></text>
+        </view>
+      </view>
+
+      <!-- 预览滚动区域 -->
+      <scroll-view class="poster-preview-scroll" scroll-y="true">
+        <view class="poster-preview-content">
+          <view class="poster-header">
+            <view class="poster-title-main">BiteRhythm</view>
+            <view class="poster-subtitle">FAMILY MENU POSTER</view>
+            <view class="poster-divider"></view>
+          </view>
+          
+          <view class="poster-date-section" wx:for="{{ posterDateData }}" wx:key="date">
+            <view class="poster-date-header">
+              <text class="poster-date-text">{{ item.date }}</text>
+            </view>
+            
+            <view class="poster-dishes-list" wx:if="{{ item.dishes && item.dishes.length > 0 }}">
+              <view class="poster-dish-item" wx:for="{{ item.dishes }}" wx:for-item="dish" wx:key="index">
+                <view class="poster-dish-title-row">
+                  <text class="poster-dish-category">{{ dish.category }}</text>
+                  <text class="poster-dish-name">{{ dish.name }}</text>
+                </view>
+                <view class="poster-dish-detail" wx:if="{{ dish.practice }}">
+                  <text class="poster-detail-label">做法：</text>
+                  <text class="poster-detail-val">{{ dish.practice }}</text>
+                </view>
+                <view class="poster-dish-detail" wx:if="{{ dish.remark }}">
+                  <text class="poster-detail-label">备注：</text>
+                  <text class="poster-detail-val">{{ dish.remark }}</text>
+                </view>
+              </view>
+            </view>
+            <view class="poster-empty-state" wx:else>
+              <text>当日无菜单</text>
+            </view>
+            <view class="poster-section-divider" wx:if="{{ index < posterDateData.length - 1 }}"></view>
+          </view>
+          
+          <view class="poster-footer">
+            <view class="poster-footer-tip">BiteRhythm 食之律动 | 记录家庭饮食习惯</view>
+          </view>
+        </view>
+      </scroll-view>
+
+      <view class="modal-footer" style="margin-top: 32rpx; display: flex; gap: 20rpx;">
+        <button class="btn-secondary" bindtap="onClosePosterPreview" style="flex: 1; border: 1rpx solid #E0E0E0; background: #FFF; color: #666; font-size: 28rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; font-weight: 600;">取消</button>
+        <button class="btn-primary" bindtap="onSavePosterToLocal" style="flex: 1; background: var(--gold) !important; color: #FFFFFF !important; box-shadow: none !important; font-size: 28rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; font-weight: 600;">保存到本地</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- 用于生成海报导出的离屏 Canvas -->
+  <canvas type="2d" id="posterCanvas" style="width: {{ canvasWidth }}px; height: {{ canvasHeight }}px; position: fixed; left: -9999px; top: -9999px;"></canvas>
 
 </view>
 
