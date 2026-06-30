@@ -11,8 +11,8 @@
     getCategoryIcon: getCategoryIcon
   };
 </wxs>
-<page-meta page-style="{{ showShoppingDetailsModal || showCreateFamilyModal || showDeleteFamilyConfirm || showClearMenuConfirm || showConfigPromptModal ? 'overflow: hidden; height: 100vh;' : '' }}" />
-<view class="page-container index-page">
+<page-meta page-style="{{ showShoppingDetailsModal || showCreateFamilyModal || showDeleteFamilyConfirm || showClearMenuConfirm || showConfigPromptModal || showPosterDateModal || showPosterPreviewModal ? 'overflow: hidden; height: 100vh;' : '' }}" />
+<view class="page-container index-page" bindtouchstart="onPageTouchStart">
 
   <!-- 骨架屏加载状态 -->
   <block wx:if="{{ initialLoading }}">
@@ -71,7 +71,7 @@
 
   <block wx:else>
     <!-- 顶部家庭选择器 -->
-    <view class="family-bar">
+    <view class="family-bar" bindtouchstart="onPageTouchStart">
       <view class="family-selector" bindtap="toggleFamilySelector">
         <text class="family-name">{{ activeFamily ? activeFamily.name : '创建家庭' }}</text>
         <text class="iconfont iconfont-down-line family-arrow {{ showFamilySelector ? 'open' : '' }}"></text>
@@ -81,10 +81,6 @@
           <text wx:if="{{ activeFamily.ai_config.adults > 0 }}">{{ activeFamily.ai_config.adults }}成人</text>
           <text wx:if="{{ activeFamily.ai_config.adults > 0 && activeFamily.ai_config.kids > 0 }}"> </text>
           <text wx:if="{{ activeFamily.ai_config.kids > 0 }}">{{ activeFamily.ai_config.kids }}小孩</text>
-        </view>
-        <view class="header-action-btn" bindtap="onOpenPosterSelector">
-          <text class="iconfont iconfont-ai" style="font-size: 26rpx; margin-right: 6rpx;"></text>
-          <text style="font-size: 22rpx; font-weight: 600;">生成海报</text>
         </view>
       </view>
     </view>
@@ -130,7 +126,7 @@
     </view>
 
     <!-- 日历卡片 -->
-    <view class="card calendar-card animate-in" wx:if="{{ activeFamily }}">
+    <view class="card calendar-card animate-in" wx:if="{{ activeFamily }}" bindtouchstart="onPageTouchStart">
       <view class="cal-header">
         <text class="cal-month">{{ currentYear }}年 {{ currentMonth }}月</text>
         <view class="cal-nav">
@@ -166,7 +162,7 @@
     </view>
 
     <!-- 今日菜谱详情卡片 -->
-    <view class="card today-card animate-in" wx:if="{{ activeFamily }}">
+    <view class="card today-card animate-in" wx:if="{{ activeFamily }}" bindtouchstart="onPageTouchStart">
       <view class="today-card-header">
         <text class="today-title">{{ selectedDateStr ? selectedDateStr + ' 菜单' : '今日菜单' }}</text>
         <view class="header-actions" wx:if="{{ memberRole !== 'read' }}">
@@ -538,6 +534,11 @@
         <button class="btn-primary" bindtap="onSavePosterToLocal" style="flex: 1; background: var(--gold) !important; color: #FFFFFF !important; box-shadow: none !important; font-size: 28rpx; height: 84rpx; display: flex; align-items: center; justify-content: center; font-weight: 600;">保存到本地</button>
       </view>
     </view>
+  </view>
+
+  <!-- 浮动“海报”按钮 -->
+  <view class="floating-poster-btn {{ posterBtnExpanded ? 'expanded' : '' }}" catchtouchstart="onTapPosterBtn" wx:if="{{ activeFamily }}">
+    <text>生成海报</text>
   </view>
 
   <!-- 用于生成海报导出的离屏 Canvas -->

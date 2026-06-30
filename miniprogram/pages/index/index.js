@@ -197,6 +197,7 @@ Page({
     canvasWidth: 375,
     canvasHeight: 600,
     repoDishesMap: {},
+    posterBtnExpanded: false,
     
     toastData: { show: false, type: 'none', title: '' }
   },
@@ -608,6 +609,27 @@ Page({
       return day;
     });
     this.setData({ posterDays: updatedDays });
+  },
+
+  onPageTouchStart: function () {
+    if (this.data.posterBtnExpanded) {
+      if (this.posterBtnTimer) clearTimeout(this.posterBtnTimer);
+      this.setData({ posterBtnExpanded: false });
+    }
+  },
+
+  onTapPosterBtn: function () {
+    if (this.data.posterBtnExpanded) {
+      if (this.posterBtnTimer) clearTimeout(this.posterBtnTimer);
+      this.setData({ posterBtnExpanded: false });
+      this.onOpenPosterSelector();
+    } else {
+      this.setData({ posterBtnExpanded: true });
+      if (this.posterBtnTimer) clearTimeout(this.posterBtnTimer);
+      this.posterBtnTimer = setTimeout(() => {
+        this.setData({ posterBtnExpanded: false });
+      }, 3000);
+    }
   },
 
   onOpenPosterSelector: async function () {

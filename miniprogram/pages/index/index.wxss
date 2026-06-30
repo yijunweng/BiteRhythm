@@ -826,3 +826,40 @@
   color: var(--text-light);
 }
 
+.floating-poster-btn {
+  position: fixed;
+  right: 24rpx;
+  bottom: 140rpx;
+  width: 180rpx;
+  height: 84rpx;
+  border-radius: 42rpx;
+  background: linear-gradient(135deg, #E6C594, #D4B28C);
+  color: #FFFFFF;
+  font-size: 24rpx;
+  font-weight: 600;
+  box-shadow: 0 4rpx 12rpx rgba(212, 178, 140, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99;
+  border: 1rpx solid rgba(255, 255, 255, 0.2);
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  
+  /* Collapsed default state: offset by 166rpx, leaving 38rpx visible */
+  opacity: 0.65;
+  transform: translateX(166rpx) scale(0.9);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.floating-poster-btn.expanded {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  box-shadow: 0 8rpx 24rpx rgba(212, 178, 140, 0.45);
+}
+
+.floating-poster-btn:active {
+  opacity: 0.9;
+}
+
