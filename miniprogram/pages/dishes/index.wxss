@@ -1,13 +1,20 @@
 /* miniprogram/pages/dishes/index.wxss */
 
 .dishes-page {
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
-  padding-top: 24rpx;
-  padding-bottom: 32rpx !important;
+  padding: 0 32rpx 32rpx !important;
   box-sizing: border-box;
+}
+
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg);
+  padding-top: 24rpx;
+  padding-bottom: 8rpx;
 }
 
 .dishes-header {

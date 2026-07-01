@@ -250,7 +250,8 @@ Page({
         this.setData({ activeFamily: globalActive });
         this.fetchMonthlyMenus();
         this.fetchUserRoleInFamily();
-      } else if (pageActive && app.globalData.menuChanged) {
+      } else if (pageActive) {
+        // 只要页面有激活家庭，每次展示都重新刷新数据，保障家庭内多成员实时同步
         app.globalData.menuChanged = false;
         this.fetchMonthlyMenus();
       }

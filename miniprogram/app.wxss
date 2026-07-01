@@ -12,7 +12,7 @@ scroll-view::-webkit-scrollbar {
 
 /* 全局设计变量 - 极简乳白/香槟金风格 */
 page {
-  height: 100%;
+  min-height: 100%;
   --primary: #2A2A2A;           /* 曜石墨黑 */
   --primary-hover: #151515;
   --gold: #D4B28C;              /* 柔和香槟金 */

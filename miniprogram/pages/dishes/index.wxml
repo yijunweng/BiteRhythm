@@ -16,24 +16,26 @@
 
   <!-- 骨架屏加载状态 -->
   <block wx:if="{{ loading }}">
-    <!-- 顶部栏骨架 -->
-    <view class="dishes-header skeleton-dishes-header">
-      <view class="shimmer-line skeleton-title-placeholder"></view>
-      <view class="skeleton-header-actions" wx:if="{{ memberRole !== 'read' }}">
-        <view class="shimmer-line skeleton-icon-btn"></view>
-        <view class="shimmer-line skeleton-icon-btn"></view>
-        <view class="shimmer-line skeleton-icon-btn"></view>
+    <view class="sticky-header">
+      <!-- 顶部栏骨架 -->
+      <view class="dishes-header skeleton-dishes-header">
+        <view class="shimmer-line skeleton-title-placeholder"></view>
+        <view class="skeleton-header-actions" wx:if="{{ memberRole !== 'read' }}">
+          <view class="shimmer-line skeleton-icon-btn"></view>
+          <view class="shimmer-line skeleton-icon-btn"></view>
+          <view class="shimmer-line skeleton-icon-btn"></view>
+        </view>
       </view>
-    </view>
 
-    <!-- 搜索栏骨架 -->
-    <view class="search-bar skeleton-search-bar">
-      <view class="shimmer-line skeleton-search-input"></view>
-    </view>
+      <!-- 搜索栏骨架 -->
+      <view class="search-bar skeleton-search-bar">
+        <view class="shimmer-line skeleton-search-input"></view>
+      </view>
 
-    <!-- 分类 Tab 骨架 -->
-    <view class="tab-scroll skeleton-tab-scroll">
-      <view class="shimmer-line skeleton-tab-pill" wx:for="{{ 5 }}" wx:key="index"></view>
+      <!-- 分类 Tab 骨架 -->
+      <view class="tab-scroll skeleton-tab-scroll">
+        <view class="shimmer-line skeleton-tab-pill" wx:for="{{ 5 }}" wx:key="index"></view>
+      </view>
     </view>
 
     <!-- 菜品列表骨架 -->
@@ -50,50 +52,52 @@
   </block>
 
   <block wx:else>
-    <!-- 顶部操作栏 -->
-    <view class="dishes-header">
-      <text class="dishes-title">菜品库 ({{ dishes.length }})</text>
-      <view class="header-actions" wx:if="{{ memberRole !== 'read' }}">
-        <view class="icon-btn" style="background: var(--border); color: var(--text-main); border-color: var(--border);" bindtap="onToggleBatchMode" wx:if="{{ filteredDishes.length > 0 || isBatchMode }}">
-          <text class="iconfont {{ isBatchMode ? 'iconfont-wrong' : 'iconfont-option' }}"></text>
-          <text>{{ isBatchMode ? '取消' : '批量管理' }}</text>
+    <view class="sticky-header">
+      <!-- 顶部操作栏 -->
+      <view class="dishes-header">
+        <text class="dishes-title">菜品库 ({{ dishes.length }})</text>
+        <view class="header-actions" wx:if="{{ memberRole !== 'read' }}">
+          <view class="icon-btn" style="background: var(--border); color: var(--text-main); border-color: var(--border);" bindtap="onToggleBatchMode" wx:if="{{ filteredDishes.length > 0 || isBatchMode }}">
+            <text class="iconfont {{ isBatchMode ? 'iconfont-wrong' : 'iconfont-option' }}"></text>
+            <text>{{ isBatchMode ? '取消' : '批量管理' }}</text>
+          </view>
+          <view class="icon-btn ai-btn" bindtap="onOpenAiImport" wx:if="{{ !isBatchMode }}"><text class="iconfont iconfont-ai"></text><text>AI导入</text></view>
+          <view class="icon-btn add-btn" bindtap="onOpenAddModal" wx:if="{{ !isBatchMode }}"><text class="iconfont iconfont-add"></text><text>新增</text></view>
         </view>
-        <view class="icon-btn ai-btn" bindtap="onOpenAiImport" wx:if="{{ !isBatchMode }}"><text class="iconfont iconfont-ai"></text><text>AI导入</text></view>
-        <view class="icon-btn add-btn" bindtap="onOpenAddModal" wx:if="{{ !isBatchMode }}"><text class="iconfont iconfont-add"></text><text>新增</text></view>
       </view>
-    </view>
 
-    <!-- 只读提示 -->
-    <view class="read-only-banner" wx:if="{{ memberRole === 'read' }}">
-      <text class="iconfont iconfont-lock"></text>
-      <text>只读模式：您可浏览菜品库，无法添加或删除</text>
-    </view>
-
-    <!-- 搜索栏 -->
-    <view class="search-bar">
-      <input
-        class="input-field search-input"
-        placeholder="搜索菜品..."
-        value="{{ searchQuery }}"
-        bindinput="onSearchInput"
-      />
-    </view>
-
-    <!-- 分类 Tab -->
-    <scroll-view class="tab-scroll" scroll-x="true">
-      <view
-        class="tab-pill {{ activeTab === item ? 'active' : '' }}"
-        wx:for="{{ tabs }}"
-        wx:key="index"
-        bindtap="onTabChange"
-        data-tab="{{ item }}"
-      >
-        {{ item }}
+      <!-- 只读提示 -->
+      <view class="read-only-banner" wx:if="{{ memberRole === 'read' }}">
+        <text class="iconfont iconfont-lock"></text>
+        <text>只读模式：您可浏览菜品库，无法添加或删除</text>
       </view>
-    </scroll-view>
+
+      <!-- 搜索栏 -->
+      <view class="search-bar">
+        <input
+          class="input-field search-input"
+          placeholder="搜索菜品..."
+          value="{{ searchQuery }}"
+          bindinput="onSearchInput"
+        />
+      </view>
+
+      <!-- 分类 Tab -->
+      <scroll-view class="tab-scroll" scroll-x="true">
+        <view
+          class="tab-pill {{ activeTab === item ? 'active' : '' }}"
+          wx:for="{{ tabs }}"
+          wx:key="index"
+          bindtap="onTabChange"
+          data-tab="{{ item }}"
+        >
+          {{ item }}
+        </view>
+      </scroll-view>
+    </view>
 
     <!-- 菜品列表 -->
-    <scroll-view class="dish-list-scroll animate-in" scroll-y="true" wx:if="{{ filteredDishes.length > 0 }}">
+    <view class="dish-list-scroll animate-in" wx:if="{{ filteredDishes.length > 0 }}">
       <view class="dish-list">
         <view class="dish-card {{ item.remark === 'AI导入' ? 'is-ai-imported' : '' }}" wx:for="{{ filteredDishes }}" wx:key="_id" bindtap="{{ isBatchMode ? 'onToggleSelectDish' : 'onOpenEditModal' }}" data-dish="{{ item }}" data-id="{{ item._id }}">
           <view style="display: flex; align-items: center; gap: 20rpx; flex: 1; min-width: 0;">
@@ -126,7 +130,7 @@
           </view>
         </view>
       </view>
-    </scroll-view>
+    </view>
 
     <!-- 空状态 -->
     <view class="card empty-state animate-in" wx:if="{{ filteredDishes.length === 0 && !loading }}">

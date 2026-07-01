@@ -78,6 +78,39 @@ exports.main = async (event, context) => {
           data: menuData
         });
 
+        // 自动将新规划的自定义菜品同步保存到家庭菜品库中，防止在“别处”使用时没有实时更新
+        try {
+          if (dishes.length > 0) {
+            // 1. 获取该家庭目前已有的所有菜品名字
+            const existingDishesRes = await db.collection('dishes')
+              .where({ family_id: familyId })
+              .field({ name: true })
+              .limit(500)
+              .get();
+            const existingNames = new Set(existingDishesRes.data.map(d => d.name));
+
+            // 2. 找出当前菜单里，菜品库中不存在的新菜品
+            const newDishes = dishes.filter(d => d.name && d.name.trim() && !existingNames.has(d.name.trim()));
+
+            // 3. 将新菜品批量加入菜品库
+            if (newDishes.length > 0) {
+              const addPromises = newDishes.map(d => {
+                return db.collection('dishes').add({
+                  data: {
+                    family_id: familyId,
+                    name: d.name.trim(),
+                    category: d.category || '热菜',
+                    created_at: db.serverDate()
+                  }
+                });
+              });
+              await Promise.all(addPromises);
+            }
+          }
+        } catch (syncErr) {
+          console.error('同步新菜品到菜品库失败', syncErr);
+        }
+
         return { success: true, message: '菜单保存成功' };
       }
 
@@ -88,6 +121,124 @@ exports.main = async (event, context) => {
         const menuId = `${familyId}_${date}`;
         await db.collection('menus').doc(menuId).remove().catch(() => null);
         return { success: true, message: '菜单已成功清空' };
+      }
+
+      case 'addDish': {
+        const { name, category, remark, practice } = event;
+        if (!name) return { success: false, message: '参数缺失 name' };
+        
+        // 检查是否重名
+        const checkRes = await db.collection('dishes').where({
+          family_id: familyId,
+          name: name.trim()
+        }).get();
+        if (checkRes.data.length > 0) {
+          return { success: false, message: '已存在同名菜品' };
+        }
+
+        const addRes = await db.collection('dishes').add({
+          data: {
+            family_id: familyId,
+            name: name.trim(),
+            category: category || '热菜',
+            remark: remark || '',
+            practice: practice || '',
+            creator_openid: openid,
+            created_at: db.serverDate(),
+            updated_at: db.serverDate()
+          }
+        });
+        return { success: true, _id: addRes._id, message: '添加成功' };
+      }
+
+      case 'updateDish': {
+        const { dishId, name, category, remark, practice } = event;
+        if (!dishId || !name) return { success: false, message: '参数缺失 dishId 或 name' };
+
+        // 检查重名 (排除自身)
+        const checkRes = await db.collection('dishes').where({
+          family_id: familyId,
+          name: name.trim()
+        }).get();
+        const duplicate = checkRes.data.find(d => d._id !== dishId);
+        if (duplicate) {
+          return { success: false, message: '已存在同名菜品' };
+        }
+
+        await db.collection('dishes').doc(dishId).update({
+          data: {
+            name: name.trim(),
+            category: category || '热菜',
+            remark: remark || '',
+            practice: practice || '',
+            updated_at: db.serverDate()
+          }
+        });
+        return { success: true, message: '修改成功' };
+      }
+
+      case 'deleteDish': {
+        const { dishId } = event;
+        if (!dishId) return { success: false, message: '参数缺失 dishId' };
+        await db.collection('dishes').doc(dishId).remove();
+        return { success: true, message: '删除成功' };
+      }
+
+      case 'batchDeleteDishes': {
+        const { dishIds } = event;
+        if (!Array.isArray(dishIds) || dishIds.length === 0) {
+          return { success: false, message: '参数错误：dishIds 格式不正确或为空' };
+        }
+        const _ = db.command;
+        await db.collection('dishes').where({
+          _id: _.in(dishIds)
+        }).remove();
+        return { success: true, message: '批量删除成功' };
+      }
+
+      case 'batchAddDishes': {
+        const { dishesList } = event;
+        if (!Array.isArray(dishesList) || dishesList.length === 0) {
+          return { success: false, message: '参数错误：dishesList 格式不正确或为空' };
+        }
+
+        const addedDishes = [];
+        for (const dish of dishesList) {
+          if (!dish.name) continue;
+          
+          // 检查是否重名
+          const checkRes = await db.collection('dishes').where({
+            family_id: familyId,
+            name: dish.name.trim()
+          }).get();
+          if (checkRes.data.length > 0) {
+            continue; // 跳过重名
+          }
+
+          const addRes = await db.collection('dishes').add({
+            data: {
+              family_id: familyId,
+              name: dish.name.trim(),
+              category: dish.category || '热菜',
+              remark: dish.remark || '',
+              practice: dish.practice || '',
+              creator_openid: openid,
+              created_at: db.serverDate(),
+              updated_at: db.serverDate()
+            }
+          });
+          addedDishes.push({
+            _id: addRes._id,
+            family_id: familyId,
+            name: dish.name.trim(),
+            category: dish.category || '热菜',
+            remark: dish.remark || '',
+            practice: dish.practice || '',
+            created_at: new Date(),
+            updated_at: new Date()
+          });
+        }
+        return { success: true, addedDishes, message: '批量导入成功' };
       }
 
       default:

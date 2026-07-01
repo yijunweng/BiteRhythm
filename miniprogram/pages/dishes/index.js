@@ -57,9 +57,11 @@ Page({
     if (app.globalData.memberRole !== undefined) {
       this.setData({ memberRole: app.globalData.memberRole });
     }
-    if (app.globalData.activeFamily && this.data.familyId !== app.globalData.activeFamily._id) {
+    if (app.globalData.activeFamily) {
+      const isFamilyChanged = this.data.familyId !== app.globalData.activeFamily._id;
       this.setData({ familyId: app.globalData.activeFamily._id });
-      this.fetchDishes();
+      // 每次页面展示都刷新菜品数据，确保多端和跨页面实时同步
+      this.fetchDishes(!isFamilyChanged); // 如果家庭没变，使用静默刷新
     }
   },
 
@@ -179,20 +181,47 @@ Page({
   },
 
   onAddDish: async function () {
+    if (this.data.memberRole === 'read') {
+      toast.showToast(this, '只读权限，无权操作', 'none');
+      return;
+    }
     const name = this.data.newDishName.trim();
     if (!name) { toast.showToast(this, '请输入菜名', 'none'); return; }
     if (this.data.dishes.some(d => d.name === name)) { toast.showToast(this, '已存在同名菜品', 'none'); return; }
     toast.showLoading(this, '添加中...');
     try {
-      const db = wx.cloud.database();
-      const addRes = await db.collection('dishes').add({
-        data: { family_id: this.data.familyId, name, category: this.data.newDishCategory, remark: this.data.newDishRemark, practice: this.data.newDishPractice || '', creator_openid: app.globalData.openid, created_at: db.serverDate(), updated_at: db.serverDate() }
+      const res = await wx.cloud.callFunction({
+        name: 'menuService',
+        data: {
+          action: 'addDish',
+          familyId: this.data.familyId,
+          name,
+          category: this.data.newDishCategory,
+          remark: this.data.newDishRemark,
+          practice: this.data.newDishPractice || ''
+        }
       });
-      const newDish = { _id: addRes._id, family_id: this.data.familyId, name, category: this.data.newDishCategory, remark: this.data.newDishRemark, practice: this.data.newDishPractice || '', created_at: new Date(), updated_at: new Date() };
-      this.setData({ dishes: [newDish, ...this.data.dishes], showAddModal: false }, () => this.filterDishes());
-      toast.showToast(this, '添加成功', 'success');
-    } catch { toast.showToast(this, '添加失败', 'error'); }
-    finally { toast.hideLoading(this); }
+      if (res.result && res.result.success) {
+        const newDish = {
+          _id: res.result._id,
+          family_id: this.data.familyId,
+          name,
+          category: this.data.newDishCategory,
+          remark: this.data.newDishRemark,
+          practice: this.data.newDishPractice || '',
+          created_at: new Date(),
+          updated_at: new Date()
+        };
+        this.setData({ dishes: [newDish, ...this.data.dishes], showAddModal: false }, () => this.filterDishes());
+        toast.showToast(this, '添加成功', 'success');
+      } else {
+        toast.showToast(this, res.result.message || '添加失败', 'error');
+      }
+    } catch {
+      toast.showToast(this, '添加失败', 'error');
+    } finally {
+      toast.hideLoading(this);
+    }
   },
 
   onOpenEditModal: function (e) {
@@ -249,6 +278,10 @@ Page({
   },
 
   onUpdateDish: async function () {
+    if (this.data.memberRole === 'read') {
+      toast.showToast(this, '只读权限，无权操作', 'none');
+      return;
+    }
     const name = this.data.editDishName.trim();
     const id = this.data.editDishId;
     if (!name) {
@@ -262,34 +295,40 @@ Page({
 
     toast.showLoading(this, '保存中...');
     try {
-      const db = wx.cloud.database();
-      await db.collection('dishes').doc(id).update({
+      const res = await wx.cloud.callFunction({
+        name: 'menuService',
         data: {
+          action: 'updateDish',
+          familyId: this.data.familyId,
+          dishId: id,
           name,
           category: this.data.editDishCategory,
           remark: this.data.editDishRemark,
-          practice: this.data.editDishPractice || '',
-          updated_at: db.serverDate()
+          practice: this.data.editDishPractice || ''
         }
       });
-      const updatedDishes = this.data.dishes.map(d => {
-        if (d._id === id) {
-          return {
-            ...d,
-            name,
-            category: this.data.editDishCategory,
-            remark: this.data.editDishRemark,
-            practice: this.data.editDishPractice || '',
-            updated_at: new Date()
-          };
-        }
-        return d;
-      });
-      this.setData({
-        dishes: updatedDishes,
-        showEditModal: false
-      }, () => this.filterDishes());
-      toast.showToast(this, '修改成功', 'success');
+      if (res.result && res.result.success) {
+        const updatedDishes = this.data.dishes.map(d => {
+          if (d._id === id) {
+            return {
+              ...d,
+              name,
+              category: this.data.editDishCategory,
+              remark: this.data.editDishRemark,
+              practice: this.data.editDishPractice || '',
+              updated_at: new Date()
+            };
+          }
+          return d;
+        });
+        this.setData({
+          dishes: updatedDishes,
+          showEditModal: false
+        }, () => this.filterDishes());
+        toast.showToast(this, '修改成功', 'success');
+      } else {
+        toast.showToast(this, res.result.message || '修改失败', 'error');
+      }
     } catch (err) {
       console.error(err);
       toast.showToast(this, '修改失败', 'error');
@@ -313,16 +352,34 @@ Page({
   },
 
   onCommitDeleteDish: async function () {
+    if (this.data.memberRole === 'read') {
+      toast.showToast(this, '只读权限，无权操作', 'none');
+      return;
+    }
     const id = this.data.deleteDishId;
     this.setData({ showDeleteDishConfirm: false });
     toast.showLoading(this, '删除中...');
     try {
-      await wx.cloud.database().collection('dishes').doc(id).remove();
-      const updated = this.data.dishes.filter(d => d._id !== id);
-      this.setData({ dishes: updated }, () => this.filterDishes());
-      toast.showToast(this, '已删除', 'success');
-    } catch { toast.showToast(this, '删除失败', 'error'); }
-    finally { toast.hideLoading(this); }
+      const res = await wx.cloud.callFunction({
+        name: 'menuService',
+        data: {
+          action: 'deleteDish',
+          familyId: this.data.familyId,
+          dishId: id
+        }
+      });
+      if (res.result && res.result.success) {
+        const updated = this.data.dishes.filter(d => d._id !== id);
+        this.setData({ dishes: updated }, () => this.filterDishes());
+        toast.showToast(this, '已删除', 'success');
+      } else {
+        toast.showToast(this, res.result.message || '删除失败', 'error');
+      }
+    } catch {
+      toast.showToast(this, '删除失败', 'error');
+    } finally {
+      toast.hideLoading(this);
+    }
   },
 
   onOpenAiImport: function () {
@@ -368,33 +425,34 @@ Page({
         const displayNames = dishNames.length > 20 ? dishNames.slice(0, 20) + '...' : dishNames;
         toast.showLoading(this, `解析出新菜: ${displayNames}\n正在导入中...`);
         
-        const db = wx.cloud.database();
-        let count = 0;
-        for (const dish of newDishes) {
-          try {
-            await db.collection('dishes').add({
-              data: {
-                family_id: this.data.familyId,
-                name: dish.name,
-                category: dish.category || '热菜',
-                remark: 'AI导入',
-                practice: dish.practice || '',
-                creator_openid: app.globalData.openid,
-                created_at: db.serverDate(),
-                updated_at: db.serverDate()
-              }
-            });
-            count++;
-          } catch (err) {
-            console.error('导入单道菜失败', dish.name, err);
+        try {
+          const listToImport = newDishes.map(d => ({
+            name: d.name,
+            category: d.category || '热菜',
+            remark: 'AI导入',
+            practice: d.practice || ''
+          }));
+          const importRes = await wx.cloud.callFunction({
+            name: 'menuService',
+            data: {
+              action: 'batchAddDishes',
+              familyId: this.data.familyId,
+              dishesList: listToImport
+            }
+          });
+          if (importRes.result && importRes.result.success) {
+            const count = (importRes.result.addedDishes || []).length;
+            this.setData({ showAiImportModal: false });
+            toast.showToast(this, `成功导入 ${count} 道菜`, 'success');
+            // 后台静默/并行刷新列表，避免因进入骨架屏状态而销毁 Toast 容器
+            this.fetchDishes(true);
+          } else {
+            toast.showToast(this, importRes.result.message || '导入失败', 'none');
           }
+        } catch (importErr) {
+          console.error('批量导入失败', importErr);
+          toast.showToast(this, '导入失败，请稍后重试', 'none');
         }
-        
-        // 导入成功，关闭弹窗并提示
-        this.setData({ showAiImportModal: false });
-        toast.showToast(this, `成功导入 ${count} 道菜`, 'success');
-        // 后台静默/并行刷新列表，避免因进入骨架屏状态而销毁 Toast 容器
-        this.fetchDishes(true);
       } else {
         toast.showToast(this, res.result.message || '分析失败', 'none');
       }
@@ -472,25 +530,38 @@ Page({
   },
 
   onCommitBatchDelete: async function () {
+    if (this.data.memberRole === 'read') {
+      toast.showToast(this, '只读权限，无权操作', 'none');
+      return;
+    }
     const ids = Object.keys(this.data.selectedDishIds);
     this.setData({ showBatchDeleteConfirm: false });
     toast.showLoading(this, '删除中...');
     
-    const db = wx.cloud.database();
     try {
-      const deletePromises = ids.map(id => db.collection('dishes').doc(id).remove());
-      await Promise.all(deletePromises);
+      const res = await wx.cloud.callFunction({
+        name: 'menuService',
+        data: {
+          action: 'batchDeleteDishes',
+          familyId: this.data.familyId,
+          dishIds: ids
+        }
+      });
       
-      const updated = this.data.dishes.filter(d => !this.data.selectedDishIds[d._id]);
-      this.setData({ 
-        dishes: updated,
-        isBatchMode: false,
-        selectedDishIds: {},
-        selectedCount: 0,
-        isAllSelected: false
-      }, () => this.filterDishes());
-      
-      toast.showToast(this, '删除成功', 'success');
+      if (res.result && res.result.success) {
+        const updated = this.data.dishes.filter(d => !this.data.selectedDishIds[d._id]);
+        this.setData({ 
+          dishes: updated,
+          isBatchMode: false,
+          selectedDishIds: {},
+          selectedCount: 0,
+          isAllSelected: false
+        }, () => this.filterDishes());
+        
+        toast.showToast(this, '删除成功', 'success');
+      } else {
+        toast.showToast(this, res.result.message || '删除失败', 'none');
+      }
     } catch (err) {
       console.error('删除失败', err);
       toast.showToast(this, '删除失败，请重试', 'none');
