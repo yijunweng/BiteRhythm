@@ -199,6 +199,7 @@ Page({
     canvasHeight: 600,
     repoDishesMap: {},
     posterBtnExpanded: false,
+    showPosterRemark: true,
     
     toastData: { show: false, type: 'none', title: '' }
   },
@@ -750,6 +751,10 @@ Page({
     this.setData({ showPosterPreviewModal: false });
   },
 
+  onTogglePosterRemark: function (e) {
+    this.setData({ showPosterRemark: e.detail.value });
+  },
+
   onSavePosterToLocal: function () {
     const { posterDateData } = this.data;
     if (posterDateData.length === 0) return;
@@ -768,7 +773,7 @@ Page({
             const lines = Math.ceil((dish.practice.length * 11) / 275) || 1;
             currentY += lines * 16 + 6;
           }
-          if (dish.remark) {
+          if (this.data.showPosterRemark && dish.remark) {
             const lines = Math.ceil((dish.remark.length * 11) / 275) || 1;
             currentY += lines * 16 + 6;
           }
@@ -873,16 +878,16 @@ Page({
                 if (dish.practice) {
                   ctx.fillStyle = '#9E9E9E';
                   ctx.font = 'bold 11px sans-serif';
-                  ctx.fillText('做法: ', 32, y);
+                  ctx.fillText('做法偏好: ', 32, y);
                   
                   ctx.fillStyle = '#222222';
                   ctx.font = '11px sans-serif';
-                  const startX = 32 + ctx.measureText('做法: ').width;
+                  const startX = 32 + ctx.measureText('做法偏好: ').width;
                   y = drawTextWithWrap(ctx, dish.practice, startX, y, 275, 16);
                   y += 6;
                 }
                 
-                if (dish.remark) {
+                if (this.data.showPosterRemark && dish.remark) {
                   ctx.fillStyle = '#9E9E9E';
                   ctx.font = 'bold 11px sans-serif';
                   ctx.fillText('备注: ', 32, y);

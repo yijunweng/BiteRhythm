@@ -114,55 +114,34 @@
   padding: 8rpx;
 }
 
-/* 添加输入行 */
-.add-input-row {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  margin-top: 24rpx;
-}
-
-.add-input {
-  flex: 1;
-  height: 80rpx;
-  font-size: 26rpx;
-}
-
-.cat-picker-btn {
-  height: 80rpx;
-  padding: 0 24rpx;
-  background: #FFFFFF;
-  border: 1rpx solid var(--border);
-  border-radius: 12rpx;
-  display: flex;
-  align-items: center;
-  font-size: 24rpx;
-  color: var(--text-main);
-  white-space: nowrap;
-  transition: var(--transition);
-  box-sizing: border-box;
-}
-
-.cat-picker-btn.active {
-  border-color: var(--theme-color);
-  background: #FFFFFF;
-  color: var(--theme-color);
-  box-shadow: 0 0 0 3rpx rgba(214, 178, 140, 0.15);
-}
-
-.add-circle-btn {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 50%;
-  background: var(--theme-color);
-  color: #FFFFFF;
+/* 从菜品库选择触发条 */
+.add-from-repo-trigger {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40rpx;
-  font-weight: 300;
-  flex-shrink: 0;
+  gap: 12rpx;
+  padding: 24rpx 0;
+  margin-top: 16rpx;
+  border: 2rpx dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 26rpx;
+  font-weight: 600;
+  background: transparent;
+  transition: var(--transition);
 }
+
+.add-from-repo-trigger:active {
+  background: #FAF7F2;
+  color: var(--theme-color);
+  border-color: var(--theme-color);
+}
+
+.trigger-icon {
+  font-size: 24rpx;
+  line-height: 1;
+}
+
 
 /* 快捷操作按钮组 */
 .quick-btns {

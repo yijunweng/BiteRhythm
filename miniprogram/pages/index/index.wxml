@@ -494,9 +494,22 @@
   <view class="modal-mask" wx:if="{{ showPosterPreviewModal }}" bindtap="onClosePosterPreview">
     <view class="modal-sheet" catchtap="noop" style="padding-bottom: 48rpx;">
       <view class="modal-header">
-        <view class="modal-title">
-          <text class="iconfont iconfont-dish"></text>
-          <text>海报预览</text>
+        <view style="display: flex; align-items: center; gap: 16rpx;">
+          <view class="modal-title">
+            <text class="iconfont iconfont-dish"></text>
+            <text>海报预览</text>
+          </view>
+          <!-- 控制显示备注的 switch -->
+          <view class="poster-remark-switch-container" style="display: flex; align-items: center; gap: 6rpx;">
+            <text style="font-size: 22rpx; color: var(--text-muted); font-weight: 500;">显示备注</text>
+            <switch 
+              class="switch-control" 
+              checked="{{ showPosterRemark }}" 
+              bindchange="onTogglePosterRemark"
+              color="#D4B28C"
+              style="transform: scale(0.65); transform-origin: left center;"
+            />
+          </view>
         </view>
         <view class="modal-close" bindtap="onClosePosterPreview">
           <text class="iconfont iconfont-wrong"></text>
@@ -524,10 +537,10 @@
                   <text class="poster-dish-name">{{ dish.name }}</text>
                 </view>
                 <view class="poster-dish-detail" wx:if="{{ dish.practice }}">
-                  <text class="poster-detail-label">做法：</text>
+                  <text class="poster-detail-label">做法偏好：</text>
                   <text class="poster-detail-val">{{ dish.practice }}</text>
                 </view>
-                <view class="poster-dish-detail" wx:if="{{ dish.remark }}">
+                <view class="poster-dish-detail" wx:if="{{ showPosterRemark && dish.remark }}">
                   <text class="poster-detail-label">备注：</text>
                   <text class="poster-detail-val">{{ dish.remark }}</text>
                 </view>

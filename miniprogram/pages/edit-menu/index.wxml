@@ -108,49 +108,12 @@
           <view class="empty-text">今天吃什么？快来添加吧！</view>
         </view>
 
-        <!-- 快捷添加输入区（只读时隐藏） -->
-        <view class="add-input-row" wx:if="{{ !isReadOnly }}">
-          <view class="custom-select-container cat-select open-up">
-            <view class="cat-picker-btn {{ showCategoryPicker ? 'active' : '' }}" bindtap="onToggleCategoryPicker">
-              <text>{{ customDishCategory }}</text>
-              <text class="iconfont iconfont-down-line select-arrow {{ showCategoryPicker ? 'open' : '' }}" style="margin-left: 6rpx; font-size: 20rpx;"></text>
-            </view>
-            <view class="custom-select-options cat-options {{ showCategoryPicker ? 'show' : '' }}">
-              <view
-                class="custom-select-option {{ categoryIndex === index ? 'selected' : '' }}"
-                wx:for="{{ categories }}"
-                wx:key="index"
-                bindtap="onSelectCategory"
-                data-index="{{ index }}"
-              >
-                <text>{{ item }}</text>
-              </view>
-            </view>
-            <view class="custom-select-backdrop" wx:if="{{ showCategoryPicker }}" bindtap="onCloseCategoryPicker"></view>
-          </view>
-          <input
-            class="input-field add-input"
-            placeholder="输入新菜名..."
-            value="{{ customDishName }}"
-            bindinput="onCustomDishInput"
-            confirm-type="done"
-            bindconfirm="onAddCustomDish"
-          />
-          <view class="add-circle-btn" bindtap="onAddCustomDish"><text class="iconfont iconfont-add" style="font-size: 32rpx; line-height: 1;"></text></view>
-        </view>
-      </view>
 
-      <!-- 操作按钮区（只读时隐藏） -->
-      <view wx:if="{{ !isReadOnly }}">
-        <!-- 从菜品库选择 -->
-        <button
-          class="btn-secondary"
-          hover-class="btn-secondary-hover"
-          bindtap="onOpenRepository"
-          style="margin-bottom: 24rpx;"
-        >
-          从收藏菜品库选择
-        </button>
+        <!-- 从菜品库选择（内嵌在卡片底部且弱化视觉效果） -->
+        <view class="add-from-repo-trigger" bindtap="onOpenRepository" wx:if="{{ !isReadOnly }}">
+          <text class="iconfont iconfont-add trigger-icon"></text>
+          <text>从收藏菜品库选择</text>
+        </view>
       </view>
 
       <!-- AI 智能搭配卡片（只读时隐藏） -->
