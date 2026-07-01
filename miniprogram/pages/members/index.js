@@ -15,6 +15,11 @@ Page({
   },
 
   onLoad: function (options) {
+    // 隐藏微信自带的左上角返回首页按钮
+    if (wx.hideHomeButton) {
+      wx.hideHomeButton();
+    }
+
     const { familyId, action } = options;
     if (!familyId) {
       this.setData({ loading: false });
@@ -61,7 +66,11 @@ Page({
 
       // 处理成员检查结果
       if (memberRes && memberRes.data && memberRes.data.length > 0) {
-        this.setData({ joined: true });
+        const memberStatus = memberRes.data[0].status;
+        this.setData({
+          joined: true,
+          isApproved: memberStatus === 'approved'
+        });
       }
     } catch (err) {
       console.error('加载页面数据失败', err);
@@ -97,11 +106,13 @@ Page({
       // 检查是否已申请
       const existRes = await db.collection('family_members').where({ family_id: familyId, openid }).get();
       if (existRes.data.length > 0) {
-        if (existRes.data[0].status === 'approved') {
-          this.setData({ joined: true });
+        const memberStatus = existRes.data[0].status;
+        if (memberStatus === 'approved') {
+          this.setData({ joined: true, isApproved: true });
           toast.showToast(this, '您已是家庭成员', 'success');
           return;
         }
+        this.setData({ joined: true, isApproved: false });
         toast.showToast(this, '您的申请正在审批中', 'none');
         return;
       }
@@ -117,7 +128,7 @@ Page({
           created_at: db.serverDate()
         }
       });
-      this.setData({ joined: true });
+      this.setData({ joined: true, isApproved: false });
       toast.showToast(this, '申请已提交', 'success');
     } catch (err) {
       console.error('提交申请失败', err);

@@ -33,11 +33,18 @@
 
     <!-- 已完成加入界面 -->
     <view class="card animate-in" wx:if="{{ joined }}">
-      <view class="success-state">
-        <view class="success-icon"></view>
-        <text class="success-title">加入成功！</text>
-        <text class="success-desc">您已成功申请加入「{{ familyName }}」，请等待管理员审批后即可查看菜单。</text>
+      <!-- 已经是家庭成员 (已审批) -->
+      <view class="success-state" wx:if="{{ isApproved }}">
+        <view class="iconfont iconfont-success success-icon" style="color: var(--theme-color); font-size: 96rpx; margin-bottom: 24rpx;"></view>
+        <text class="success-title">您已是家庭成员</text>
+        <text class="success-desc">您已经成功加入家庭「{{ familyName }}」，可以直接使用小程序的各项功能了。</text>
         <button class="btn-primary" hover-class="btn-primary-hover" bindtap="onGoHome" style="margin-top: 40rpx;">前往首页</button>
+      </view>
+      <!-- 正在等待审批 (未审批) -->
+      <view class="success-state" wx:else>
+        <view class="iconfont iconfont-info success-icon" style="color: var(--gold); font-size: 96rpx; margin-bottom: 24rpx;"></view>
+        <text class="success-title" style="color: var(--gold);">申请正在审批中</text>
+        <text class="success-desc">您已提交加入家庭「{{ familyName }}」的申请，请等待管理员（雇主）进行审批。</text>
       </view>
     </view>
 
@@ -45,7 +52,7 @@
     <view wx:elif="{{ !joined && familyName }}" class="animate-in">
       <view class="invite-banner">
         <text class="invite-title">您收到了邀请！</text>
-        <text class="invite-desc">雇主邀请您加入家庭「{{ familyName }}」的厨房日历，一起规划家人每周的饮食。</text>
+        <text class="invite-desc">雇主邀请您加入家庭「{{ familyName }}」的厨房，一起规划家人每周的饮食。</text>
       </view>
 
       <view class="card">
