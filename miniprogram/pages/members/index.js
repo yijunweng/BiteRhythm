@@ -14,35 +14,59 @@ Page({
     toastData: { show: false, type: 'none', title: '' }
   },
 
-  onLoad: async function (options) {
+  onLoad: function (options) {
     const { familyId, action } = options;
     if (!familyId) {
       this.setData({ loading: false });
       return;
     }
-    this.setData({ familyId });
+    this.setData({ familyId, loading: true });
 
-    // 获取家庭名称
+    if (app.globalData.hasCheckedAuth) {
+      this.initInvitationPage();
+    } else {
+      app.authCallback = () => this.initInvitationPage();
+    }
+  },
+
+  initInvitationPage: async function () {
+    const familyId = this.data.familyId;
     try {
-      const db = wx.cloud.database();
-      const res = await db.collection('families').doc(familyId).get();
-      this.setData({ familyName: res.data.name || '' });
+      // 1. 获取家庭名称 (通过云函数绕过客户端数据库读取规则限制)
+      const namePromise = wx.cloud.callFunction({
+        name: 'adminService',
+        data: {
+          action: 'getFamilyName',
+          familyId
+        }
+      });
+
+      // 2. 检查是否已经是成员
+      let memberPromise = Promise.resolve({ data: [] });
+      const openid = app.globalData.openid;
+      if (openid) {
+        const db = wx.cloud.database();
+        memberPromise = db.collection('family_members').where({ family_id: familyId, openid }).get();
+      }
+
+      // 并发等待两个请求完成
+      const [nameRes, memberRes] = await Promise.all([namePromise, memberPromise]);
+
+      // 处理家庭名称结果
+      if (nameRes.result && nameRes.result.success) {
+        this.setData({ familyName: nameRes.result.name || '' });
+      } else {
+        console.error('获取家庭名称失败', nameRes.result.message);
+      }
+
+      // 处理成员检查结果
+      if (memberRes && memberRes.data && memberRes.data.length > 0) {
+        this.setData({ joined: true });
+      }
     } catch (err) {
-      console.error('获取家庭失败', err);
+      console.error('加载页面数据失败', err);
     } finally {
       this.setData({ loading: false });
-    }
-
-    // 检查是否已经是成员
-    const openid = app.globalData.openid;
-    if (openid) {
-      try {
-        const db = wx.cloud.database();
-        const r = await db.collection('family_members').where({ family_id: familyId, openid }).get();
-        if (r.data.length > 0) {
-          this.setData({ joined: true });
-        }
-      } catch { }
     }
   },
 

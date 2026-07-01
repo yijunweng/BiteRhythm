@@ -8,6 +8,7 @@ Page({
     dateStr: '',
     familyId: '',
     isReadOnly: false,
+    isSystemAdmin: false,
 
     dishesList: [],
     customDishName: '',
@@ -44,11 +45,13 @@ Page({
       return;
     }
     const memberRole = app.globalData.memberRole || '';
+    const isSystemAdmin = app.globalData.isSystemAdmin || false;
     const syncShoppingList = wx.getStorageSync('sync_shopping_list') || false;
     this.setData({
       dateStr: date,
       familyId,
       isReadOnly: memberRole === 'read',
+      isSystemAdmin,
       syncShoppingList,
       loading: true
     });

@@ -302,11 +302,22 @@ Page({
     const { id, role } = e.currentTarget.dataset;
     toast.showLoading(this, '审批中...');
     try {
-      const db = wx.cloud.database();
-      await db.collection('family_members').doc(id).update({ data: { status: 'approved', role } });
-      toast.showToast(this, '审批通过', 'success');
-      this.fetchMembers();
-    } catch {
+      const res = await wx.cloud.callFunction({
+        name: 'adminService',
+        data: {
+          action: 'approveMember',
+          memberId: id,
+          role
+        }
+      });
+      if (res.result && res.result.success) {
+        toast.showToast(this, '审批通过', 'success');
+        this.fetchMembers();
+      } else {
+        toast.showToast(this, res.result.message || '审批失败', 'error');
+      }
+    } catch (err) {
+      console.error(err);
       toast.showToast(this, '审批失败', 'error');
     } finally {
       toast.hideLoading(this);
@@ -372,15 +383,22 @@ Page({
     }
     toast.showLoading(this, '保存中...');
     try {
-      const db = wx.cloud.database();
-      if (role === 'admin') {
-        await db.collection('family_members').doc(id).update({ data: { nickname } });
+      const res = await wx.cloud.callFunction({
+        name: 'adminService',
+        data: {
+          action: 'editMember',
+          memberId: id,
+          nickname,
+          role: role === 'admin' ? '' : role
+        }
+      });
+      if (res.result && res.result.success) {
+        toast.showToast(this, '修改成功', 'success');
+        this.setData({ showEditMemberModal: false });
+        this.fetchMembers();
       } else {
-        await db.collection('family_members').doc(id).update({ data: { nickname, role } });
+        toast.showToast(this, res.result.message || '修改失败', 'none');
       }
-      toast.showToast(this, '修改成功', 'success');
-      this.setData({ showEditMemberModal: false });
-      this.fetchMembers();
     } catch (err) {
       console.error(err);
       toast.showToast(this, '修改失败', 'none');
@@ -407,8 +425,9 @@ Page({
     const family = app.globalData.activeFamily;
     if (!family) return { title: 'BiteRhythm (食之律动) - 邀请加入' };
     return {
-      title: `邀请您加入「${family.name}」的厨房日历`,
-      path: `/pages/members/index?familyId=${family._id}&action=join`
+      title: `邀请您加入「${family.name}」的厨房`,
+      path: `/pages/members/index?familyId=${family._id}&action=join`,
+      imageUrl: '/images/invite-cover.jpg'
     };
   },
 
@@ -563,11 +582,22 @@ Page({
     if (actionType === 'rejectMember') {
       toast.showLoading(this, '处理中...');
       try {
-        await wx.cloud.database().collection('family_members').doc(targetId).remove();
-        toast.showToast(this, '已拒绝', 'success');
-        this.setData({ showConfirmModal: false });
-        this.fetchMembers();
-      } catch {
+        const res = await wx.cloud.callFunction({
+          name: 'adminService',
+          data: {
+            action: 'deleteMember',
+            memberId: targetId
+          }
+        });
+        if (res.result && res.result.success) {
+          toast.showToast(this, '已拒绝', 'success');
+          this.setData({ showConfirmModal: false });
+          this.fetchMembers();
+        } else {
+          toast.showToast(this, res.result.message || '操作失败', 'error');
+        }
+      } catch (err) {
+        console.error(err);
         toast.showToast(this, '操作失败', 'error');
       } finally {
         toast.hideLoading(this);
@@ -575,10 +605,20 @@ Page({
     } else if (actionType === 'removeMember') {
       toast.showLoading(this, '移除中...');
       try {
-        await wx.cloud.database().collection('family_members').doc(targetId).remove();
-        toast.showToast(this, '已移除', 'success');
-        this.setData({ showConfirmModal: false });
-        this.fetchMembers();
+        const res = await wx.cloud.callFunction({
+          name: 'adminService',
+          data: {
+            action: 'deleteMember',
+            memberId: targetId
+          }
+        });
+        if (res.result && res.result.success) {
+          toast.showToast(this, '已移除', 'success');
+          this.setData({ showConfirmModal: false });
+          this.fetchMembers();
+        } else {
+          toast.showToast(this, res.result.message || '移除失败', 'none');
+        }
       } catch (err) {
         console.error(err);
         toast.showToast(this, '移除失败', 'none');

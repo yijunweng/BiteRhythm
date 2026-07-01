@@ -103,11 +103,11 @@
           catchtap="onDeleteFamilyFromSwitcher"
           data-family-id="{{ item._id }}"
           data-family-name="{{ item.name }}"
-          wx:if="{{ !(activeFamily && activeFamily._id === item._id) }}"
+          wx:if="{{ isSystemAdmin && !(activeFamily && activeFamily._id === item._id) }}"
           style="font-size: 30rpx; color: #E53935; padding: 10rpx; margin-right: -10rpx;"
         ></text>
       </view>
-      <view class="family-drop-item add-item" bindtap="onCreateFamily">
+      <view class="family-drop-item add-item" bindtap="onCreateFamily" wx:if="{{ isSystemAdmin }}">
         <text class="iconfont iconfont-add"></text>
         <text>创建新家庭</text>
       </view>
@@ -115,14 +115,29 @@
 
     <!-- 无家庭时的引导 -->
     <view class="card empty-guide animate-in" wx:if="{{ !activeFamily && !loading }}">
-      <view class="empty-state">
-        <view class="empty-icon iconfont iconfont-dish" style="font-size: 80rpx;"></view>
-        <view class="empty-text">还没有家庭群组\n点击上方创建您的第一个家庭吧</view>
-      </view>
-      <button class="btn-primary" hover-class="btn-primary-hover" bindtap="onCreateFamily">
-        <text class="iconfont iconfont-add"></text>
-        <text>创建我的家庭</text>
-      </button>
+      <!-- 申请加入审批中的提示 -->
+      <block wx:if="{{ pendingFamilies && pendingFamilies.length > 0 }}">
+        <view class="empty-state" wx:for="{{ pendingFamilies }}" wx:key="_id" style="margin-bottom: 24rpx;">
+          <view class="empty-icon iconfont iconfont-family" style="color: var(--gold); opacity: 1; font-size: 80rpx;"></view>
+          <view class="empty-text" style="font-weight: 700; font-size: 32rpx; color: var(--text-main); margin-bottom: 12rpx; white-space: pre-wrap;">申请加入「{{ item.name }}」审批中</view>
+          <view class="empty-text" style="padding: 0 40rpx; line-height: 1.6; font-size: 26rpx; color: var(--text-muted);">您已提交加入家庭的申请，请联系管理员（雇主）进行审批。审批通过并重新打开小程序即可自动进入该家庭的厨房日历。</view>
+        </view>
+        <button class="btn-primary" hover-class="btn-primary-hover" bindtap="onCreateFamily" style="margin-top: 24rpx;" wx:if="{{ isSystemAdmin }}">
+          <text class="iconfont iconfont-add"></text>
+          <text>或者创建自己的家庭</text>
+        </button>
+      </block>
+      <block wx:else>
+        <view class="empty-state">
+          <view class="empty-icon iconfont iconfont-dish" style="font-size: 80rpx;"></view>
+          <view class="empty-text" wx:if="{{ isSystemAdmin }}">还没有家庭群组\n点击上方创建您的第一个家庭吧</view>
+          <view class="empty-text" wx:else>您尚未加入任何家庭群组\n请联系管理员（雇主）扫描分享卡片邀请您加入</view>
+        </view>
+        <button class="btn-primary" hover-class="btn-primary-hover" bindtap="onCreateFamily" wx:if="{{ isSystemAdmin }}">
+          <text class="iconfont iconfont-add"></text>
+          <text>创建我的家庭</text>
+        </button>
+      </block>
     </view>
 
     <!-- 日历卡片 -->
@@ -374,10 +389,11 @@
         <text class="iconfont iconfont-ai" style="font-size: 64rpx; color: var(--gold);"></text>
       </view>
       <view class="custom-dialog-title">提示</view>
-      <view class="custom-dialog-content">首次使用 AI 功能前，请先完成家庭用餐人数及偏好配置。</view>
+      <view class="custom-dialog-content" wx:if="{{ isSystemAdmin }}">首次使用 AI 功能前，请先完成家庭用餐人数及偏好配置。</view>
+      <view class="custom-dialog-content" wx:else>家庭用餐人数及偏好尚未配置，请联系管理员（雇主）进行配置。</view>
       <view class="custom-dialog-footer">
-        <button class="custom-dialog-btn-cancel" bindtap="onCloseConfigPrompt">取消</button>
-        <button class="custom-dialog-btn-confirm" bindtap="onGoToConfig">去配置</button>
+        <button class="custom-dialog-btn-cancel" bindtap="onCloseConfigPrompt">{{ isSystemAdmin ? '取消' : '我知道了' }}</button>
+        <button class="custom-dialog-btn-confirm" bindtap="onGoToConfig" wx:if="{{ isSystemAdmin }}">去配置</button>
       </view>
     </view>
   </view>

@@ -166,6 +166,7 @@ Page({
     isSystemAdmin: false,
     activeFamily: null,
     families: [],
+    pendingFamilies: [],
     showFamilySelector: false,
     currentYear: new Date().getFullYear(),
     currentMonth: new Date().getMonth() + 1,
@@ -284,9 +285,10 @@ Page({
       const db = wx.cloud.database();
       const openid = app.globalData.openid;
 
-      // 并发查询用户加入的家庭成员记录和自己创建的家庭
-      const [memberRes, ownRes] = await Promise.all([
+      // 并发查询用户加入的已审批家庭成员记录、待审批记录和自己创建的家庭
+      const [memberRes, pendingRes, ownRes] = await Promise.all([
         db.collection('family_members').where({ openid, status: 'approved' }).get(),
+        db.collection('family_members').where({ openid, status: 'pending' }).get(),
         db.collection('families').where({ creator_openid: openid }).get()
       ]);
 
@@ -305,10 +307,24 @@ Page({
 
       this.setData({ families });
 
+      // 获取待审批的家庭详情
+      let pendingFamilies = [];
+      const pendingFamilyIds = pendingRes.data.map(m => m.family_id);
+      if (pendingFamilyIds.length > 0) {
+        const pr = await db.collection('families')
+          .where({ _id: db.command.in(pendingFamilyIds) }).get();
+        pendingFamilies = pr.data;
+      }
+      this.setData({ pendingFamilies });
+
       if (families.length > 0) {
         const lastId = wx.getStorageSync('last_family_id');
         const selected = families.find(f => f._id === lastId) || families[0];
         await this.selectFamily(selected);
+      } else {
+        // 如果没有可用家庭，清空全局及页面的 activeFamily
+        app.globalData.activeFamily = null;
+        this.setData({ activeFamily: null });
       }
     } catch (err) {
       console.error('获取家庭列表失败', err);
@@ -363,6 +379,10 @@ Page({
   },
 
   onCreateFamily: function () {
+    if (!this.data.isSystemAdmin) {
+      toast.showToast(this, '仅限管理员创建家庭', 'none');
+      return;
+    }
     this.setData({ showCreateFamilyModal: true, newFamilyName: '' });
   },
 
@@ -377,6 +397,10 @@ Page({
   noop: function () {},
 
   onCommitCreateFamily: async function () {
+    if (!this.data.isSystemAdmin) {
+      toast.showToast(this, '权限不足', 'none');
+      return;
+    }
     const name = this.data.newFamilyName.trim();
     if (!name) {
       toast.showToast(this, '请输入家庭名称', 'none');
@@ -1083,6 +1107,10 @@ Page({
   },
 
   onDeleteFamilyFromSwitcher: function (e) {
+    if (!this.data.isSystemAdmin) {
+      toast.showToast(this, '仅限管理员删除家庭', 'none');
+      return;
+    }
     const { familyId, familyName } = e.currentTarget.dataset;
     this.setData({
       showDeleteFamilyConfirm: true,
@@ -1096,6 +1124,10 @@ Page({
   },
 
   onCommitDeleteFamily: async function () {
+    if (!this.data.isSystemAdmin) {
+      toast.showToast(this, '权限不足', 'none');
+      return;
+    }
     const { deleteFamilyId } = this.data;
     this.setData({ showDeleteFamilyConfirm: false });
     toast.showLoading(this, '正在删除...');

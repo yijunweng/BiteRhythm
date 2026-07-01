@@ -286,10 +286,11 @@
         <text class="iconfont iconfont-ai" style="font-size: 64rpx; color: var(--gold);"></text>
       </view>
       <view class="custom-dialog-title">提示</view>
-      <view class="custom-dialog-content">首次使用 AI 功能前，请先完成家庭用餐人数及偏好配置。</view>
+      <view class="custom-dialog-content" wx:if="{{ isSystemAdmin }}">首次使用 AI 功能前，请先完成家庭用餐人数及偏好配置。</view>
+      <view class="custom-dialog-content" wx:else>家庭用餐人数及偏好尚未配置，请联系管理员（雇主）进行配置。</view>
       <view class="custom-dialog-footer">
-        <button class="custom-dialog-btn-cancel" bindtap="onCloseConfigPrompt">取消</button>
-        <button class="custom-dialog-btn-confirm" bindtap="onGoToConfig">去配置</button>
+        <button class="custom-dialog-btn-cancel" bindtap="onCloseConfigPrompt">{{ isSystemAdmin ? '取消' : '我知道了' }}</button>
+        <button class="custom-dialog-btn-confirm" bindtap="onGoToConfig" wx:if="{{ isSystemAdmin }}">去配置</button>
       </view>
     </view>
   </view>

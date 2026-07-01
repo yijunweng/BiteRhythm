@@ -36,7 +36,7 @@ exports.main = async (event, context) => {
   };
 
   // 需要超管权限的操作
-  const adminRequiredActions = ['saveLLMConfig', 'getLLMConfig'];
+  const adminRequiredActions = ['saveLLMConfig', 'getLLMConfig', 'approveMember', 'deleteMember', 'editMember'];
   if (adminRequiredActions.includes(action)) {
     const superAdminOpenid = await getSuperAdminOpenid();
     if (!superAdminOpenid) {
@@ -124,6 +124,51 @@ exports.main = async (event, context) => {
           return { success: true, config: { ...safeData, api_key_set: !!api_key } };
         }
         return { success: true, config: {} };
+      }
+
+      case 'approveMember': {
+        const { memberId, role } = event;
+        if (!memberId || !role) {
+          return { success: false, message: '参数缺失 memberId 或 role' };
+        }
+        await db.collection('family_members').doc(memberId).update({
+          data: { status: 'approved', role }
+        });
+        return { success: true, message: '审批成功' };
+      }
+
+      case 'deleteMember': {
+        const { memberId } = event;
+        if (!memberId) {
+          return { success: false, message: '参数缺失 memberId' };
+        }
+        await db.collection('family_members').doc(memberId).remove();
+        return { success: true, message: '删除成功' };
+      }
+
+      case 'editMember': {
+        const { memberId, nickname, role } = event;
+        if (!memberId || !nickname) {
+          return { success: false, message: '参数缺失 memberId 或 nickname' };
+        }
+        const data = { nickname };
+        if (role) {
+          data.role = role;
+        }
+        await db.collection('family_members').doc(memberId).update({
+          data
+        });
+        return { success: true, message: '修改成功' };
+      }
+
+      case 'getFamilyName': {
+        const { familyId } = event;
+        if (!familyId) return { success: false, message: '参数缺失 familyId' };
+        const res = await db.collection('families').doc(familyId).get().catch(() => null);
+        if (res && res.data) {
+          return { success: true, name: res.data.name };
+        }
+        return { success: false, message: '找不到该家庭' };
       }
 
       case 'incrementMemberCount': {
